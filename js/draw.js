@@ -245,7 +245,7 @@ function drawHumanoid(ctx, s, o = {}) {
   ctx.strokeStyle = INK; ctx.lineWidth = 3;
   const legW = s.legW || Math.max(10, w * 0.3), legH = h * 0.27;
   const armW = s.armW || 10; // largeur des bras (Faouzi : plus fins)
-  const swing = s.stiffLegs ? 0 : pose === 'walk' ? Math.sin(walk) * 0.55 : (pose === 'jump' ? 0.5 : 0);
+  const swing = s.stiffLegs ? 0 : (pose === 'walk' || (pose === 'carry' && pt === 1)) ? Math.sin(walk) * 0.55 : (pose === 'jump' ? 0.5 : 0);
   const legCol = s.legs || '#2c3e50', shoe = s.shoes || '#111';
   ctx.save(); ctx.translate(-w * 0.18, -legH); ctx.rotate(-swing);
   rrect(ctx, -legW / 2, 0, legW, legH, 6, legCol); rrect(ctx, -legW / 2, legH - 7, legW + 6, 8, 4, shoe, false);
@@ -254,7 +254,7 @@ function drawHumanoid(ctx, s, o = {}) {
   const shoulderY = -h * 0.72 + bob;
   // bras arrière
   ctx.save(); ctx.translate(-w * 0.15, shoulderY);
-  ctx.rotate(pose === 'victory' ? -2.7 + Math.sin(t * 10) * 0.15 : pose === 'taunt' ? 0.5 : s.armFwd ? -1.3 + Math.sin(t * 5) * 0.1 : -0.15 - (pose === 'walk' ? Math.sin(walk + Math.PI) * 0.5 : 0));
+  ctx.rotate(pose === 'carry' ? -2.85 : pose === 'victory' ? -2.7 + Math.sin(t * 10) * 0.15 : pose === 'taunt' ? 0.5 : s.armFwd ? -1.3 + Math.sin(t * 5) * 0.1 : -0.15 - (pose === 'walk' ? Math.sin(walk + Math.PI) * 0.5 : 0));
   const armLB = Math.max(24, h * 0.3);
   rrect(ctx, -armW / 2, 0, armW, armLB, armW / 2, s.sleeve || s.color);
   ctx.translate(0, armLB); drawHand(ctx, s.backHand || skin, t, false);
@@ -301,6 +301,7 @@ function drawHumanoid(ctx, s, o = {}) {
   else if (pose === 'hurt' || pose === 'down') ang = -Math.PI * 0.8;
   else if (pose === 'victory') ang = -Math.PI * 0.95 + Math.sin(t * 10 + 1) * 0.15;   // bras levés
   else if (pose === 'taunt') ang = -Math.PI * 0.62 + Math.sin(t * 16) * 0.35;      // « viens ! » de la main
+  else if (pose === 'carry') ang = -Math.PI * 0.97;  // bras tendus au-dessus de la tête
   else if (pose === 'jump') ang = -Math.PI * 0.7;
   else if (s.armFwd) ang = -1.45 + Math.sin(t * 5) * 0.1;
   else if (pose === 'walk') ang = idle + 0.05 + Math.sin(walk) * 0.45;
@@ -998,6 +999,7 @@ function drawProjectile(ctx, p, t) {
       ctx.strokeStyle = '#5d4037'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(-30 * d, 0);
       for (let i = 0; i < 6; i++) ctx.lineTo((-30 + i * 10) * d, (i % 2 ? -6 : 6));
       ctx.stroke(); ctx.fillStyle = '#c98a2f'; for (let i = 0; i < 4; i++) ctx.fillRect(rand(-14, 14), -rand(6, 40), 6, 6); break;
+    case 'item': ctx.translate(0, -58); drawThrowItem(ctx, p.item, t, d); break; // objet lancé par le héros (combat.js)
     case 'parmesan': ctx.translate(0, -60); ctx.rotate(t * 10); poly(ctx, [[-14, 8], [14, 8], [0, -14]], '#f6e58d'); circle(ctx, -3, 2, 2, '#e1c95f', false); circle(ctx, 4, 4, 1.5, '#e1c95f', false); break;
   }
   ctx.restore();

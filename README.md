@@ -31,6 +31,8 @@ Beat'em up à défilement horizontal (inspiré de Castle Crashers), jouable dans
 | Sauter (coup sauté = renverse) | Espace | ⤒ SAUT |
 | Coup plongeant (onde de choc, renverse) | Espace puis J / X **en redescendant** | SAUT puis FRAPPE **en redescendant** |
 | Spécial | K ou C | ★ SPÉCIAL |
+| Attraper puis lancer un ennemi | Rester appuyé sur J / X, puis lâcher | Rester appuyé sur FRAPPE, puis lâcher |
+| Lancer un objet (trouvé dans une caisse) | J ou X | ✊ FRAPPE |
 | Pause | Échap ou P | ❚❚ |
 
 Sur tablette, le joystick et les boutons sont **plus gros automatiquement** (taille proportionnelle à l'écran, jusqu'à × 1,6 sur iPad). ⚙ Réglages → **Commandes tactiles** : Normales / Grandes / Très grandes.
@@ -52,6 +54,30 @@ Déblocages :
 - **The Purf** : termine le mode histoire **en jouant Senoussi**.
 
 Les histoires terminées sont comptées par héros dans la sauvegarde (`storyWinsBy`).
+
+## Combat (v3.6)
+
+- **Combos** : gros compteur à droite, avec une jauge qui montre le temps avant que la série retombe. Paliers à ×10 (« PAS MAL ! »), ×25 (« LAÏQUE ! »), ×50 (« INARRÊTABLE ! ») et ×100 (« LÉGENDAIRE ! ») : bonus de points, petit ralenti, arpège. Le coup final envoie valser l'ennemi ; le dernier ennemi d'une vague tombe au ralenti (« K.O. ! »).
+- **Attraper / lancer** : reste appuyé sur FRAPPE près d'un ennemi (pas les boss ni les volants) : il passe au-dessus de ta tête. Lâche le bouton : il part devant et renverse tous ceux qu'il croise, puis s'écrase. Si tu es touché, tu le lâches.
+- **Caisses** (3 par monde : palette, enceinte, cagette, bloc « ? », conteneur, amphore, baril) : 3 coups pour les casser. Elles lâchent de la nourriture ou un **objet à lancer** propre au monde (brique, vinyle, boule de pétanque, cartouche, batterie, jarre, bidon) : le prochain FRAPPE le lance (gros dégâts ; vinyle, boule et batterie traversent).
+- **Dangers et lancers récompensés** : un ennemi éliminé par un danger du décor (« BIEN ENVOYÉ ! ») ou par un lancer (« STRIKE ! ») rapporte un bonus, plus gros pour un « DOUBLÉ ! », « TRIPLÉ ! », « CARNAGE ! ».
+- Réglages : `COMBAT` en haut de `js/combat.js`.
+
+## Événements de milieu de monde (v3.6)
+
+Entre la 2e et la 3e vague (mode histoire et choix du niveau), une épreuve propre au monde. Réussie : **+800 points** (× le niveau de difficulté) et **+30 de vie**. Ratée : rien de perdu.
+
+| Monde | Épreuve |
+|---|---|
+| Christian | **Pluie de briques d'or** : ramasser 10 briques dorées sous les palettes de la grue |
+| Guilhem | **Battle de rap** : FRAPPE quand la note passe dans le cercle (calé sur le tempo) ; 60 % de réussite pour gagner |
+| Fateh | **Partie de pétanque** : 3 boules, jauge de puissance ; carreau = 3 points, il en faut 3 |
+| Faouzi | **Niveau bonus** : sauter pour attraper 12 pièces |
+| Venum | **Le drone voleur** : le frapper 5 fois avant qu'il s'enfuie |
+| Senoussi | **Le mouton d'or** : le frapper 5 fois avant qu'il s'échappe |
+| The Purf | **Opération nettoyage** : ramasser 8 bidons entre les flaques |
+
+Le temps imparti dépend du niveau de difficulté. Réglages : `EVENTS` en haut de `js/events.js`.
 
 ## Niveaux de difficulté
 
@@ -264,6 +290,8 @@ js/draw.js            dessin des persos, ennemis, véhicules, dangers, objets
 js/backgrounds.js     décors des 7 mondes (parallaxe), premier plan, particules, teintes
 js/entities.js        combattants (héros et ennemis)
 js/game.js            niveau, vagues, IA, boss et phases, dangers, modes, HUD
+js/combat.js          combos, attraper/lancer, caisses et objets à lancer, bonus des dangers
+js/events.js          événements de milieu de monde (briques d'or, battle de rap, pétanque…)
 js/audio.js           mixage, bruitages, musiques écrites et arrangement, ambiances, voix (fichiers ou synthèse)
 sounds/               sons enregistrés (pets, rots, arrivée des boss, voiture, game over, fin de niveau)
 voices/               voix des personnages, facultatif (générées par tools/make-voices.py)

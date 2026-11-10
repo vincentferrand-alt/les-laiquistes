@@ -468,6 +468,8 @@ const CONTROLS_HTML = `
     <tr><td>Coup sauté (renverse)</td><td>Espace puis J (en montée)</td><td>SAUT puis FRAPPE</td></tr>
     <tr><td>Coup plongeant (onde de choc)</td><td>Espace puis J / X en redescendant</td><td>SAUT puis FRAPPE en redescendant</td></tr>
     <tr><td>Attaque spéciale</td><td>K ou C</td><td>★ SPÉCIAL</td></tr>
+    <tr><td>Attraper puis lancer un ennemi</td><td>Rester appuyé sur J / X, puis lâcher</td><td>Rester appuyé sur FRAPPE, puis lâcher</td></tr>
+    <tr><td>Lancer un objet (trouvé dans une caisse)</td><td>J ou X</td><td>✊ FRAPPE</td></tr>
     <tr><td>Pause</td><td>Échap ou P</td><td>❚❚</td></tr>
   </table>
   <div class="ctl-tip">La frappe touche aussi en hauteur (goélands, chauves-souris). Le « ! » rouge annonce une attaque ennemie : esquive en changeant de ligne.</div>`;
