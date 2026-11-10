@@ -60,13 +60,15 @@ const Cloud = {
       survScore: ints(d.survival, s => s.score),
       rushBest: Math.max(0, Math.round(d.rushBest || 0)),
       diffMax: Math.max(1, Math.min(3, d.diffMax || 1)),
+      stars: ints(d.stars), xp: ints(d.xp),
+      trophies: Object.keys(d.trophies || {}).filter(k => TROPHIES.some(t => t.id === k)).slice(0, 60),
       updatedAt: M.serverTimestamp(),
     };
   },
   fromDoc(r) {
     const survival = {};
     HERO_IDS.forEach(k => { if (r.survWave && r.survWave[k] != null) survival[k] = { wave: r.survWave[k], score: (r.survScore || {})[k] || 0 }; });
-    return { name: r.name || '', unlocked: r.unlocked || {}, storyWinsBy: r.storyWinsBy || {}, cleared: r.cleared || {}, survival, rushBest: r.rushBest || 0, diffMax: r.diffMax || 1 };
+    return { name: r.name || '', unlocked: r.unlocked || {}, storyWinsBy: r.storyWinsBy || {}, cleared: r.cleared || {}, survival, rushBest: r.rushBest || 0, diffMax: r.diffMax || 1, stars: r.stars || {}, xp: r.xp || {}, trophies: r.trophies || [] };
   },
   // Fusion : union des déblocages, meilleur de chaque record, plus grand nombre d'histoires terminées
   merge(local, remote) {
@@ -82,6 +84,8 @@ const Cloud = {
     }
     local.rushBest = Math.max(local.rushBest || 0, remote.rushBest || 0);
     local.diffMax = Math.max(local.diffMax || 1, remote.diffMax || 1);
+    local.stars = max(local.stars, remote.stars); local.xp = max(local.xp, remote.xp); // v3.7
+    local.trophies = local.trophies || {}; (remote.trophies || []).forEach(k => { local.trophies[k] = 1; });
     local.storyWins = Math.max(local.storyWins || 0, Object.values(local.storyWinsBy).reduce((s, n) => s + n, 0));
     if (!local.name && remote.name) local.name = remote.name;
     // cohérence des déblocages avec les histoires terminées
@@ -111,9 +115,9 @@ const Cloud = {
     clearTimeout(this.pushTimer);
     try { await this.mods.setDoc(this.ref(), this.toDoc()); }
     catch (e) {
-      // Règles Firestore d'avant la v3.4 (sans « diffMax ») : on renvoie sans ce champ, le reste est sauvegardé
+      // Règles Firestore pas encore à jour (sans « diffMax », « stars », « xp », « trophies ») : on renvoie sans ces champs
       if (String(e && e.code).includes('permission')) {
-        try { const d = this.toDoc(); delete d.diffMax; await this.mods.setDoc(this.ref(), d); return; } catch (e2) { e = e2; }
+        try { const d = this.toDoc(); ['diffMax', 'stars', 'xp', 'trophies'].forEach(k => delete d[k]); await this.mods.setDoc(this.ref(), d); return; } catch (e2) { e = e2; }
       }
       console.warn('Envoi de la sauvegarde impossible (elle reste sur l\'appareil)', e);
     }

@@ -71,6 +71,8 @@
         <div class="menu row">
           <button class="btn" id="b-rush">💀 BOSS RUSH</button>
           <button class="btn" id="b-surv">🌊 SURVIE</button>
+          <button class="btn daily-btn" id="b-daily">📅 DÉFI DU JOUR</button>
+          <button class="btn" id="b-trophies">🏅 TROPHÉES</button>
           <button class="btn" id="b-scores">🏆 CLASSEMENT</button>
         </div>
       </div>
@@ -159,6 +161,7 @@
     <section id="s-over" class="screen dim">
       <div class="gameover">ALORS LA !!!</div>
       <div class="big-score">Score : <b id="over-score">0</b></div>
+      <div class="win-unlock" id="over-prog"></div>
       <div id="over-save" class="save-box hidden"></div>
       <div class="menu row">
         <button class="btn primary big" id="b-over-retry">RÉESSAYER</button>
@@ -173,6 +176,28 @@
       <div class="win-unlock" id="win-unlock"></div>
       <div id="win-save" class="save-box hidden"></div>
       <div class="menu row" id="win-buttons"></div>
+    </section>
+
+    <!-- Défi du jour -->
+    <section id="s-daily" class="screen">
+      <h2>📅 DÉFI DU JOUR</h2>
+      <div class="sub" id="daily-date"></div>
+      <canvas id="daily-art" width="760" height="200"></canvas>
+      <div class="daily-card" id="daily-card"></div>
+      <div class="menu row">
+        <button class="btn small" data-go="s-title">← Retour</button>
+        <button class="btn primary big" id="b-daily-go">RELEVER LE DÉFI !</button>
+      </div>
+      <div class="sub" id="daily-src"></div>
+      <ol id="daily-list"></ol>
+    </section>
+
+    <!-- Trophées -->
+    <section id="s-trophies" class="screen">
+      <h2>🏅 TROPHÉES</h2>
+      <div class="sub" id="troph-sum"></div>
+      <div id="troph-grid"></div>
+      <button class="btn small" data-go="s-title">← Retour</button>
     </section>
 
     <!-- Classement -->
@@ -203,6 +228,7 @@
   <script src="js/game.js"></script>
   <script src="js/combat.js"></script>
   <script src="js/events.js"></script>
+  <script src="js/progress.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/main.js"></script>
 </body>

@@ -18,6 +18,9 @@ const UI = {
     $('#b-levels').onclick = () => { Sfx.init(); Sfx.click(); this.run.mode = 'select'; this.openChars(); };
     $('#b-rush').onclick = () => { Sfx.init(); Sfx.click(); this.run.mode = 'bossrush'; this.openChars(); };
     $('#b-surv').onclick = () => { Sfx.init(); Sfx.click(); this.run.mode = 'survival'; this.openChars(); };
+    $('#b-daily').onclick = () => { Sfx.init(); Sfx.click(); this.openDaily(); };
+    $('#b-daily-go').onclick = () => { Sfx.click(); this.startDaily(); };
+    $('#b-trophies').onclick = () => { Sfx.init(); Sfx.click(); this.openTrophies(); };
     $('#b-scores').onclick = () => { Sfx.init(); Sfx.click(); this.openScores('histoire'); };
     $('#b-mute').onclick = () => this.toggleMute();
     $('#b-fs').onclick = () => this.fullscreen();
@@ -147,7 +150,7 @@ const UI = {
       const card = document.createElement('button');
       card.className = 'char-card' + (unlocked ? '' : ' locked') + (k === this.selHero ? ' sel' : '');
       card.style.setProperty('--c', c.light);
-      card.innerHTML = `<canvas width="140" height="150"></canvas><div class="cc-name">${unlocked ? c.name : '???'}</div>${unlocked ? `<div class="cc-title">${c.title}</div>` : `<div class="cc-title">🔒 ${c.unlockText}</div>`}`;
+      card.innerHTML = `${unlocked ? `<div class="cc-lv">Niv. ${Progress.level(k).lv}</div>` : ''}<canvas width="140" height="150"></canvas><div class="cc-name">${unlocked ? c.name : '???'}</div>${unlocked ? `<div class="cc-title">${c.title}</div>` : `<div class="cc-title">🔒 ${c.unlockText}</div>`}`;
       const cv = card.querySelector('canvas');
       this.liveCanvas(cv, (ctx, t, W, H) => {
         const sel = this.selHero === k;
@@ -208,6 +211,7 @@ const UI = {
     $('#char-detail').innerHTML = `
       <div class="cd-name" style="color:${c.light}">${c.name}</div>
       <div class="cd-title">${c.title}</div>
+      ${(() => { const L = Progress.level(this.selHero), b = Progress.bonus(this.selHero); return `<div class="cd-lv">Niveau <b>${L.lv}</b>${L.need ? ` <span class="xpbar"><i style="width:${Math.round(L.cur / L.need * 100)}%"></i></span> ${L.cur}/${L.need} XP` : ' (max)'}${L.lv > 1 ? ` · vie +${Math.round((b.hp - 1) * 100)} %, force +${Math.round((b.dmg - 1) * 100)} %` : ''}</div>`; })()}
       <div class="cd-weapon"><b>⚔ ${c.weapon}</b> — ${c.weaponDesc}</div>
       ${bar('Vie', c.hp, 150)}${bar('Vitesse', c.speed, 300)}${bar('Force', c.dmg, 14)}${bar('Allonge', c.range, 100)}
       <div class="cd-special"><b>★ ${c.specialName}</b><br>${c.specialDesc}</div>`;
@@ -238,7 +242,8 @@ const UI = {
       const status = locked ? '🔒 ' + CHARACTERS[w.boss].unlockText : mine ? "C'est ton monde !"
         : surv ? (sb ? `🏆 Vague ${sb.wave} — ${sb.score} pts` : 'Pas encore tenté')
         : best ? '✓ Record : ' + best : 'Jamais terminé';
-      card.innerHTML = `<canvas width="300" height="150"></canvas><div class="wc-name">${locked ? '🔒 ' : ''}${CHARACTERS[w.boss].name.toUpperCase()}</div><div class="wc-boss">${w.sub}</div><div class="wc-best">${status}</div>`;
+      const st = Progress.stars(w.id);
+      card.innerHTML = `${!locked && !surv ? `<div class="wc-stars">${'★'.repeat(st)}${'☆'.repeat(3 - st)}</div>` : ''}<canvas width="300" height="150"></canvas><div class="wc-name">${locked ? '🔒 ' : ''}${CHARACTERS[w.boss].name.toUpperCase()}</div><div class="wc-boss">${w.sub}</div><div class="wc-best">${status}</div>`;
       const cv = card.querySelector('canvas');
       this.liveCanvas(cv, (ctx, t, W, H) => {
         const s = H / VIEW_H; ctx.save(); ctx.scale(s, s);
@@ -262,7 +267,7 @@ const UI = {
   openIntro() {
     const wid = this.run.order[this.run.idx], w = worldById(wid), boss = CHARACTERS[w.boss];
     const n = `${this.run.idx + 1} / ${this.run.order.length}`;
-    $('#intro-step').textContent = { story: 'MONDE ' + n, select: 'CHOIX DU NIVEAU', bossrush: 'BOSS RUSH — BOSS ' + n, survival: 'SURVIE — VAGUES SANS FIN' }[this.run.mode]
+    $('#intro-step').textContent = { story: 'MONDE ' + n, select: 'CHOIX DU NIVEAU', bossrush: 'BOSS RUSH — BOSS ' + n, survival: 'SURVIE — VAGUES SANS FIN', daily: 'DÉFI DU JOUR — ' + (this.run.daily ? this.run.daily.mod.name : '') }[this.run.mode]
       + '  ·  ' + '★'.repeat(this.run.level || 1) + ' ' + BALANCE.levels[this.run.level || 1].name;
     $('#intro-name').textContent = w.name;
     $('#intro-sub').textContent = w.sub;
@@ -288,7 +293,7 @@ const UI = {
     this.run.worldScoreStart = this.run.score;
     const diff = { story: BALANCE.story.base + this.run.idx * BALANCE.story.perWorld, bossrush: 1 + this.run.idx * 0.08, survival: 1 }[this.run.mode] || 1.15;
     this.hideScreens(); this.setControls(true);
-    Game.start({ worldId: wid, heroKind: this.run.hero, mode: this.run.mode, difficulty: diff, level: this.run.level, score: this.run.score, heroHp: retry ? null : this.run.heroHp });
+    Game.start({ worldId: wid, heroKind: this.run.hero, mode: this.run.mode, difficulty: diff, level: this.run.level, mod: this.run.mode === 'daily' && this.run.daily ? this.run.daily.mod : null, score: this.run.score, heroHp: retry ? null : this.run.heroHp });
   },
 
   pause() {
@@ -373,7 +378,9 @@ const UI = {
         Save.save();
       }
       if (mode === 'bossrush') { Save.data.rushBest = Math.max(Save.data.rushBest || 0, res.score); Save.save(); }
-      const board = { story: 'histoire', bossrush: 'bossrush', survival: 'survie-' + res.worldId }[mode];
+      if (mode === 'daily') Daily.record(res.score);
+      $('#over-prog').innerHTML = Progress.worldEnd(res, this.run); // expérience gagnée quand même
+      const board = { story: 'histoire', bossrush: 'bossrush', survival: 'survie-' + res.worldId, daily: this.run.daily && this.run.daily.board }[mode];
       this.prepareNameEntry('#over-save', !!board && res.score > 0, board);
       this.show('s-over');
       return;
@@ -388,6 +395,12 @@ const UI = {
     const unlocks = storyDone ? Save.storyCompleted(this.run.hero, this.run.level) : [];
     if (rushDone) Save.data.rushBest = Math.max(Save.data.rushBest || 0, res.score);
     Save.save();
+    // progression : étoiles, expérience, trophées
+    if (storyDone) { Progress.unlock('histoire'); if (this.run.level >= 2) Progress.unlock('costaud'); if (this.run.level >= 3) Progress.unlock('ultime'); }
+    if (rushDone) Progress.unlock('rush');
+    const daily = this.run.mode === 'daily';
+    if (daily) { Daily.record(res.score); Progress.unlock('defi'); }
+    const progHtml = Progress.worldEnd(res, this.run);
 
     $('#win-title').textContent = storyDone ? 'VICTOIRE TOTALE !' : rushDone ? 'BOSS RUSH TERMINÉ !' : `${CHARACTERS[w.boss].name.toUpperCase()} EST PLANTÉ !`;
     $('#win-stats').innerHTML = `
@@ -400,7 +413,7 @@ const UI = {
     if (storyDone || rushDone) setTimeout(() => Sfx.jingle('victory'), 300);
     else Sfx.levelEnd(); // fin de niveau : « ba-dum-tss »
     if (storyDone && !Save.isUnlocked('purf')) unlockHtml += (unlockHtml ? '<br>' : '') + '<span class="win-hint">Termine l\'histoire avec <b>Senoussi</b> pour débloquer <b>The Purf</b>…</span>';
-    $('#win-unlock').innerHTML = unlockHtml;
+    $('#win-unlock').innerHTML = progHtml + (unlockHtml ? '<div>' + unlockHtml + '</div>' : '');
     const btns = $('#win-buttons'); btns.innerHTML = '';
     const add = (label, fn, cls = '') => { const b = document.createElement('button'); b.className = 'btn ' + cls; b.textContent = label; b.onclick = () => { Sfx.click(); fn(); }; btns.appendChild(b); };
     if (rush && !rushDone) { // Boss Rush : la vie se reporte (petit soin entre deux boss), le score se cumule
@@ -424,8 +437,8 @@ const UI = {
       }, 'primary');
       add('Abandonner', () => this.toTitle());
     } else {
-      this.prepareNameEntry('#win-save', true, storyDone ? 'histoire' : w.id);
-      if (!storyDone) { add('Rejouer', () => { this.run.score = 0; this.launch(true); }, 'primary'); add('Autre monde', () => this.openWorlds()); }
+      this.prepareNameEntry('#win-save', true, storyDone ? 'histoire' : daily ? this.run.daily.board : w.id);
+      if (!storyDone) { add('Rejouer', () => { this.run.score = 0; this.launch(true); }, 'primary'); if (!daily) add('Autre monde', () => this.openWorlds()); }
       add('Menu', () => this.toTitle());
     }
     this.show('s-win');
@@ -447,6 +460,44 @@ const UI = {
   },
   saveScore() {},
 
+  // ---------- défi du jour ----------
+  async openDaily() {
+    const d = Daily.get(), w = worldById(d.world), hero = CHARACTERS[d.hero];
+    this.dailyCur = d;
+    $('#daily-date').textContent = 'Défi du ' + d.label + ' — le même pour tout le monde';
+    $('#daily-card').innerHTML = `<div>Monde : <b>${CHARACTERS[w.boss].name}</b> — ${w.sub}</div><div>Héros imposé : <b>${hero.name}</b> (niveau ${Progress.level(d.hero).lv})</div>`
+      + `<div class="mod">Règle du jour : <b>${d.mod.name}</b> — ${d.mod.desc}</div><div>Difficulté : <b>★★ ${BALANCE.levels[d.level].name}</b></div>`
+      + `<div>Ton record du jour : <b>${Daily.best() || '—'}</b></div>`;
+    this.liveCanvas($('#daily-art'), (ctx, t, W, H) => {
+      const s = H / VIEW_H; ctx.save(); ctx.scale(s, s); const VW = W / s;
+      drawWorldBackground(ctx, d.world, VW, t * 40, t);
+      ctx.save(); ctx.translate(VW * 0.35, GROUND_BOTTOM - 20); menuSprite(ctx, d.hero, { dir: 1, scale: 1.6, t, walk: t * 9, pose: Math.floor(t * 1.2) % 3 === 2 ? 'attack' : 'idle', poseT: (t * 1.2) % 1, companion: true }); ctx.restore();
+      ctx.save(); ctx.translate(VW * 0.68, GROUND_BOTTOM - 20); menuSprite(ctx, w.boss, { dir: -1, scale: 1.9, t: t + 1, pose: 'idle' }); ctx.restore();
+      ctx.restore();
+    });
+    $('#daily-list').innerHTML = '<li class="empty">Chargement…</li>';
+    this.show('s-daily');
+    const { online, list } = await Scores.top(d.board);
+    $('#daily-src').textContent = (online ? '🌍 Classement du jour' : '📱 Classement du jour (cet appareil)');
+    $('#daily-list').innerHTML = list.length
+      ? list.slice(0, 10).map((e, i) => `<li><span class="rk">${i + 1}</span><span class="nm">${escapeHtml(e.name)}</span><b>${e.score}</b></li>`).join('')
+      : '<li class="empty">Personne n\'a encore relevé le défi aujourd\'hui !</li>';
+  },
+  startDaily() {
+    const d = this.dailyCur || Daily.get();
+    this.run.mode = 'daily'; this.run.daily = d; this.run.hero = d.hero; this.run.level = d.level;
+    this.run.order = [d.world]; this.run.idx = 0; this.run.score = 0; this.run.heroHp = null;
+    this.openIntro();
+  },
+  // ---------- trophées ----------
+  openTrophies() {
+    const got = TROPHIES.filter(t => Progress.has(t.id)).length;
+    $('#troph-sum').textContent = `${got} / ${TROPHIES.length} trophées · ${Progress.totalStars()} / ${WORLDS.length * 3} étoiles`;
+    $('#troph-grid').innerHTML = TROPHIES.map(t => { const ok = Progress.has(t.id);
+      return `<div class="troph ${ok ? 'got' : 'locked'}"><span class="ti">${ok ? t.icon : '🔒'}</span><span><b>${t.name}</b><small>${t.desc}</small></span></div>`; }).join('');
+    this.show('s-trophies');
+  },
+
   async openScores(board) {
     $('#score-board').value = board;
     $('#score-list').innerHTML = '<li class="empty">Chargement…</li>';
@@ -458,7 +509,7 @@ const UI = {
       : '<li class="empty">Aucun score pour l\'instant. À toi de jouer !</li>';
   },
 };
-const MENU_SCREENS = ['s-title', 's-chars', 's-worlds', 's-intro', 's-scores', 's-settings'];
+const MENU_SCREENS = ['s-title', 's-chars', 's-worlds', 's-intro', 's-scores', 's-settings', 's-daily', 's-trophies'];
 const CONTROLS_HTML = `
   <table>
     <tr><th></th><th>Clavier</th><th>Téléphone</th></tr>

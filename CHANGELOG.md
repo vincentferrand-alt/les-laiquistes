@@ -1,3 +1,21 @@
+# Les laïquistes — v3.7.0 : progression et défi du jour
+
+## Correction
+- **Fin d'épreuve** : le héros restait bloqué dans sa pose de victoire (il fallait qu'un ennemi le touche). Il reprend la main après 1,4 s.
+
+## Progression (`js/progress.js`)
+- **Étoiles** par monde (3) : boss vaincu · épreuve réussie · plus de la moitié de sa vie. Sur les cartes des mondes et l'écran de victoire.
+- **Niveaux des héros** 1 à 10 (+3 % vie, +2 % force par niveau), expérience affichée en fin de partie (même en cas de défaite) et sur l'écran du choix du perso.
+- **22 trophées** avec un écran dédié et un message quand on en gagne un.
+
+## Défi du jour
+- Même défi pour tous chaque jour : monde + héros imposé + règle du jour (Turbo, Ennemis géants, Fragile, Déluge, Combo fou, Déménagement). Classement du jour partagé, record du jour sur l'appareil.
+
+## En ligne
+- Étoiles, XP et trophées sauvegardés en ligne. **Nouvelles règles Firestore dans le README** (sinon tout reste sur l'appareil, rien n'est perdu).
+
+---
+
 # Les laïquistes — v3.6.0 : combat et événements
 
 ## Combat (`js/combat.js`)

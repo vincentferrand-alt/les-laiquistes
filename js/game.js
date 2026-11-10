@@ -63,6 +63,8 @@ const Game = {
     this.mode = o.mode; this.diff = o.difficulty || 1;
     // niveau de difficulté choisi (1 à 3) : multiplicateurs de BALANCE.levels
     this.level = o.level || Save.data.diff || 1; this.L = BALANCE.levels[this.level] || BALANCE.levels[2];
+    this.mod = o.mod || {}; // règle spéciale du défi du jour (progress.js)
+    this.evOk = false; this.bossTouched = false;
     this.heroKind = o.heroKind;
     this.score = o.score || 0; this.startScore = this.score;
     this.levelLen = 4200;
@@ -77,6 +79,8 @@ const Game = {
     this.cine = 0; this.cineT = 0; this.bossCard = null; // cinématique d'arrivée du boss
     this.minionScale = this.world.small ? 0.72 : 1;
     this.hero = new Fighter(o.heroKind, 'hero', 160, (GROUND_TOP + GROUND_BOTTOM) / 2);
+    // niveau du héros (progress.js) : +3 % de vie et +2 % de force par niveau ; défi « Fragile » : moitié de vie
+    { const bn = Progress.bonus(o.heroKind), h = this.hero; h.maxHp = Math.round(h.maxHp * bn.hp * (this.mod.heroHp || 1)); h.hp = h.maxHp; h.dmg *= bn.dmg; }
     if (o.heroHp) this.hero.hp = clamp(o.heroHp, 1, this.hero.maxHp);
     this.pw = (BALANCE.perWorld && BALANCE.perWorld[this.world.id]) || {}; // réglages propres au monde
     const extra = Math.max(0, Math.floor((this.diff - 1) * 6) + (this.pw.extraPerWave || 0) + this.L.extraPerWave);
@@ -121,6 +125,7 @@ const Game = {
 
   // ---------- boucle ----------
   update(rdt) {
+    rdt *= this.mod.speed || 1; // défi « Turbo »
     if (this.hitstop > 0) { this.hitstop -= rdt; this.updateFx(rdt * 0.2); return; }
     if (this.slowT > 0) { this.slowT -= rdt; this.timeScale = 0.3; } else this.timeScale = 1;
     const dt = rdt * this.timeScale;
@@ -207,6 +212,8 @@ const Game = {
       }
     } else if (f.state === 'taunt') {
       if (f.st >= f.stateDur) f.setState('idle');
+    } else if (f.state === 'victory') { // victoire courte (fin d'épreuve) : on rend la main ; celle de fin de boss (99 s) dure jusqu'à l'écran de victoire
+      if (f.stateDur < 50 && f.st >= f.stateDur) { f.setState('idle'); f.vz = Math.min(f.vz, 0); }
     } else if (f.state === 'special') {
       const sp = f.dashSp || this.specialOf(f);
       if (sp === 'argent' && f.st - (f.lastPuddle || 0) > 0.12) { // The Purf : la charge laisse des flaques toxiques
@@ -270,7 +277,7 @@ const Game = {
   },
 
   // points gagnés × multiplicateur du niveau de difficulté (×1 / ×1,5 / ×2)
-  addScore(n) { this.score += Math.round(n * this.L.score); },
+  addScore(n) { this.score += Math.round(n * this.L.score * (this.mod.score || 1)); },
   specialDmg(f, base) {
     if (f.team === 'hero') return base;
     return f.isBoss ? base * BALANCE.boss.specialDmgMul * this.bossDmgK() : base * 0.55 * this.diff * 0.8 * this.L.enemyDmg;
@@ -309,10 +316,11 @@ const Game = {
     if (opts.knockdown || big) { Sfx.bigHit(pan, wk, this.hits); this.shake = 0.25; this.hitstop = 0.07; }
     else { Sfx.hit(pan, wk, src ? src.combo || 0 : 0, this.hits); this.hitstop = Math.max(this.hitstop, 0.035); this.shake = Math.max(this.shake, 0.08); }
     if (src && src.team === 'hero') {
-      this.hits++; this.hitT = 1.6; this.addScore(5 + Math.min(this.hits, 30)); this.onHeroHit();
+      this.hits++; this.hitT = 1.6; this.addScore((5 + Math.min(this.hits, 30)) * (this.mod.hitScore || 1)); this.onHeroHit();
       if (o.dead) this.onKill(o, src, opts);
     } else if (o === this.hero) {
       Sfx.hurt(); this.hits = 0; this.comboReset(); this.dropCarry();
+      if (this.bossPhase === 2) this.bossTouched = true; // (trophée « Intouchable »)
       Haptics.vibrate(opts.knockdown ? 110 : 55);
       if (o.dead) { this.slowT = 1.2; Sfx.gameOver(); Sfx.stopMusic(); }
       // le boss qui vient de renverser le héros prend le temps de le narguer (répit pour le joueur)
@@ -325,7 +333,7 @@ const Game = {
     this.kills++;
     this.onKillFx(e, src, opts); // éjection, bonus danger / lancer, dernier ennemi de la vague (combat.js)
     const gag = Sfx.kill(Sfx.panX(e.x), e.isBoss);
-    if (gag) this.gagFx(e, gag);
+    if (gag) { this.gagFx(e, gag); Progress.count('gags'); }
     if (e.isBoss) {
       this.addScore(1000);
       this.slowT = 1.2; this.shake = 0.5;
@@ -765,6 +773,7 @@ const Game = {
       speed: m.speed * rand(0.9, 1.05), scale: (o.scale || 1) * (o.mustKill ? 1 : this.minionScale), mustKill: o.mustKill,
     });
     if (e.fly) e.z = e.cruiseZ;
+    if (this.mod.giant && !o.mustKill) { e.scale *= 1.3; e.maxHp = e.hp = Math.round(e.hp * 1.5); } // défi « Ennemis géants »
     e.dir = x > this.hero.x ? -1 : 1;
     this.enemies.push(e);
     return e;
@@ -772,6 +781,7 @@ const Game = {
 
   // ---------- arrivée du boss ----------
   startBoss() {
+    this.bossTouched = false;
     const w = this.world, c = CHARACTERS[w.boss];
     this.bossPhase = 1; this.lockMax = this.levelLen - this.VW; this.bossIntroT = 2.6;
     // cinématique : bandes noires, léger zoom, carte avec le nom du boss
@@ -934,7 +944,7 @@ const Game = {
     // dangers du monde (annoncés, évitables), plus rares pendant le boss
     if (this.bossPhase !== 1 && this.bossPhase !== 3 && !this.hero.dead && !this.ev) { // (pendant un événement, c'est lui qui gère les dangers)
       this.hazardT -= dt;
-      if (this.hazardT <= 0) { this.hazardT = rand(...BALANCE.hazards.every) * (this.pw.hazardEvery || 1) * this.L.hazardEvery * (this.bossPhase === 2 || this.survBoss ? 1.6 : 1); this.spawnWorldHazard(); }
+      if (this.hazardT <= 0) { this.hazardT = rand(...BALANCE.hazards.every) * (this.pw.hazardEvery || 1) * this.L.hazardEvery * (this.mod.hazard || 1) * (this.bossPhase === 2 || this.survBoss ? 1.6 : 1); this.spawnWorldHazard(); }
     }
     if (this.mode === 'survival') { this.updateSurvival(dt, alive); return; }
     if (this.evUpdate(dt)) return; // événement de milieu de monde en cours (events.js)
@@ -984,6 +994,7 @@ const Game = {
         this.bossPhase = 3; this.endT = 3.2;
         this.flashA = 0.6; this.flashCol = '255,255,240'; this.slowT = 1.4;
         Sfx.victory(); Sfx.stopMusic();
+        Progress.unlock('boss1'); if (!this.bossTouched && !this.hero.dead) Progress.unlock('intouchable');
         this.banner("JE T'AI PLANTÉ !", 'No homo.', 3);
         this.enemies.forEach(m => { if (!m.dead) m.die(Math.sign(m.x - this.hero.x) || 1); });
         this.dangers = []; this.storm = null;
@@ -1010,6 +1021,7 @@ const Game = {
     this.survT -= dt;
     if (this.survT > 0) return;
     this.survWave++; this.survT = 2.2;
+    if (this.survWave >= 10) Progress.unlock('survie10');
     this.diff = 1 + (this.survWave - 1) * S.diffPerWave;
     const n = Math.min(S.maxCount, Math.round(S.baseCount + (this.survWave - 1) * S.perWave));
     for (let i = 0; i < n; i++) this.spawnQueue.push(pickWeighted(this.world.minions));
@@ -1029,7 +1041,7 @@ const Game = {
     const timeBonus = result === 'win' ? Math.max(0, Math.round((240 - this.time) * 3 * this.L.score)) : 0;
     const hpBonus = result === 'win' ? Math.round(this.hero.hp * 4 * this.L.score) : 0;
     this.score += timeBonus + hpBonus;
-    const res = { result, score: this.score, levelScore: this.score - this.startScore, timeBonus, hpBonus, heroHp: this.hero.hp, kills: this.kills, time: this.time, worldId: this.world.id, wave: this.survWave, mode: this.mode };
+    const res = { result, score: this.score, levelScore: this.score - this.startScore, timeBonus, hpBonus, heroHp: this.hero.hp, evOk: !!this.evOk, hpFrac: this.hero.hp / this.hero.maxHp, kills: this.kills, time: this.time, worldId: this.world.id, wave: this.survWave, mode: this.mode };
     setTimeout(() => { this.stop(); this.onEnd && this.onEnd(res); }, result === 'win' ? 200 : 600);
   },
 
