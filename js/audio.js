@@ -218,7 +218,7 @@ const Sfx = {
   // renvoie 'pet', 'rot' ou rien : le jeu affiche alors le gag à l'écran (texte BD + nuage), pour qu'il n'y ait aucun doute
   kill(pan, boss = false) {
     if (!this.ctx) return null;
-    if (boss) { this.fart(pan, pick(['pet-3', 'pet-8', 'pet-6'])); return 'pet'; } // un boss vaincu part toujours… avec panache
+    if (boss) { this.fart(pan, pick(['pet-3', 'pet-3', 'pet-5'])); return 'pet'; } // un boss vaincu part toujours… avec panache
     this.killN = (this.killN || 0) + 1;
     // ≈ 1 fois sur 3, et jamais deux KO de suite
     const lucky = this.killN - (this.lastGag || -9) >= 2 && Math.random() < 0.33;
@@ -291,12 +291,25 @@ const Sfx = {
   // coup plongeant : sifflement qui descend, puis choc grave à l'atterrissage
   diveStart() { this.tone('sine', 2200, 260, 0.32, 0.16); this.noise(0.3, 0.08, 3500, 0, 0.6); },
   diveLand()  { this.tone('sine', 110, 28, 0.55, 0.7); this.tone('square', 70, 30, 0.25, 0.25); this.noise(0.4, 0.55, 220, 0, 0.7); },
+  // Arrivée d'un boss : le son enregistré (repli : la synthèse)
+  bossArrival() { if (!Samples.play('arrivee-boss', 0, 1, 1)) this.bossIntro(); },
+  // Fin de niveau (boss battu, écran de victoire) : « ba-dum-tss »
+  levelEnd() { if (!Samples.play('blague-nulle', 0, 1, 1)) this.jingle('stage'); },
   bossIntro() { [0, 0.25, 0.5].forEach((d, i) => this.tone('sawtooth', 110 - i * 15, 90 - i * 15, 0.35, 0.35, d)); this.noise(1.2, 0.25, 160, 0, 0.6); },
 
   // Moteur d'un véhicule de boss : renvoie une poignée { stop(brake) }
   engine(type, pan = 0.6) {
     if (!this.ctx) return { stop() {} };
     const c = this.ctx, t = c.currentTime;
+    // Camionnette de Christian : le moteur enregistré, en boucle tant qu'elle roule
+    if (type === 'van' && Samples.buf['voiture-christian']) {
+      const p = Samples.play('voiture-christian', pan, 1.1, 1, true);
+      return { stop: brake => {
+        const n = c.currentTime; p.g.gain.setValueAtTime(p.g.gain.value, n); p.g.gain.exponentialRampToValueAtTime(0.0001, n + 0.4);
+        try { p.src.stop(n + 0.45); } catch (e) {}
+        if (brake) { this.noise(0.45, 0.22, 2600, 0, 12, pan); this.tone('square', 440, 440, 0.12, 0.15, 0.45, null, 0, pan); this.tone('square', 440, 440, 0.12, 0.15, 0.62, null, 0, pan); }
+      } };
+    }
     const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.32, t + 0.3);
     const lp = c.createBiquadFilter(); lp.type = 'lowpass';
     lp.connect(g); g.connect(this.out(pan));
@@ -351,7 +364,7 @@ const Sfx = {
     }
   },
   victory()  { Music.stop(0.3); this.jingle('victory'); },
-  gameOver() { Music.stop(0.4); this.jingle('defeat'); this.tone('sawtooth', 150, 20, 1.8, 0.2, 0.1); },
+  gameOver() { Music.stop(0.4); if (!Samples.play('game-over', 0, 1, 1)) { this.jingle('defeat'); this.tone('sawtooth', 150, 20, 1.8, 0.2, 0.1); } },
 
   // ---------- musique : API simple pour le reste du jeu ----------
   // name : 'menu' | id de monde | 'boss:' + id de monde
@@ -373,28 +386,31 @@ function loadBuffer(url) {
   return fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
     .then(ab => new Promise((res, rej) => { const p = Sfx.ctx.decodeAudioData(ab, res, rej); if (p && p.then) p.then(res, rej); })); // ancien Safari : rappels
 }
-// 8 pets et 5 rots fabriqués par tools/make-bruitages.py
+// Bruitages enregistrés (fournis par Vincent, nettoyés : blancs coupés, volumes égalisés) :
+//  5 pets, 2 rots, l'arrivée des boss, la voiture de Christian, le game over et la fin de niveau (« blague nulle »)
 const Samples = {
-  list: { pet: 8, rot: 5 }, buf: {}, bag: {}, loading: false,
+  list: { pet: 5, rot: 2 }, named: ['arrivee-boss', 'voiture-christian', 'game-over', 'blague-nulle'], buf: {}, bag: {}, loading: false,
   load() {
     if (this.loading || !Sfx.ctx) return; this.loading = true;
     for (const k in this.list) for (let i = 1; i <= this.list[k]; i++) {
       const name = k + '-' + i;
       loadBuffer('sounds/' + name + '.mp3').then(b => { this.buf[name] = b; }).catch(() => {});
     }
+    this.named.forEach(name => loadBuffer('sounds/' + name + '.mp3').then(b => { this.buf[name] = b; }).catch(() => {}));
   },
   // tirage « sac mélangé » : on entend tous les sons d'une famille avant d'en réentendre un
   next(k) {
     if (!this.bag[k] || !this.bag[k].length) this.bag[k] = shuffle(Array.from({ length: this.list[k] }, (_, i) => k + '-' + (i + 1)));
     return this.bag[k].pop();
   },
-  play(name, pan = 0, vol = 1, rate) {
-    const b = this.buf[name]; if (!b || !Sfx.ctx) return false;
-    const c = Sfx.ctx, s = c.createBufferSource(); s.buffer = b;
+  // Joue un son ; renvoie { src, g } (ou null si le fichier n'est pas chargé : on retombe alors sur la synthèse)
+  play(name, pan = 0, vol = 1, rate, loop = false) {
+    const b = this.buf[name]; if (!b || !Sfx.ctx) return null;
+    const c = Sfx.ctx, s = c.createBufferSource(); s.buffer = b; s.loop = loop;
     s.playbackRate.value = rate || (0.92 + Math.random() * 0.16); // légère variation : jamais tout à fait le même
     const g = c.createGain(); g.gain.value = vol * 0.8;
     s.connect(g); g.connect(Sfx.out(pan)); s.start();
-    return true;
+    return { src: s, g };
   },
 };
 // Voix générées par tools/make-voices.py : voices/manifest.json liste { kind, text, file }

@@ -1,3 +1,27 @@
+# Les laïquistes — v3.5.0 : graphismes
+
+- **Gros contour noir** autour de chaque personnage (style Castle Crashers), en jeu et dans les menus.
+- **Éclairage des persos** : haut du corps éclairé, jambes dans l'ombre ; **ombres au sol douces**, plus petites et plus pâles quand on saute.
+- **Yeux expressifs** : blanc de l'œil, pupille tournée vers l'avant, reflet, clignement ; sourcils froncés quand il frappe, levés quand il nargue ou fête sa victoire.
+- **Profondeur des décors** : brume au loin près de l'horizon, sol plus sombre au fond et plus clair devant, grain léger qui défile avec le sol.
+- **Effets lumineux** : étincelles et étoiles d'impact avec halo.
+- **Qualité automatique** : si l'appareil rame (moins de 45 images/s trop souvent), le jeu retire d'abord le contour des petits ennemis, puis l'éclairage.
+
+---
+
+# Les laïquistes — v3.4.1 : vrais sons
+
+- **Sons enregistrés** fournis par Vincent, nettoyés (blancs coupés, volumes égalisés, MP3 mono pour les bruitages) :
+  - 5 pets et 2 rots à la place des sons de synthèse (même règle : environ 1 KO sur 3, montrés à l'écran) ; un boss vaincu part sur le pet en 4 temps ;
+  - **arrivée des boss** (remplace le grondement de synthèse ; le rugissement de phase 2 reste synthétisé) ;
+  - **camionnette de Christian** : le moteur enregistré tourne en boucle tant qu'elle roule, puis freinage et klaxon ;
+  - **game over** (remplace le trombone de synthèse) ;
+  - **fin de niveau** : « blague nulle » sur l'écran de victoire (la victoire totale garde sa fanfare).
+- Si un fichier manque, le jeu retombe sur l'ancien son de synthèse.
+- `tools/make-bruitages.py` supprimé (plus utilisé).
+
+---
+
 # Les laïquistes — v3.4.0 : difficulté, version, pets et rots lisibles
 
 ## Niveaux de difficulté

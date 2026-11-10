@@ -2,6 +2,11 @@
 //  UI — écrans, choix du perso, mode histoire, choix du niveau
 // ============================================================
 const $ = s => document.querySelector(s);
+// Perso dans les menus : même rendu cartoon qu'en jeu (contour épais + éclairage)
+function menuSprite(ctx, kind, o) {
+  const c = CHARACTERS[kind], sc = o.scale || 1, h = c.bh * sc, r = (c.range + c.bw * 0.6 + 40) * sc;
+  drawSprite(ctx, { x: -r, y: -h - 120 * sc, w: r * 2, h: h + 140 * sc }, x => drawCharacter(x, kind, o), { outline: 3.2 * Math.sqrt(sc), shade: { top: -h } });
+}
 const UI = {
   current: null, live: new Map(), selHero: null,
   run: { mode: 'story', hero: null, order: [], idx: 0, score: 0, heroHp: null, worldScoreStart: 0 },
@@ -126,7 +131,7 @@ const UI = {
         const x = W * (i + 0.5) / n, y = H - 14 - Math.abs(Math.sin(t * 3 + i)) * 10;
         ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(x, H - 12, 26, 6, 0, 0, Math.PI * 2); ctx.fill();
         ctx.translate(x, y);
-        drawCharacter(ctx, k, { dir: i < n / 2 ? 1 : -1, scale: 0.85, t: t + i, walk: t * 8 + i, pose: 'walk' });
+        menuSprite(ctx, k, { dir: i < n / 2 ? 1 : -1, scale: 0.85, t: t + i, walk: t * 8 + i, pose: 'walk' });
         ctx.restore();
       });
     });
@@ -153,7 +158,7 @@ const UI = {
         const o = { dir: 1, scale: sc, companion: true, t, walk: t * 9, pose: sel && unlocked ? (Math.floor(t * 1.2) % 3 === 2 ? 'attack' : 'walk') : 'idle', poseT: (t * 1.2) % 1 };
         // perso verrouillé : silhouette noire (sans ctx.filter, pour iPhone)
         if (!unlocked) { ctx.globalAlpha = 0.6; drawTinted(ctx, '#000', 1, { x: -110, y: -150, w: 220, h: 160 }, c => drawCharacter(c, k, o)); ctx.globalAlpha = 1; }
-        else drawCharacter(ctx, k, o);
+        else menuSprite(ctx, k, o);
         ctx.restore();
       });
       card.onclick = () => {
@@ -239,7 +244,7 @@ const UI = {
         const s = H / VIEW_H; ctx.save(); ctx.scale(s, s);
         drawWorldBackground(ctx, w.id, W / s, 200 + t * 30, t);
         ctx.translate(W / s * 0.62, GROUND_BOTTOM - 40);
-        drawCharacter(ctx, w.boss, { dir: -1, scale: 1.6, t: t + i });
+        menuSprite(ctx, w.boss, { dir: -1, scale: 1.6, t: t + i });
         if (mine || locked) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = locked ? 'rgba(0,0,0,.7)' : 'rgba(0,0,0,.55)'; ctx.fillRect(0, 0, W, H); }
         if (locked) { ctx.font = '64px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('🔒', W / 2, H / 2); ctx.textBaseline = 'alphabetic'; }
         ctx.restore();
@@ -267,8 +272,8 @@ const UI = {
       const s = H / VIEW_H; ctx.save(); ctx.scale(s, s);
       const VW = W / s;
       drawWorldBackground(ctx, wid, VW, t * 40, t);
-      ctx.save(); ctx.translate(VW * 0.3, GROUND_BOTTOM - 30); drawCharacter(ctx, this.run.hero, { dir: 1, scale: 1.5, t, walk: t * 9, pose: 'idle', companion: true }); ctx.restore();
-      ctx.save(); ctx.translate(VW * 0.72, GROUND_BOTTOM - 20); drawCharacter(ctx, w.boss, { dir: -1, scale: 2.1, t: t + 1, pose: Math.floor(t) % 3 === 0 ? 'windup' : 'idle' }); ctx.restore();
+      ctx.save(); ctx.translate(VW * 0.3, GROUND_BOTTOM - 30); menuSprite(ctx, this.run.hero, { dir: 1, scale: 1.5, t, walk: t * 9, pose: 'idle', companion: true }); ctx.restore();
+      ctx.save(); ctx.translate(VW * 0.72, GROUND_BOTTOM - 20); menuSprite(ctx, w.boss, { dir: -1, scale: 2.1, t: t + 1, pose: Math.floor(t) % 3 === 0 ? 'windup' : 'idle' }); ctx.restore();
       ctx.font = '900 70px "Arial Black", Arial'; ctx.textAlign = 'center'; ctx.lineWidth = 8; ctx.strokeStyle = '#000'; ctx.fillStyle = '#feca57';
       ctx.strokeText('VS', VW * 0.5, GROUND_TOP + 40); ctx.fillText('VS', VW * 0.5, GROUND_TOP + 40);
       ctx.restore();
@@ -393,6 +398,7 @@ const UI = {
       <div class="total"><span>SCORE</span><b>${res.score}</b></div>`;
     let unlockHtml = unlocks.map(n => `🔓 <b>${n}</b> est débloqué !`).join('<br>');
     if (storyDone || rushDone) setTimeout(() => Sfx.jingle('victory'), 300);
+    else Sfx.levelEnd(); // fin de niveau : « ba-dum-tss »
     if (storyDone && !Save.isUnlocked('purf')) unlockHtml += (unlockHtml ? '<br>' : '') + '<span class="win-hint">Termine l\'histoire avec <b>Senoussi</b> pour débloquer <b>The Purf</b>…</span>';
     $('#win-unlock').innerHTML = unlockHtml;
     const btns = $('#win-buttons'); btns.innerHTML = '';
