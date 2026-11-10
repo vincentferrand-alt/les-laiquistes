@@ -1,3 +1,34 @@
+# Les laïquistes — v3.3.0 : son et iPad
+
+## Mixage
+- **Plus de petits « clics »** au début des sons (montée de 3–4 ms sur chaque bruitage et percussion).
+- **Plus de saturation** quand tout tape en même temps : nombre de sons simultanés limité par famille (coups, KO, aboiements, pas…), compresseurs séparés pour la musique et les effets (les coups ne font plus « respirer » la musique), limiteur en sortie.
+- **Réverbération** légère sur la musique et les effets (impulsion calculée, pas de fichier).
+- **Curseur Ambiance** séparé (avant, les ambiances suivaient le curseur Effets, 1,6 fois plus fort).
+- **Curseurs progressifs** (en décibels) : on règle finement dans les volumes bas.
+- **Volumes par défaut plus bas** : musique ≈ 2 dB sous la v3.2, ambiance nettement plus discrète, effets au même niveau. Seuls les appareils qui n'avaient jamais touché aux curseurs changent ; les autres gardent leur volume (converti sur la nouvelle échelle). Rien à dire aux joueurs.
+- **iPad / iPhone : le son joue même en mode silencieux** (iOS 17+).
+
+## Bruitages
+- **Coups en 3 couches** (choc, claquement, chair) + **couleur de l'arme** de chaque héros ; le son monte avec le combo et la série.
+- **8 pets et 5 rots réalistes** (fichiers générés par `tools/make-bruitages.py`) : environ un KO sur trois, jamais deux de suite, tirés sans répétition ; les autres KO font un « pouf » cartoon avec étoiles. Un boss vaincu part sur un long pet.
+- Pas plus discrets, souffle d'attaque plus ample au 3e coup.
+
+## Musique
+- **Arrangement** : intro, contre-chant, break de 4 mesures, passage un ton plus haut, roulements toutes les 4 mesures. La boucle ne se répète plus à l'identique.
+- **Changement de musique calé sur la mesure** (plus de coupure) ; le thème du boss démarre par une mesure de montée.
+
+## Voix
+- Le jeu lit des **fichiers de voix** s'ils existent (`voices/`, créés par `tools/make-voices.py` avec les voix neuronales gratuites de Microsoft), sinon la synthèse du navigateur comme avant.
+
+## iPad
+- **Joystick et boutons proportionnels à l'écran** : × 1,6 sur iPad (joystick 208 px au lieu de 130, FRAPPE 154 px au lieu de 96), inchangés sur téléphone.
+- **⚙ Réglages → Commandes tactiles** : Normales / Grandes / Très grandes.
+- Le joystick reste flottant ; son socle revient à sa place au relâchement.
+- Les boutons tactiles ne disparaissent plus sur un iPad avec clavier ou trackpad branché.
+
+---
+
 # Les laïquistes — v3.2.5
 
 - **Son coupé après un retour dans l’appli** (iPhone / iPad) : l’audio passe en état « interrupted » quand on quitte l’appli ; il est maintenant relancé à chaque geste dès qu’il ne tourne pas, et la voix est re-débloquée.

@@ -293,8 +293,9 @@ const Game = {
     this.spark(o.x, o.y, hz, opts.knockdown || big ? 14 : 8);
     if (!opts.noStagger || dmg > 4) this.text(o.x + rand(-10, 10), o.y, hz + 20, pick(HIT_WORDS), opts.knockdown ? '#ff9f43' : '#fff', opts.knockdown ? 26 : 20);
     const pan = Sfx.panX(o.x);
-    if (opts.knockdown || big) { Sfx.bigHit(pan); this.shake = 0.25; this.hitstop = 0.07; }
-    else { Sfx.hit(pan); this.hitstop = Math.max(this.hitstop, 0.035); this.shake = Math.max(this.shake, 0.08); }
+    const wk = src && src.team === 'hero' ? src.kind : null; // le son prend la « couleur » de l'arme du héros
+    if (opts.knockdown || big) { Sfx.bigHit(pan, wk, this.hits); this.shake = 0.25; this.hitstop = 0.07; }
+    else { Sfx.hit(pan, wk, src ? src.combo || 0 : 0, this.hits); this.hitstop = Math.max(this.hitstop, 0.035); this.shake = Math.max(this.shake, 0.08); }
     if (src && src.team === 'hero') {
       this.hits++; this.hitT = 1.6; this.score += 5 + Math.min(this.hits, 30);
       if (o.dead) this.onKill(o);
@@ -310,7 +311,7 @@ const Game = {
 
   onKill(e) {
     this.kills++;
-    Sfx.kill(Sfx.panX(e.x));
+    Sfx.kill(Sfx.panX(e.x), e.isBoss);
     if (e.isBoss) {
       this.score += 1000;
       this.slowT = 1.2; this.shake = 0.5;

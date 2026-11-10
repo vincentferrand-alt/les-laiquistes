@@ -205,7 +205,20 @@ const Save = {
     this.data.survival = this.data.survival || {};  // meilleure vague atteinte en Survie, par monde
     this.data.rushBest = this.data.rushBest || 0;    // meilleur score en Boss Rush
     // réglages : volumes séparés (0..1), voix des boss, vibrations
-    this.data.settings = Object.assign({ music: 0.2, sfx: 0.2, voice: 1, voiceOn: true, vibrate: true }, this.data.settings || {});
+    // music / sfx / amb = position du curseur (échelle progressive, voir volGain dans audio.js) ; ctlSize = taille des commandes tactiles
+    const old = this.data.settings;
+    this.data.settings = Object.assign({ music: 0.5, sfx: 0.5, amb: 0.5, voice: 1, voiceOn: true, vibrate: true, ctlSize: 1, sv: 2 }, old || {});
+    const st = this.data.settings;
+    // Migration v3.3 : avant, les curseurs étaient linéaires. Ceux qui n'y avaient jamais touché (20 % / 20 %)
+    // passent aux nouveaux niveaux, plus bas ; les autres gardent le même volume réel, converti sur la nouvelle échelle.
+    if (old && !old.sv) {
+      const lim = v => Math.max(0, Math.min(1, v)); // (clamp n'est pas encore défini ici)
+      const toPos = v => v <= 0 ? 0 : Math.round(lim(1 + 20 * Math.log10(v) / 36) * 20) / 20;
+      if (old.music === 0.2 && old.sfx === 0.2) { st.music = 0.5; st.sfx = 0.5; st.amb = 0.5; }
+      else { st.music = toPos(old.music); st.sfx = toPos(old.sfx); st.amb = lim(st.sfx - 0.05); }
+      st.sv = 2;
+      try { localStorage.setItem(this.key, JSON.stringify(this.data)); } catch (e) {}
+    }
     return this.data;
   },
   // sauvegarde locale (toujours) + envoi groupé vers Firestore si la sauvegarde en ligne est active

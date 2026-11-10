@@ -26,12 +26,14 @@ Beat'em up à défilement horizontal (inspiré de Castle Crashers), jouable dans
 
 | | PC | Téléphone |
 |---|---|---|
-| Se déplacer | Flèches ou ZQSD | Joystick (pouce gauche, n'importe où sur la moitié gauche) |
+| Se déplacer | Flèches ou ZQSD | Joystick flottant (pouce gauche, n'importe où sur la moitié gauche) |
 | Frapper (combo x3) | J ou X | ✊ FRAPPE |
 | Sauter (coup sauté = renverse) | Espace | ⤒ SAUT |
 | Coup plongeant (onde de choc, renverse) | Espace puis J / X **en redescendant** | SAUT puis FRAPPE **en redescendant** |
 | Spécial | K ou C | ★ SPÉCIAL |
 | Pause | Échap ou P | ❚❚ |
+
+Sur tablette, le joystick et les boutons sont **plus gros automatiquement** (taille proportionnelle à l'écran, jusqu'à × 1,6 sur iPad). ⚙ Réglages → **Commandes tactiles** : Normales / Grandes / Très grandes.
 
 ## Les spéciaux
 
@@ -81,15 +83,30 @@ Les histoires terminées sont comptées par héros dans la sauvegarde (`storyWin
 
 ## Son
 
-Tout est synthétisé en direct (Web Audio), il n'y a aucun fichier audio.
+Musiques, ambiances et la plupart des bruitages sont synthétisés en direct (Web Audio). Seuls quelques sons sont des fichiers, tous **générés** (aucun enregistrement) :
+- `sounds/` : **8 pets et 5 rots** fabriqués par `tools/make-bruitages.py` (Python + numpy/scipy + ffmpeg) ;
+- `voices/` (facultatif) : **voix des personnages** fabriquées par `tools/make-voices.py` (voir plus bas).
 
-- **Une musique écrite par monde** (`SONGS` dans `js/audio.js`) : chantier sifflé avec coups de marteau (Christian), beat hip-hop à 90 BPM (Guilhem), cordes pincées et galoubet provençal en 3/4 (Fateh), chiptune (Faouzi), électro (Venum), gamme orientale avec bourdon, darbouka et ney (Senoussi), drone industriel (The Purf), plus un thème de menu.
-- **Thème de boss** dérivé du monde (plus rapide, mineur, martelé) qui prend le relais à l'arrivée du boss. L'intensité monte avec le compteur de coups (charleston, arpèges, octaves, cymbales). Jingles de vague terminée, de victoire et de défaite.
-- Le séquenceur planifie les notes sur l'horloge audio (`audioCtx.currentTime`) : pas de dérive. Si l'onglet passe en arrière-plan, l'audio est suspendu et le séquenceur se recale au retour.
-- **Ambiances par monde** : goélands et vent (chantier), klaxons et ballon (Rap City), cigales et oiseaux (Allauch), bips rétro, bourdonnement électrique, vent du désert et bêlements, crépitement Geiger et bulles toxiques.
-- **Bruitages** : panoramique stéréo selon la position à l'écran, hauteur légèrement aléatoire sur les coups, bruits de pas selon le sol, moteurs des véhicules de boss (diesel du van, voiture de sport, sifflement du SUV électrique).
-- **Voix des boss** : générées par la synthèse vocale du navigateur (`speechSynthesis`, voix française), avec une hauteur et une vitesse par boss (`Voice.PROFILES`), au moment où la bulle apparaît. S'il n'y a aucune voix française sur l'appareil, les boss restent muets (le menu Réglages l'indique).
-- **⚙ Réglages** (écran titre et menu pause) : volumes séparés Musique / Effets / Voix, voix des boss activée ou non, vibrations. En pause, la musique continue, étouffée, puis repart sans redémarrer.
+- **Mixage** : musique, effets, ambiance et voix ont chacun leur bus ; la musique et les effets ont chacun leur compresseur (les coups ne font plus « respirer » la musique), puis un limiteur en sortie empêche toute saturation. Un peu de **réverbération** donne de l'espace à la musique et aux effets. Chaque son démarre par une montée de quelques millisecondes (plus de petits « clics »), et le nombre de sons d'une même famille joués en même temps est limité.
+- **Une musique écrite par monde** (`SONGS` dans `js/audio.js`) : chantier sifflé avec coups de marteau (Christian), boom bap (Guilhem), cordes pincées et galoubet provençal en 3/4 (Fateh), chiptune (Faouzi), électro (Venum), gamme orientale avec bourdon, darbouka et ney (Senoussi), drone industriel (The Purf), plus un thème de menu.
+- **Arrangement** : la boucle ne se répète plus à l'identique. Intro (batterie + basse), puis en cycle : passage complet avec contre-chant, **break** de 4 mesures (grosse caisse seule, mélodie une octave plus bas, roulement qui monte), passage **un ton plus haut**. Roulement de caisse claire toutes les 4 mesures.
+- **Thème de boss** dérivé du monde, qui démarre **pile sur la mesure** (plus de coupure sèche) par une mesure de montée. L'intensité monte avec le compteur de coups (charleston, arpèges, octaves, cymbales). Jingles de vague terminée, de victoire et de défaite.
+- **Ambiances par monde** (curseur à part) : goélands et vent (chantier), klaxons et ballon (Rap City), cigales et oiseaux (Allauch), bips rétro, bourdonnement électrique, vent du désert et bêlements, crépitement Geiger et bulles toxiques.
+- **Coups** : trois couches (choc, claquement, chair) + la « couleur » de l'arme du héros (tintement de truelle, « ting » de la Rolex, cuir des gants de Venum, « bôngg » de la pelle, cartouche en plastique, grésillement toxique). Le son monte un peu à chaque coup du combo et avec la série en cours.
+- **KO** : un « pouf » cartoon, et **environ une fois sur trois un pet ou un rot** (jamais deux de suite, tirés sans répétition parmi les 13). Un boss vaincu part toujours sur un long pet.
+- Bruits de pas discrets selon le sol, moteurs des véhicules de boss, panoramique stéréo selon la position à l'écran.
+- **iPad / iPhone** : le jeu joue **même avec l'interrupteur silencieux activé** (iOS 17 et plus). Revers : la musique d'une autre appli se met en pause pendant le jeu.
+- **⚙ Réglages** : curseurs Musique / Effets / Ambiance / Voix sur une **échelle progressive** (on règle finement dans les volumes bas). Par défaut : Musique 50 %, Effets 50 %, Ambiance 50 %, Voix 100 %. Les appareils qui n'avaient jamais touché aux curseurs passent à ces niveaux (un peu plus bas qu'avant) ; ceux qui les avaient réglés gardent leur volume. En pause, la musique continue, étouffée.
+
+### Voix des personnages (fichiers générés)
+
+Sans fichiers, les personnages parlent avec la synthèse vocale du navigateur (qualité variable selon l'appareil). Pour avoir **les mêmes voix partout, de bien meilleure qualité** :
+
+1. Installer Python 3, puis dans un terminal : `pip install edge-tts`
+2. Dans le dossier du jeu : `python tools/make-voices.py` (Windows : `py tools/make-voices.py`). Il faut Internet : ce sont les voix neuronales gratuites de Microsoft.
+3. Le dossier `voices/` se remplit (un MP3 par phrase + `manifest.json`). Le mettre sur GitHub, puis changer `VERSION` (sw.js) et `GAME_VERSION` (config.js).
+
+Les phrases sont lues dans `js/data.js` : si tu en changes une, relance le script. La voix, la hauteur et la vitesse de chaque personnage se règlent dans le tableau `VOIX` en haut du script. Une phrase sans fichier retombe sur la synthèse du navigateur.
 
 ## Mettre le jeu en ligne (GitHub Pages)
 
@@ -224,13 +241,17 @@ js/draw.js            dessin des persos, ennemis, véhicules, dangers, objets
 js/backgrounds.js     décors des 7 mondes (parallaxe), premier plan, particules, teintes
 js/entities.js        combattants (héros et ennemis)
 js/game.js            niveau, vagues, IA, boss et phases, dangers, modes, HUD
-js/audio.js           sons, musiques écrites, ambiances, voix des boss (tout synthétisé)
+js/audio.js           mixage, bruitages, musiques écrites et arrangement, ambiances, voix (fichiers ou synthèse)
+sounds/               8 pets + 5 rots (générés par tools/make-bruitages.py)
+voices/               voix des personnages, facultatif (générées par tools/make-voices.py)
 js/input.js           clavier, joystick, boutons, vibrations
 js/cloud.js           sauvegarde en ligne (Firebase Auth anonyme + Google, Firestore)
 js/scores.js          classements (local / Firestore)
 js/ui.js              menus, modes, réglages
 sw.js, manifest.webmanifest, icons/   appli installable (PWA) et mises à jour
 tools/make-og.html    fabrique l'image de partage et les icônes
+tools/make-bruitages.py  fabrique les pets et les rots (sounds/)
+tools/make-voices.py  fabrique les voix des personnages (voices/)
 ```
 
 Pour tester en local : `python3 -m http.server` dans ce dossier puis http://localhost:8000 (ou ouvre simplement `index.html` ; tout marche sauf l'installation et la connexion Google).

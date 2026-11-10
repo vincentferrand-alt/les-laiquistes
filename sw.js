@@ -1,17 +1,24 @@
 // Service worker : met le jeu en cache pour qu'il marche hors-ligne et s'installe comme une appli.
 // ⚠ Change VERSION à chaque mise en ligne (et GAME_VERSION dans js/config.js) :
 // les joueurs verront alors le bandeau « Nouvelle version disponible — Mettre à jour ».
-const VERSION = 'laiquistes-v3.2.5';
+const VERSION = 'laiquistes-v3.3.0';
 const FILES = [
   './', 'index.html', 'css/style.css', 'manifest.webmanifest',
   'js/config.js', 'js/data.js', 'js/audio.js', 'js/draw.js', 'js/backgrounds.js', 'js/entities.js',
   'js/input.js', 'js/cloud.js', 'js/scores.js', 'js/game.js', 'js/ui.js', 'js/main.js',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png',
+  // bruitages (tools/make-bruitages.py)
+  ...[1, 2, 3, 4, 5, 6, 7, 8].map(i => `sounds/pet-${i}.mp3`), ...[1, 2, 3, 4, 5].map(i => `sounds/rot-${i}.mp3`),
 ];
 // Installation : on télécharge la nouvelle version (sans passer par le cache HTTP)…
 // …mais on NE l'active PAS tout de suite (plus de skipWaiting automatique) : elle attend que le joueur clique sur « Mettre à jour ».
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES.map(f => new Request(f, { cache: 'reload' })))));
+  e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES.map(f => new Request(f, { cache: 'reload' })))
+    // voix générées (facultatives : dossier voices/ créé par tools/make-voices.py) — on ne bloque pas si elles manquent
+    .then(() => fetch('voices/manifest.json', { cache: 'reload' }).then(r => r.ok ? r.clone().json().then(m => {
+      c.put('voices/manifest.json', r);
+      return Promise.all((m.files || []).map(f => c.add(new Request('voices/' + f.file, { cache: 'reload' })).catch(() => {})));
+    }) : null).catch(() => {}))));
 });
 // Le bouton « Mettre à jour » envoie ce message
 self.addEventListener('message', e => { if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting(); });

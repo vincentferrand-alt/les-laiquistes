@@ -132,17 +132,19 @@ h2 { margin: 0; font-family: var(--fx); font-size: clamp(22px, 5vh, 40px); color
 #controls { position: fixed; inset: 0; z-index: 10; pointer-events: none; }
 #btn-pause { pointer-events: auto; position: absolute; top: max(8px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right)); width: 46px; height: 46px; border-radius: 50%; border: 3px solid #fff; background: rgba(0,0,0,.45); color: #fff; font-weight: 900; font-size: 15px; }
 #stick-zone, #btns { display: none; }
-#controls.touch #stick-zone { display: block; pointer-events: auto; position: absolute; left: 0; bottom: 0; width: 50%; height: 75%; touch-action: none; }
-#stick-base { position: absolute; left: 40px; top: calc(100% - 170px); width: 130px; height: 130px; border-radius: 50%; background: rgba(255,255,255,.12); border: 3px solid rgba(255,255,255,.35); opacity: .55; }
+/* Tailles multipliées par --k (calculé dans UI.applyControlSize : ×1 sur téléphone, jusqu'à ×1,6 sur iPad, × le réglage) */
+:root { --k: 1; }
+#controls.touch #stick-zone { display: block; pointer-events: auto; position: absolute; left: 0; bottom: 0; width: 50%; height: 80%; touch-action: none; }
+#stick-base { position: absolute; left: calc(40px * var(--k)); top: calc(100% - 170px * var(--k)); width: calc(130px * var(--k)); height: calc(130px * var(--k)); border-radius: 50%; background: rgba(255,255,255,.12); border: 3px solid rgba(255,255,255,.35); opacity: .55; }
 #stick-base.on { opacity: 1; }
-#stick-knob { position: absolute; left: 35px; top: 35px; width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,.55); border: 3px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,.5); }
-#controls.touch #btns { display: block; position: absolute; right: max(14px, env(safe-area-inset-right)); bottom: 14px; width: 230px; height: 200px; }
-.pad { pointer-events: auto; position: absolute; border-radius: 50%; border: 3px solid rgba(255,255,255,.7); color: #fff; font-size: 26px; font-weight: 900; display: flex; flex-direction: column; align-items: center; justify-content: center; text-shadow: 1px 1px 2px #000; touch-action: none; backdrop-filter: blur(3px); }
-.pad small { font-size: 9px; letter-spacing: 1px; }
+#stick-knob { position: absolute; left: calc(35px * var(--k) - 3px); top: calc(35px * var(--k) - 3px); width: calc(60px * var(--k)); height: calc(60px * var(--k)); border-radius: 50%; background: rgba(255,255,255,.55); border: 3px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,.5); }
+#controls.touch #btns { display: block; position: absolute; right: max(14px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); width: calc(230px * var(--k)); height: calc(200px * var(--k)); }
+.pad { pointer-events: auto; position: absolute; border-radius: 50%; border: 3px solid rgba(255,255,255,.7); color: #fff; font-size: calc(26px * var(--k)); font-weight: 900; display: flex; flex-direction: column; align-items: center; justify-content: center; text-shadow: 1px 1px 2px #000; touch-action: none; backdrop-filter: blur(3px); }
+.pad small { font-size: calc(9px * var(--k)); letter-spacing: 1px; }
 .pad.down { transform: scale(.9); filter: brightness(1.5); }
-.pad.attack { right: 0; bottom: 0; width: 96px; height: 96px; background: rgba(238,82,83,.55); font-size: 34px; }
-.pad.jump { right: 108px; bottom: 0; width: 72px; height: 72px; background: rgba(46,134,222,.55); }
-.pad.special { right: 30px; bottom: 112px; width: 72px; height: 72px; background: rgba(254,202,87,.55); }
+.pad.attack { right: 0; bottom: 0; width: calc(96px * var(--k)); height: calc(96px * var(--k)); background: rgba(238,82,83,.55); font-size: calc(34px * var(--k)); }
+.pad.jump { right: calc(108px * var(--k)); bottom: 0; width: calc(72px * var(--k)); height: calc(72px * var(--k)); background: rgba(46,134,222,.55); }
+.pad.special { right: calc(30px * var(--k)); bottom: calc(112px * var(--k)); width: calc(72px * var(--k)); height: calc(72px * var(--k)); background: rgba(254,202,87,.55); }
 
 /* ---------- Portrait ---------- */
 #rotate { display: none; position: fixed; inset: 0; z-index: 100; background: #2d1b4e; color: #fff; font-family: var(--fx); font-size: 22px; text-align: center; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 30px; }
@@ -163,7 +165,6 @@ h2 { margin: 0; font-family: var(--fx); font-size: clamp(22px, 5vh, 40px); color
   #world-grid { gap: 6px; }
   .wc-boss { display: none; }
 }
-@media (min-width: 900px) and (pointer: fine) { .pad, #stick-zone { display: none; } }
 
 h2, .logo, .win-title, .intro-name, .intro-step, .gameover, .b-title, .b-sub, .cc-name, .cd-name, .wc-name, .btn, .win-stats .total { font-weight: 900; }
 .char-side .btn.big { min-width: 0; width: 100%; }
@@ -220,3 +221,8 @@ h2, .logo, .win-title, .intro-name, .intro-step, .gameover, .b-title, .b-sub, .c
 }
 #splash .splash-go { font-family: var(--fx); font-weight: 900; font-size: clamp(18px, 4vh, 30px); color: #fff; text-shadow: 3px 3px 0 #000; animation: splashPulse 1.1s ease-in-out infinite; }
 @keyframes splashPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .55; transform: scale(.96); } }
+
+/* Réglage « Commandes tactiles » */
+.seg { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-weight: bold; }
+.seg span { width: 100%; }
+.seg .btn.small { padding: 6px 12px; font-size: 12px; }

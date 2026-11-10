@@ -289,9 +289,20 @@ const UI = {
       if (el.type === 'checkbox') el.checked = !!s[k];
       else { el.value = Math.round(s[k] * 100); const o = el.parentElement.querySelector('output'); if (o) o.textContent = el.value + ' %'; }
     });
+    document.querySelectorAll('#ctl-size [data-size]').forEach(b => b.classList.toggle('primary', +b.dataset.size === (s.ctlSize || 1)));
     const note = $('#voice-note');
-    if (note) note.textContent = !Voice.supported() ? 'Synthèse vocale non disponible sur ce navigateur : les boss resteront muets.'
+    if (note) note.textContent = VoiceFiles.count ? 'Voix : fichiers audio générés (' + VoiceFiles.count + ' phrases).'
+      : !Voice.supported() ? 'Synthèse vocale non disponible sur ce navigateur : les boss resteront muets.'
       : !Voice.available() ? 'Aucune voix française trouvée sur cet appareil : les boss resteront muets.' : 'Voix : ' + Voice.voice.name;
+  },
+  // Taille des commandes tactiles : proportionnelle à l'écran (×1 sur téléphone, jusqu'à ×1,6 sur iPad),
+  // multipliée par le réglage Normales / Grandes / Très grandes
+  applyControlSize() {
+    const auto = clamp(Math.min(innerWidth, innerHeight) / 420, 1, 1.6);
+    const k = Math.min(2, auto * (Settings.get().ctlSize || 1)); // plafond : les boutons ne doivent pas manger l'écran
+    document.documentElement.style.setProperty('--k', k.toFixed(3));
+    Input.stickR = 55 * k;
+    if (Game.resize && Game.running) Game.updateSafeArea();
   },
   initSettings() {
     document.querySelectorAll('[data-set]').forEach(el => {
@@ -300,8 +311,11 @@ const UI = {
         if (el.type === 'checkbox') Settings.set(k, el.checked);
         else { Settings.set(k, el.value / 100); const o = el.parentElement.querySelector('output'); if (o) o.textContent = el.value + ' %'; }
       });
-      el.addEventListener('change', () => { Sfx.init(); if (k === 'sfx') Sfx.hit(); if (k === 'voice' || k === 'voiceOn') Voice.speak('Alors là !', 'senoussi', 2); if (k === 'vibrate' && el.checked) Haptics.vibrate(60); });
+      el.addEventListener('change', () => { Sfx.init(); if (k === 'sfx') Sfx.hit(0, 'christian'); if (k === 'amb') Ambience.preview(); if (k === 'voice' || k === 'voiceOn') Voice.speak('Alors là !', 'senoussi', 2); if (k === 'vibrate' && el.checked) Haptics.vibrate(60); });
     });
+    document.querySelectorAll('#ctl-size [data-size]').forEach(b => b.onclick = () => { Sfx.click(); Settings.set('ctlSize', +b.dataset.size); this.refreshSettings(); });
+    this.applyControlSize();
+    window.addEventListener('resize', () => this.applyControlSize());
     $('#b-settings').onclick = () => { Sfx.init(); Sfx.click(); this.openSettings('s-title'); };
     $('#b-pause-settings').onclick = () => { Sfx.click(); this.openSettings('s-pause'); };
     $('#b-settings-back').onclick = () => this.closeSettings();

@@ -15,7 +15,7 @@ const Input = {
   pressed: { attack: false, jump: false, special: false, pause: false },
   held: { attack: false, jump: false },
   stick: { active: false, id: null, ox: 0, oy: 0, dx: 0, dy: 0 },
-  isTouch: false,
+  isTouch: false, stickR: 55,
 
   init() {
     const map = {
@@ -41,9 +41,9 @@ const Input = {
     const zone = document.getElementById('stick-zone');
     const knob = document.getElementById('stick-knob');
     const base = document.getElementById('stick-base');
-    const R = 55;
     const setKnob = () => {
-      base.style.left = (this.stick.ox - 65) + 'px'; base.style.top = (this.stick.oy - 65) + 'px';
+      const half = base.offsetWidth / 2 || 65; // le socle grandit avec la taille des commandes
+      base.style.left = (this.stick.ox - half) + 'px'; base.style.top = (this.stick.oy - half) + 'px';
       knob.style.transform = `translate(${this.stick.dx}px, ${this.stick.dy}px)`;
     };
     zone.addEventListener('pointerdown', e => {
@@ -58,10 +58,10 @@ const Input = {
       if (!this.stick.active || e.pointerId !== this.stick.id) return;
       const r = zone.getBoundingClientRect();
       let dx = e.clientX - r.left - this.stick.ox, dy = e.clientY - r.top - this.stick.oy;
-      const d = Math.hypot(dx, dy); if (d > R) { dx *= R / d; dy *= R / d; }
+      const R = this.stickR, d = Math.hypot(dx, dy); if (d > R) { dx *= R / d; dy *= R / d; }
       this.stick.dx = dx; this.stick.dy = dy; setKnob();
     });
-    const end = e => { if (e.pointerId !== this.stick.id) return; this.stick.active = false; this.stick.dx = this.stick.dy = 0; base.classList.remove('on'); setKnob(); };
+    const end = e => { if (e.pointerId !== this.stick.id) return; this.stick.active = false; this.stick.dx = this.stick.dy = 0; base.classList.remove('on'); knob.style.transform = ''; base.style.left = base.style.top = ''; }; // le socle revient à sa place de repos
     zone.addEventListener('pointerup', end); zone.addEventListener('pointercancel', end);
 
     document.querySelectorAll('[data-btn]').forEach(b => {
@@ -70,14 +70,15 @@ const Input = {
       const up = () => { this.held[a] = false; b.classList.remove('down'); };
       b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up);
     });
-    if (matchMedia('(pointer: coarse)').matches) this.isTouch = true;
+    // écran tactile : téléphone, iPad (même avec clavier ou trackpad branché, qui le fait passer en « pointer: fine »)
+    if (matchMedia('(pointer: coarse)').matches || matchMedia('(any-pointer: coarse)').matches || navigator.maxTouchPoints > 0) this.isTouch = true;
   },
 
   update() {
     let mx = (this.keys.right ? 1 : 0) - (this.keys.left ? 1 : 0);
     let my = (this.keys.down ? 1 : 0) - (this.keys.up ? 1 : 0);
     if (this.stick.active) {
-      const dx = this.stick.dx / 55, dy = this.stick.dy / 55;
+      const dx = this.stick.dx / this.stickR, dy = this.stick.dy / this.stickR;
       mx = Math.abs(dx) > 0.25 ? dx : 0; my = Math.abs(dy) > 0.3 ? dy : 0;
     }
     this.mx = clamp(mx, -1, 1); this.my = clamp(my, -1, 1);

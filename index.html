@@ -135,8 +135,12 @@
       <div class="settings">
         <label class="rng"><span>🎵 Musique</span><input type="range" min="0" max="100" step="5" data-set="music"><output></output></label>
         <label class="rng"><span>💥 Effets</span><input type="range" min="0" max="100" step="5" data-set="sfx"><output></output></label>
+        <label class="rng"><span>🌿 Ambiance</span><input type="range" min="0" max="100" step="5" data-set="amb"><output></output></label>
         <label class="rng"><span>🗣 Voix</span><input type="range" min="0" max="100" step="5" data-set="voice"><output></output></label>
-        <label class="tog"><input type="checkbox" data-set="voiceOn"> Voix des boss (synthèse vocale)</label>
+        <label class="tog"><input type="checkbox" data-set="voiceOn"> Voix des personnages</label>
+        <div class="seg" id="ctl-size"><span>🎮 Commandes tactiles</span>
+          <button class="btn small" data-size="1">Normales</button><button class="btn small" data-size="1.2">Grandes</button><button class="btn small" data-size="1.4">Très grandes</button>
+        </div>
         <label class="tog"><input type="checkbox" data-set="vibrate"> Vibrations (téléphone)</label>
         <div class="set-note" id="voice-note"></div>
         <div class="account">
