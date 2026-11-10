@@ -39,6 +39,72 @@ function drawTinted(ctx, col, alpha, box, fn) {
   ctx.drawImage(cv, 0, 0, W, H, box.x, box.y, box.w, box.h);
 }
 
+// ---------- Rendu « cartoon » d'un combattant (v3.5) ----------
+// Le perso est dessiné dans un canvas à part, puis :
+//  1. gros contour noir tout autour de la silhouette (style Castle Crashers) : la silhouette noire est posée
+//     8 fois, décalée dans 8 directions, sous le dessin ;
+//  2. éclairage : haut du corps éclairé, jambes dans l'ombre (le perso « tient » au sol) ;
+//  3. flash blanc à l'impact (remplace drawTinted pour les combattants).
+// Gfx.quality descend tout seul si l'appareil rame (voir Gfx.tick) : 2 = complet, 1 = sans contour pour les sbires, 0 = rendu simple.
+const Gfx = {
+  quality: 2, frames: 0, slow: 0, acc: 0,
+  // appelé à chaque image avec la durée de l'image (s) : si on passe trop souvent sous 45 i/s, on allège
+  tick(dt) {
+    this.acc += dt; this.frames++;
+    if (dt > 1 / 45) this.slow++;
+    if (this.acc >= 3) {
+      if (this.slow / this.frames > 0.35 && this.quality > 0) { this.quality--; console.info('Graphismes allégés : qualité', this.quality); }
+      this.acc = 0; this.frames = 0; this.slow = 0;
+    }
+  },
+};
+const _spr = { a: null, ca: null, b: null, cb: null };
+function drawSprite(ctx, box, paint, o = {}) {
+  const outline = o.outline || 0;
+  // qualité 0, ou sbire en qualité 1 : dessin direct (plus léger), sauf pendant le flash d'impact
+  if (!o.flash && (Gfx.quality === 0 || (o.minor && Gfx.quality < 2) || (!outline && !o.shade))) { paint(ctx); return; }
+  const m = ctx.getTransform();
+  const k = clamp(Math.hypot(m.a, m.b), 0.2, 2); // résolution réelle à l'écran (plafonnée : assez net, pas trop lourd)
+  const pad = outline + 1;
+  const W = Math.max(1, Math.ceil((box.w + pad * 2) * k)), H = Math.max(1, Math.ceil((box.h + pad * 2) * k));
+  if (!_spr.a) {
+    _spr.a = document.createElement('canvas'); _spr.ca = _spr.a.getContext('2d');
+    _spr.b = document.createElement('canvas'); _spr.cb = _spr.b.getContext('2d');
+  }
+  const A = _spr.a, a = _spr.ca, B = _spr.b, b = _spr.cb;
+  if (A.width < W || A.height < H) { A.width = B.width = Math.max(A.width, W); A.height = B.height = Math.max(A.height, H); }
+  // 1) le perso, dans le canvas A
+  a.setTransform(1, 0, 0, 1, 0, 0); a.globalCompositeOperation = 'source-over'; a.globalAlpha = 1; a.clearRect(0, 0, W, H);
+  a.setTransform(k, 0, 0, k, (pad - box.x) * k, (pad - box.y) * k);
+  a.lineJoin = 'round'; a.miterLimit = 2;
+  paint(a);
+  a.setTransform(1, 0, 0, 1, 0, 0);
+  // 2) éclairage, seulement sur les pixels du perso (source-atop)
+  if (o.shade) {
+    a.globalCompositeOperation = 'source-atop';
+    const top = (pad - box.y + o.shade.top) * k, bot = (pad - box.y) * k; // du sommet de la tête jusqu'aux pieds (y = 0)
+    const g = a.createLinearGradient(0, top, 0, bot);
+    g.addColorStop(0, 'rgba(255,250,235,0.16)'); g.addColorStop(0.35, 'rgba(255,250,235,0)');
+    g.addColorStop(0.62, 'rgba(25,15,45,0)'); g.addColorStop(1, 'rgba(25,15,45,0.30)');
+    a.fillStyle = g; a.fillRect(0, 0, W, H);
+  }
+  // 3) flash blanc
+  if (o.flash) { a.globalCompositeOperation = 'source-atop'; a.globalAlpha = 0.78; a.fillStyle = '#fff'; a.fillRect(0, 0, W, H); a.globalAlpha = 1; }
+  a.globalCompositeOperation = 'source-over';
+  const dx = box.x - pad, dy = box.y - pad, dw = W / k, dh = H / k;
+  // 4) contour : silhouette noire (canvas B) posée tout autour
+  if (outline && Gfx.quality >= 1 && !(o.minor && Gfx.quality < 2)) {
+    b.setTransform(1, 0, 0, 1, 0, 0); b.globalCompositeOperation = 'source-over'; b.clearRect(0, 0, W, H);
+    b.drawImage(A, 0, 0, W, H, 0, 0, W, H);
+    b.globalCompositeOperation = 'source-in'; b.fillStyle = o.outlineCol || '#0b0b12'; b.fillRect(0, 0, W, H);
+    b.globalCompositeOperation = 'source-over';
+    const r = outline;
+    // 4 décalages en diagonale (moitié moins de copies que 8 directions, contour quasi identique)
+    [[r, r], [-r, r], [r, -r], [-r, -r]].forEach(([ox, oy]) => ctx.drawImage(B, 0, 0, W, H, dx + ox, dy + oy, dw, dh));
+  }
+  ctx.drawImage(A, 0, 0, W, H, dx, dy, dw, dh);
+}
+
 const SKIN = '#ffeaa7';
 const INK = '#111';
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -64,9 +130,32 @@ function poly(ctx, pts, fill, stroke = true) {
   if (fill) { ctx.fillStyle = fill; ctx.fill(); }
   if (stroke) ctx.stroke();
 }
+// Yeux expressifs (v3.5) : blanc de l'œil + pupille qui regarde devant + reflet, clignement,
+// sourcils froncés quand il frappe, levés quand il nargue. _face est rempli par drawHumanoid / drawMinion.
+const _face = { pose: 'idle', t: 0 };
 function eyeDot(ctx, x, y, r, hurt) {
-  if (hurt) { ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - r, y - r); ctx.lineTo(x + r, y + r); ctx.moveTo(x + r, y - r); ctx.lineTo(x - r, y + r); ctx.stroke(); }
-  else circle(ctx, x, y, r, INK, false);
+  ctx.save();
+  if (hurt) { ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - r, y - r); ctx.lineTo(x + r, y + r); ctx.moveTo(x + r, y - r); ctx.lineTo(x - r, y + r); ctx.stroke(); ctx.restore(); return; }
+  const P = _face.pose, t = _face.t;
+  const angry = P === 'attack' || P === 'windup' || P === 'special', smug = P === 'taunt' || P === 'victory';
+  const blink = !angry && (t % 3.3) < 0.12;
+  ctx.strokeStyle = INK; ctx.lineCap = 'round';
+  if (blink) { ctx.lineWidth = Math.max(1.4, r * 0.6); ctx.beginPath(); ctx.moveTo(x - r * 1.2, y); ctx.lineTo(x + r * 1.2, y); ctx.stroke(); }
+  else {
+    ctx.lineWidth = Math.max(1, r * 0.4);
+    ell(ctx, x, y, r * 1.25, angry ? r * 1.15 : r * 1.55, '#fff');                // blanc (plissé quand il frappe)
+    circle(ctx, x + r * 0.38, y + r * 0.1, r * 0.82, INK, false);              // pupille, tournée vers l'avant
+    circle(ctx, x + r * 0.12, y - r * 0.38, r * 0.3, '#fff', false);           // reflet
+  }
+  if (angry || smug) { // sourcils
+    ctx.lineWidth = Math.max(1.6, r * 0.75);
+    const yo = y - r * 2.1;
+    ctx.beginPath();
+    if (angry) { ctx.moveTo(x - r * 1.3, yo - r * 0.55); ctx.lineTo(x + r * 1.4, yo + r * 0.55); }
+    else { ctx.moveTo(x - r * 1.3, yo); ctx.quadraticCurveTo(x, yo - r * 1.2, x + r * 1.4, yo - r * 0.5); }
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 function hairDome(ctx, hr, hy, col, a0 = 1.02, a1 = 1.98, lift = 0.25, scale = 1.02) {
   ctx.strokeStyle = INK; ctx.lineWidth = 2;
@@ -198,6 +287,7 @@ function drawHumanoid(ctx, s, o = {}) {
   ctx.strokeStyle = INK; ctx.lineWidth = 3;
   circle(ctx, 0, hy, hr, skin);
   const hurt = pose === 'hurt' || pose === 'down' || pose === 'dead';
+  _face.pose = pose; _face.t = t;
   if (s.face) s.face(ctx, hr, hy, pose, t, hurt, o);
   else eyeDot(ctx, hr * 0.42, hy - hr * 0.08, 3, hurt);
   mouth(ctx, hr, hy, pose);
@@ -778,6 +868,7 @@ function drawMinion(ctx, type, o = {}) {
   if (o.alpha !== undefined) ctx.globalAlpha *= o.alpha;
   ctx.scale((o.dir || 1) * (o.scale || 1), o.scale || 1);
   const t = o.t || 0, pose = o.pose || 'idle';
+  _face.pose = pose; _face.t = t;
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   if (pose === 'down' || pose === 'hurt') ctx.rotate(pose === 'down' ? -0.6 : -0.2);
   switch (type) {

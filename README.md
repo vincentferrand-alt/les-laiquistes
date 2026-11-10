@@ -94,6 +94,8 @@ Les histoires terminées sont comptées par héros dans la sauvegarde (`storyWin
 - **Teinte et vignettage** par monde, qui s'accentuent du début du niveau vers l'arène du boss (avec une pulsation rouge pendant le combat).
 - **Traînées d'arme**, écrasement et étirement à l'attaque, au saut et à l'atterrissage, **pose de victoire** et petite **raillerie** à la fin d'une vague.
 - **Arrivée des boss** : bandes noires, léger zoom et carte avec son nom.
+- **Rendu cartoon (v3.5)** : gros contour noir autour des persos, éclairage (haut éclairé, jambes dans l'ombre), ombres douces, yeux expressifs (clignement, sourcils selon l'action), brume au loin et grain sur le sol, halos sur les étincelles. Voir `drawSprite` et `Gfx` dans `js/draw.js`, `drawDepth` dans `js/backgrounds.js`.
+- **Qualité automatique** : si l'appareil rame, le jeu allège tout seul (d'abord le contour des petits ennemis, puis l'éclairage).
 
 ## Son
 

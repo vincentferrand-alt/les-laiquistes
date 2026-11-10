@@ -407,6 +407,43 @@ const BACKGROUNDS = {
 function drawWorldBackground(ctx, worldId, VW, camX, t) {
   ctx.lineJoin = 'round'; ctx.miterLimit = 2;
   (BACKGROUNDS[worldId] || BACKGROUNDS.christian)(ctx, VW, camX, t);
+  drawDepth(ctx, worldId, VW, camX);
+}
+
+// ---------- Profondeur (v3.5) : brume au loin, sol qui s'assombrit vers l'horizon, grain ----------
+// Brume : le fond se fond dans la couleur du ciel près de l'horizon (perspective atmosphérique).
+// Sol : plus sombre au fond, plus clair devant, avec un grain léger qui défile avec le sol.
+const DEPTH_HAZE = {
+  christian: '255,236,200', guilhem: '120,80,190', fateh: '255,225,170', faouzi: null,
+  venum: '40,200,255', senoussi: '255,210,140', purf: '150,170,90',
+};
+const _grain = { cv: null, pat: null, ctx: null };
+function drawDepth(ctx, worldId, VW, camX) {
+  if (Gfx.quality === 0) return;
+  const H0 = GROUND_TOP;
+  ctx.save();
+  const haze = DEPTH_HAZE[worldId];
+  if (haze) {
+    const g = ctx.createLinearGradient(0, H0 - 150, 0, H0 + 4);
+    g.addColorStop(0, `rgba(${haze},0)`); g.addColorStop(1, `rgba(${haze},0.32)`);
+    ctx.fillStyle = g; ctx.fillRect(0, H0 - 150, VW, 154);
+  }
+  // sol : ombre au fond (sous l'horizon), lumière devant
+  const gs = ctx.createLinearGradient(0, H0, 0, VIEW_H);
+  gs.addColorStop(0, 'rgba(10,5,25,0.26)'); gs.addColorStop(0.35, 'rgba(10,5,25,0.06)'); gs.addColorStop(1, 'rgba(255,245,220,0.07)');
+  ctx.fillStyle = gs; ctx.fillRect(0, H0, VW, VIEW_H - H0);
+  // grain (motif 128×128 calculé une fois)
+  if (worldId !== 'faouzi') {
+    if (!_grain.cv) {
+      const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
+      for (let i = 0; i < 900; i++) { x.fillStyle = Math.random() < 0.5 ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.06)'; x.fillRect(Math.random() * 128, Math.random() * 128, 1 + Math.random() * 2, 1 + Math.random() * 1.5); }
+      _grain.cv = c;
+    }
+    if (_grain.ctx !== ctx) { _grain.pat = ctx.createPattern(_grain.cv, 'repeat'); _grain.ctx = ctx; }
+    ctx.translate(-(camX % 128), 0);
+    ctx.fillStyle = _grain.pat; ctx.fillRect(0, H0 + 2, VW + 128, VIEW_H - H0);
+  }
+  ctx.restore();
 }
 
 // ============================================================

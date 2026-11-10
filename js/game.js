@@ -17,7 +17,8 @@ const Game = {
     this.resize();
     let last = performance.now();
     const loop = now => {
-      const dt = Math.min(0.033, (now - last) / 1000); last = now;
+      const raw = (now - last) / 1000, dt = Math.min(0.033, raw); last = now;
+      if (this.running && !this.paused && raw < 0.25) Gfx.tick(raw); // allège les graphismes si l'appareil rame
       if (this.running && !this.paused) this.update(dt);
       if (this.running) this.render();
       requestAnimationFrame(loop);
@@ -1174,11 +1175,18 @@ const Game = {
 
     this.particles.forEach(p => {
       const a = Math.max(0, p.life / p.max), sx = p.x - cx, sy = p.y - p.z;
-      if (p.type === 'spark') { ctx.fillStyle = `rgba(255,${200 + Math.random() * 55},80,${a})`; ctx.fillRect(sx - 3, sy - 3, 6, 6); }
+      if (p.type === 'spark') { // étincelle lumineuse (halo additif)
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, 9); g.addColorStop(0, `rgba(255,240,180,${a})`); g.addColorStop(0.4, `rgba(255,170,60,${a * 0.6})`); g.addColorStop(1, 'rgba(255,120,30,0)');
+        ctx.fillStyle = g; ctx.fillRect(sx - 9, sy - 9, 18, 18); ctx.restore();
+        ctx.fillStyle = `rgba(255,${200 + Math.random() * 55},80,${a})`; ctx.fillRect(sx - 2, sy - 2, 4, 4); }
       else if (p.type === 'dust') { ctx.fillStyle = `rgba(230,220,200,${a * 0.6})`; ctx.beginPath(); ctx.arc(sx, sy, 6 + (1 - a) * 10, 0, Math.PI * 2); ctx.fill(); }
       else if (p.type === 'speed') { ctx.strokeStyle = `rgba(255,255,255,${a * 0.8})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx, sy - 46); ctx.stroke(); }
       else if (p.type === 'pix') { ctx.globalAlpha = a; ctx.fillStyle = p.col; ctx.fillRect(sx - 4, sy - 4, 8, 8); ctx.globalAlpha = 1; }
       else if (p.type === 'burst') {
+        ctx.save(); ctx.globalCompositeOperation = 'lighter'; // halo derrière l'étoile d'impact
+        const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, 46); g.addColorStop(0, `rgba(255,250,210,${a * 0.75})`); g.addColorStop(1, 'rgba(255,200,80,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(sx, sy, 46, 0, Math.PI * 2); ctx.fill(); ctx.restore();
         ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.beginPath();
         for (let i = 0; i < 10; i++) { const ang = i / 10 * Math.PI * 2, r = i % 2 ? 12 : 30; ctx.lineTo(sx + Math.cos(ang) * r, sy + Math.sin(ang) * r); }
         ctx.fill();

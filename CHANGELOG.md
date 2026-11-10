@@ -1,3 +1,14 @@
+# Les laïquistes — v3.5.0 : graphismes
+
+- **Gros contour noir** autour de chaque personnage (style Castle Crashers), en jeu et dans les menus.
+- **Éclairage des persos** : haut du corps éclairé, jambes dans l'ombre ; **ombres au sol douces**, plus petites et plus pâles quand on saute.
+- **Yeux expressifs** : blanc de l'œil, pupille tournée vers l'avant, reflet, clignement ; sourcils froncés quand il frappe, levés quand il nargue ou fête sa victoire.
+- **Profondeur des décors** : brume au loin près de l'horizon, sol plus sombre au fond et plus clair devant, grain léger qui défile avec le sol.
+- **Effets lumineux** : étincelles et étoiles d'impact avec halo.
+- **Qualité automatique** : si l'appareil rame (moins de 45 images/s trop souvent), le jeu retire d'abord le contour des petits ennemis, puis l'éclairage.
+
+---
+
 # Les laïquistes — v3.4.1 : vrais sons
 
 - **Sons enregistrés** fournis par Vincent, nettoyés (blancs coupés, volumes égalisés, MP3 mono pour les bruitages) :

@@ -144,9 +144,12 @@ class Fighter {
 
   drawShadow(ctx, sx, sy) {
     if (this.dead && this.deadT > 1) return;
-    const r = this.halfW * 1.1 * Math.max(0.45, 1 - this.z / 400);
-    ctx.fillStyle = `rgba(0,0,0,${this.fly ? 0.18 : 0.32})`;
-    ctx.beginPath(); ctx.ellipse(sx, sy, r, 8 * this.scale, 0, 0, Math.PI * 2); ctx.fill();
+    // ombre douce : plus petite et plus pâle quand il saute
+    const up = Math.max(0.45, 1 - this.z / 400), r = this.halfW * 1.25 * up, a = (this.fly ? 0.22 : 0.42) * (0.5 + up * 0.5);
+    ctx.save(); ctx.translate(sx, sy); ctx.scale(1, (9 * this.scale) / r);
+    const g = ctx.createRadialGradient(0, 0, r * 0.15, 0, 0, r);
+    g.addColorStop(0, `rgba(0,0,0,${a})`); g.addColorStop(0.65, `rgba(0,0,0,${a * 0.6})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   }
 
   draw(ctx, sx, sy, gt) {
@@ -200,11 +203,14 @@ class Fighter {
     const o = { dir: this.dir, scale: this.scale, t: this.t, walk: this.walk, pose: p.pose, poseT: p.pt, flash: this.flash > 0,
       variant: this.variant, label: this.label, roll: this.roll, air: this.z > 0, companion: this.team === 'hero' };
     const paint = c => { if (this.isChar) drawCharacter(c, this.kind, o); else drawMinion(c, this.kind, o); };
-    if (this.flash > 0 && !this.dead) {
-      // flash blanc à l'impact, compatible iPhone (pas de ctx.filter)
-      const sc = this.scale, hw = 160 * sc;
-      drawTinted(ctx, '#ffffff', 0.78, { x: -hw, y: -this.height - 150 * sc, w: hw * 2, h: this.height + 175 * sc }, paint);
-    } else paint(ctx);
+    // rendu cartoon : gros contour + éclairage + flash blanc à l'impact (voir drawSprite dans draw.js)
+    // boîte qui contient le perso ET son arme quand il frappe (au-dessus de la tête, devant lui)
+    // boîte au plus juste (moins de pixels à recopier) : large devant (arme), plus étroite derrière, plus haute quand il frappe
+    const sc = this.scale, front = ((this.def.range || 40) + (this.def.bw || 40) * 0.6 + 40) * sc, back = ((this.def.bw || 40) * 0.6 + 70) * sc;
+    const swingUp = p.pose === 'attack' || p.pose === 'windup' || p.pose === 'special' || p.pose === 'victory' || p.pose === 'down';
+    const above = (swingUp ? 120 : 60) * sc;
+    const box = { x: this.dir > 0 ? -back : -front, y: -this.height - above, w: front + back, h: this.height + above + 20 * sc };
+    drawSprite(ctx, box, paint, { outline: (this.isBoss ? 4 : 3.2) * Math.sqrt(sc), shade: { top: -this.height }, flash: this.flash > 0 && !this.dead, minor: this.team === 'enemy' && !this.isBoss && !this.mustKill });
     if (this.state === 'victory' && !this.dead) { // étoiles qui tournent autour de la tête
       ctx.font = '20px Arial'; ctx.textAlign = 'center';
       for (let i = 0; i < 5; i++) {
