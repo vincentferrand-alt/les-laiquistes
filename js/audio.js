@@ -291,6 +291,13 @@ const Sfx = {
   // coup plongeant : sifflement qui descend, puis choc grave à l'atterrissage
   diveStart() { this.tone('sine', 2200, 260, 0.32, 0.16); this.noise(0.3, 0.08, 3500, 0, 0.6); },
   diveLand()  { this.tone('sine', 110, 28, 0.55, 0.7); this.tone('square', 70, 30, 0.25, 0.25); this.noise(0.4, 0.55, 220, 0, 0.7); },
+  // Palier de combo (×10, ×25…) ou multi-élimination : arpège qui monte, plus haut selon le niveau
+  comboUp(lv = 0) {
+    if (!this.ctx) return;
+    const base = [72, 74, 77, 79][Math.min(3, lv)];
+    [0, 4, 7, 12].forEach((iv, i) => this.tone('square', midiHz(base + iv), null, 0.09, 0.12, i * 0.06));
+    this.tone('triangle', midiHz(base + 24), null, 0.3, 0.1, 0.26);
+  },
   // Arrivée d'un boss : le son enregistré (repli : la synthèse)
   bossArrival() { if (!Samples.play('arrivee-boss', 0, 1, 1)) this.bossIntro(); },
   // Fin de niveau (boss battu, écran de victoire) : « ba-dum-tss »

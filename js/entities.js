@@ -9,7 +9,7 @@ class Fighter {
     this.def = this.isChar ? CHARACTERS[kind] : MINIONS[kind];
     const c = this.def;
     this.beh = this.isChar ? 'melee' : c.beh;
-    this.x = x; this.y = y; this.z = opts.z || 0; this.vz = 0; this.kx = 0;
+    this.x = x; this.y = y; this.z = opts.z || 0; this.vz = 0; this.kx = 0; this.thrownT = 0; this.grabbed = false;
     this.fly = this.beh === 'flyer';
     this.dir = team === 'hero' ? 1 : -1;
     this.isBoss = !!opts.boss;
@@ -126,6 +126,7 @@ class Fighter {
   pose() {
     if (this.dead) return { pose: 'hurt', pt: 1 };
     if (this.stun > 0) return { pose: 'hurt', pt: 0 };
+    if (this.carrying && (this.state === 'idle' || this.state === 'walk')) return { pose: 'carry', pt: this.state === 'walk' ? 1 : 0 }; // porte un ennemi au-dessus de sa tête
     switch (this.state) {
       case 'attack': return { pose: 'attack', pt: this.st / this.stateDur };
       case 'windup': return { pose: 'windup', pt: 0 };

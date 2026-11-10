@@ -1,3 +1,20 @@
+# Les laïquistes — v3.6.0 : combat et événements
+
+## Combat (`js/combat.js`)
+- **Combos** : gros compteur avec jauge, paliers ×10 / ×25 / ×50 / ×100 (bonus, ralenti, arpège), ennemi éjecté par le coup final, ralenti et « K.O. ! » sur le dernier ennemi d'une vague.
+- **Attraper / lancer** : appui long sur FRAPPE près d'un ennemi, puis lâcher : il renverse ceux qu'il croise.
+- **Caisses** (3 par monde, une par décor) → nourriture ou **objet à lancer** du monde (brique, vinyle, boule, cartouche, batterie, jarre, bidon).
+- **Bonus** quand un danger du décor ou un lancer élimine des ennemis (« BIEN ENVOYÉ ! », « STRIKE ! », « DOUBLÉ ! », « TRIPLÉ ! »).
+
+## Événements de milieu de monde (`js/events.js`)
+- Une épreuve par monde entre la 2e et la 3e vague : briques d'or (Christian), battle de rap (Guilhem), pétanque (Fateh), niveau bonus (Faouzi), drone voleur (Venum), mouton d'or (Senoussi), opération nettoyage (The Purf).
+- Réussite : +800 points × niveau, +30 vie. Échec : on continue sans pénalité.
+
+## Divers
+- Commandes « attraper / lancer » ajoutées dans le menu pause et le README.
+
+---
+
 # Les laïquistes — v3.5.0 : graphismes
 
 - **Gros contour noir** autour de chaque personnage (style Castle Crashers), en jeu et dans les menus.

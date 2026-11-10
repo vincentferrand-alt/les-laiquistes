@@ -71,6 +71,7 @@ const Game = {
     this.hits = 0; this.hitT = 0; this.kills = 0;
     this.enemies = []; this.projectiles = []; this.hazards = []; this.pickups = []; this.particles = []; this.texts = []; this.vehicles = [];
     this.dangers = [];   // dangers annoncés (monde + attaques de phase 2 des boss)
+    this.combatStart(); this.evReset(); // caisses, objets, attraper/lancer (combat.js) · événements de milieu de monde (events.js)
     this.ambient = [];   // particules d'ambiance (cendres, sable, billets…)
     this.hazardT = BALANCE.hazards.first; this.pw = (BALANCE.perWorld && BALANCE.perWorld[this.world.id]) || {}; this.storm = null;
     this.cine = 0; this.cineT = 0; this.bossCard = null; // cinématique d'arrivée du boss
@@ -124,11 +125,12 @@ const Game = {
     if (this.slowT > 0) { this.slowT -= rdt; this.timeScale = 0.3; } else this.timeScale = 1;
     const dt = rdt * this.timeScale;
     this.t += dt; this.time += rdt;
-    if (this.hitT > 0) { this.hitT -= dt; if (this.hitT <= 0) this.hits = 0; }
+    if (this.hitT > 0) { this.hitT -= dt; if (this.hitT <= 0) { this.hits = 0; this.comboReset(); } }
 
     Input.update();
     if (Input.consume('pause')) { UI.pause(); return; }
     this.updateHero(dt);
+    this.updateCombat(dt);
     // intensité musicale : monte avec le compteur de coups
     Music.setIntensity(this.hits >= 20 ? 3 : this.hits >= 10 ? 2 : this.hits >= 4 ? 1 : 0);
     if (this.cineT > 0) this.cineT -= rdt;
@@ -162,7 +164,8 @@ const Game = {
     if (!h.dead) {
       // la raillerie est purement décorative : n'importe quelle commande l'annule
       if (h.state === 'taunt' && (Input.mx || Input.my || Input.pressed.attack || Input.pressed.jump || Input.pressed.special)) h.setState('idle');
-      if (h.canAct()) {
+      if (this.ev && this.ev.lockHero) { if (h.state === 'walk') h.state = 'idle'; } // événement : le héros est guidé par l'événement
+      else if (h.canAct()) {
         const mx = Input.mx, my = Input.my;
         if (mx || my) {
           h.x += mx * h.speed * dt; h.y += my * h.speed * 0.62 * dt;
@@ -173,9 +176,11 @@ const Game = {
         } else h.state = 'idle';
         if (Input.consume('jump') && h.z <= 0) { h.vz = 600; Sfx.jump(); this.dust(h.x, h.y, 5); }
         if (Input.consume('special') && h.specialCd <= 0) { h.startSpecial(); Haptics.vibrate(50); }
+        else if (this.carry) Input.consume('attack'); // il porte un ennemi : lâcher FRAPPE le lance (combat.js)
         else if (Input.consume('attack')) {
+          if (this.heldItem) this.throwItem(); // objet en main : on le lance
           // en l'air ET en train de redescendre : coup plongeant
-          if (h.z > 25 && h.vz < 0) h.startDive(); else h.startAttack();
+          else if (h.z > 25 && h.vz < 0) h.startDive(); else h.startAttack();
         }
       } else {
         if (h.state === 'attack' && h.st > 0.1 && Input.consume('attack')) h.queued = true;
@@ -286,7 +291,8 @@ const Game = {
   resolveMelee(f) {
     const finisher = f.combo === 2 || (f.z > 20 && f.team === 'hero');
     const dmg = f.dmg * (finisher ? 1.6 : 1);
-    this.opponents(f).forEach(o => { if (this.inMeleeZone(f, o)) this.applyHit(f, o, dmg, { knockdown: finisher }); });
+    this.opponents(f).forEach(o => { if (this.inMeleeZone(f, o) && !o.grabbed) this.applyHit(f, o, dmg, { knockdown: finisher }); });
+    if (f.team === 'hero') { this.meleeProps(f); this.evMelee(f); } // caisses · cible d'un événement
     if (f.team === 'hero' && f.kind === 'fateh') { // Aïka mord en même temps
       this.opponents(f).forEach(o => { if (this.inMeleeZone(f, o, 40) && !o.dead) this.applyHit(f, o, 3, { noStagger: true }); });
     }
@@ -303,20 +309,21 @@ const Game = {
     if (opts.knockdown || big) { Sfx.bigHit(pan, wk, this.hits); this.shake = 0.25; this.hitstop = 0.07; }
     else { Sfx.hit(pan, wk, src ? src.combo || 0 : 0, this.hits); this.hitstop = Math.max(this.hitstop, 0.035); this.shake = Math.max(this.shake, 0.08); }
     if (src && src.team === 'hero') {
-      this.hits++; this.hitT = 1.6; this.addScore(5 + Math.min(this.hits, 30));
-      if (o.dead) this.onKill(o);
+      this.hits++; this.hitT = 1.6; this.addScore(5 + Math.min(this.hits, 30)); this.onHeroHit();
+      if (o.dead) this.onKill(o, src, opts);
     } else if (o === this.hero) {
-      Sfx.hurt(); this.hits = 0;
+      Sfx.hurt(); this.hits = 0; this.comboReset(); this.dropCarry();
       Haptics.vibrate(opts.knockdown ? 110 : 55);
       if (o.dead) { this.slowT = 1.2; Sfx.gameOver(); Sfx.stopMusic(); }
       // le boss qui vient de renverser le héros prend le temps de le narguer (répit pour le joueur)
       else if (opts.knockdown && src && src.isBoss && !src.dead && src.state !== 'special') { src.setState('taunt', BALANCE.boss.tauntAfterKnockdown); src.attackCd = Math.max(src.attackCd, 1.2); }
-    } else if (src && src.team === 'world' && o.dead) this.onKill(o); // un ennemi pris dans un danger du décor
+    } else if (src && src.team === 'world' && o.dead) this.onKill(o, src, opts); // un ennemi pris dans un danger du décor
     return true;
   },
 
-  onKill(e) {
+  onKill(e, src, opts) {
     this.kills++;
+    this.onKillFx(e, src, opts); // éjection, bonus danger / lancer, dernier ennemi de la vague (combat.js)
     const gag = Sfx.kill(Sfx.panX(e.x), e.isBoss);
     if (gag) this.gagFx(e, gag);
     if (e.isBoss) {
@@ -390,7 +397,7 @@ const Game = {
         if (p.ground && o.z > 30) continue; // la fissure au sol s'évite en sautant
         if (Math.abs(o.y - p.y) < 30 * Math.max(1, o.scale) && Math.abs(o.x - p.x) < o.halfW + 22 && o.z < 160) {
           p.hit.add(o);
-          this.applyHit(p.owner, o, p.dmg, { knockdown: p.knockdown });
+          this.applyHit(p.owner, o, p.dmg, { knockdown: p.knockdown, item: p.itemHit });
           if (!p.pierce) { p.life = 0; break; }
         }
       }
@@ -582,7 +589,7 @@ const Game = {
     const h = this.hero;
     this.pickups.forEach(p => {
       p.t += dt; p.life -= dt;
-      if (!h.dead && Math.abs(p.x - h.x) < 34 && Math.abs(p.y - h.y) < 24) {
+      if (!p.item && !h.dead && Math.abs(p.x - h.x) < 34 && Math.abs(p.y - h.y) < 24) {
         p.life = 0; h.hp = Math.min(h.maxHp, h.hp + 25); Sfx.pickup();
         this.text(h.x, h.y, h.height + 20, '+25 MIAM', '#2ecc71', 22);
       }
@@ -592,6 +599,7 @@ const Game = {
 
   // ---------- IA ennemie ----------
   updateEnemy(e, dt) {
+    if (e.grabbed) { e.tickTimers(dt); return; } // porté par le héros (combat.js)
     e.tickTimers(dt);
     if (e.isBoss && !e.dead) {
       if (!e.phase2 && e.hp <= e.maxHp * this.L.phase2At && e.entering <= 0) this.enterPhase2(e);
@@ -609,6 +617,7 @@ const Game = {
       if (e.beh === 'roller') e.roll += (e.dir) * dt * 3 * (e.state === 'walk' ? 1 : 0);
     }
     e.physics(dt);
+    if (e.thrownT > 0) this.updateThrown(e, dt); // lancé par le héros
     if (!e.dead && e.entering <= 0) this.keepInView(e, dt);
   },
 
@@ -923,11 +932,12 @@ const Game = {
   updateLevel(dt, rdt) {
     const alive = this.enemies.filter(e => !e.dead);
     // dangers du monde (annoncés, évitables), plus rares pendant le boss
-    if (this.bossPhase !== 1 && this.bossPhase !== 3 && !this.hero.dead) {
+    if (this.bossPhase !== 1 && this.bossPhase !== 3 && !this.hero.dead && !this.ev) { // (pendant un événement, c'est lui qui gère les dangers)
       this.hazardT -= dt;
       if (this.hazardT <= 0) { this.hazardT = rand(...BALANCE.hazards.every) * (this.pw.hazardEvery || 1) * this.L.hazardEvery * (this.bossPhase === 2 || this.survBoss ? 1.6 : 1); this.spawnWorldHazard(); }
     }
     if (this.mode === 'survival') { this.updateSurvival(dt, alive); return; }
+    if (this.evUpdate(dt)) return; // événement de milieu de monde en cours (events.js)
     for (const w of this.waves) {
       if (!w.started && this.camX >= w.x - 2 && this.bossPhase === 0) {
         w.started = true; this.wave = w; this.lockMax = w.x; this.camX = Math.min(this.camX, w.x);
@@ -1167,10 +1177,13 @@ const Game = {
     this.pickups.forEach(p => list.push({ y: p.y, draw: () => {
       if (p.life < 3 && Math.floor(p.life * 8) % 2) return;
       ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(p.x - cx, p.y, 14, 5, 0, 0, Math.PI * 2); ctx.fill();
-      drawFood(ctx, p.type, p.x - cx, p.y, p.t);
+      if (p.item) { ctx.save(); ctx.translate(p.x - cx, p.y - 18 - Math.abs(Math.sin(p.t * 4)) * 8); drawThrowItem(ctx, p.item, 0); ctx.restore(); }
+      else drawFood(ctx, p.type, p.x - cx, p.y, p.t);
     } }));
+    this.combatDraw(list, ctx, cx, gt); this.evDraw(list, ctx, cx, gt);
     this.dangers.forEach(dg => list.push({ y: dg.y + 2, draw: () => drawDangerObj(ctx, dg, dg.x - cx, gt, VW) }));
     list.sort((a, b) => a.y - b.y).forEach(o => o.draw());
+    this.combatOverlay(ctx, cx, gt);
     drawWorldForeground(ctx, this.world.id, VW, cx, gt); // premier plan, devant les personnages
 
     this.particles.forEach(p => {
@@ -1249,10 +1262,8 @@ const Game = {
     ctx.textAlign = 'right'; ctx.font = '900 26px "Arial Black", Arial'; ctx.lineWidth = 5; ctx.strokeStyle = '#000'; ctx.fillStyle = '#fff';
     const sc = String(this.score).padStart(6, '0');
     ctx.strokeText(sc, VW - 90, 40); ctx.fillText(sc, VW - 90, 40);
-    if (this.hits >= 2) {
-      ctx.font = '900 22px "Arial Black", Arial'; ctx.fillStyle = '#feca57';
-      ctx.strokeText(this.hits + ' COUPS !', VW - 90, 68); ctx.fillText(this.hits + ' COUPS !', VW - 90, 68);
-    }
+    this.combatHUD(ctx, VW); // compteur de combo + paliers (combat.js)
+    this.evHUD(ctx, VW);     // événement en cours (events.js)
     ctx.textAlign = 'center'; ctx.font = '900 17px "Arial Black", Arial'; ctx.fillStyle = '#fff';
     ctx.strokeText(this.world.name, VW / 2, 28); ctx.fillText(this.world.name, VW / 2, 28);
     if (this.mode === 'survival') { // Survie : numéro de vague
