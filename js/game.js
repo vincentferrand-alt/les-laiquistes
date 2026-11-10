@@ -60,6 +60,8 @@ const Game = {
   start(o) {
     this.world = worldById(o.worldId);
     this.mode = o.mode; this.diff = o.difficulty || 1;
+    // niveau de difficulté choisi (1 à 3) : multiplicateurs de BALANCE.levels
+    this.level = o.level || Save.data.diff || 1; this.L = BALANCE.levels[this.level] || BALANCE.levels[2];
     this.heroKind = o.heroKind;
     this.score = o.score || 0; this.startScore = this.score;
     this.levelLen = 4200;
@@ -75,7 +77,7 @@ const Game = {
     this.hero = new Fighter(o.heroKind, 'hero', 160, (GROUND_TOP + GROUND_BOTTOM) / 2);
     if (o.heroHp) this.hero.hp = clamp(o.heroHp, 1, this.hero.maxHp);
     this.pw = (BALANCE.perWorld && BALANCE.perWorld[this.world.id]) || {}; // réglages propres au monde
-    const extra = Math.floor((this.diff - 1) * 6) + (this.pw.extraPerWave || 0);
+    const extra = Math.max(0, Math.floor((this.diff - 1) * 6) + (this.pw.extraPerWave || 0) + this.L.extraPerWave);
     this.waves = [
       { x: 520, n: 4 + Math.floor(extra / 2), started: false, done: false },
       { x: 1500, n: 5 + Math.floor(extra / 2), started: false, done: false },
@@ -213,7 +215,7 @@ const Game = {
         this.opponents(f).forEach(o => {
           if (f.dashHits.has(o)) return;
           if (Math.abs(o.x - f.x) < f.halfW + o.halfW + 10 && Math.abs(o.y - f.y) < 32 * f.scale && o.z < 120) {
-            const dd = sp === 'argent' ? BALANCE.boss.phase2Dmg * this.bossDiff() : this.specialDmg(f, 24); // charge de phase 2 de The Purf
+            const dd = sp === 'argent' ? BALANCE.boss.phase2Dmg * this.bossDmgK() : this.specialDmg(f, 24); // charge de phase 2 de The Purf
             f.dashHits.add(o); this.applyHit(f, o, dd, { knockdown: true }, true);
           }
         });
@@ -261,12 +263,15 @@ const Game = {
     Sfx.diveLand();
   },
 
+  // points gagnés × multiplicateur du niveau de difficulté (×1 / ×1,5 / ×2)
+  addScore(n) { this.score += Math.round(n * this.L.score); },
   specialDmg(f, base) {
     if (f.team === 'hero') return base;
-    return f.isBoss ? base * BALANCE.boss.specialDmgMul * this.bossDiff() : base * 0.55 * this.diff * 0.8;
+    return f.isBoss ? base * BALANCE.boss.specialDmgMul * this.bossDmgK() : base * 0.55 * this.diff * 0.8 * this.L.enemyDmg;
   },
   // difficulté atténuée appliquée aux boss (voir BALANCE.boss.diffScale)
   bossDiff() { return 1 + (this.diff - 1) * BALANCE.boss.diffScale; },
+  bossDmgK() { return this.bossDiff() * this.L.bossDmg; }, // dégâts des boss, niveau de difficulté compris
 
   // zone de frappe : devant, large, et haute (touche aussi les goélands)
   inMeleeZone(f, o, extra = 0) {
@@ -297,7 +302,7 @@ const Game = {
     if (opts.knockdown || big) { Sfx.bigHit(pan, wk, this.hits); this.shake = 0.25; this.hitstop = 0.07; }
     else { Sfx.hit(pan, wk, src ? src.combo || 0 : 0, this.hits); this.hitstop = Math.max(this.hitstop, 0.035); this.shake = Math.max(this.shake, 0.08); }
     if (src && src.team === 'hero') {
-      this.hits++; this.hitT = 1.6; this.score += 5 + Math.min(this.hits, 30);
+      this.hits++; this.hitT = 1.6; this.addScore(5 + Math.min(this.hits, 30));
       if (o.dead) this.onKill(o);
     } else if (o === this.hero) {
       Sfx.hurt(); this.hits = 0;
@@ -311,15 +316,16 @@ const Game = {
 
   onKill(e) {
     this.kills++;
-    Sfx.kill(Sfx.panX(e.x), e.isBoss);
+    const gag = Sfx.kill(Sfx.panX(e.x), e.isBoss);
+    if (gag) this.gagFx(e, gag);
     if (e.isBoss) {
-      this.score += 1000;
+      this.addScore(1000);
       this.slowT = 1.2; this.shake = 0.5;
       Haptics.vibrate([70, 40, 160]);
       for (let i = 0; i < 24; i++) this.particles.push({ type: 'coin', x: e.x, y: e.y, z: e.height * 0.6, vx: rand(-260, 260), vy: rand(-40, 40), vz: rand(300, 700), life: 1.6, max: 1.6 });
     } else {
-      this.score += e.mustKill ? 300 : 50;
-      if (!e.mustKill && Math.random() < 0.22) this.pickups.push({ type: this.world.food, x: e.x, y: e.y, t: 0, life: 14 });
+      this.addScore(e.mustKill ? 300 : 50);
+      if (!e.mustKill && Math.random() < 0.22 * this.L.food) this.pickups.push({ type: this.world.food, x: e.x, y: e.y, t: 0, life: 14 });
     }
   },
 
@@ -418,6 +424,7 @@ const Game = {
   // ============================================================
   addDanger(d) {
     d = Object.assign({ act: 0.15, rx: 50, ry: 22, dmg: BALANCE.hazards.dmg, kd: true, team: 'world', t: 0, hit: new Set(), tickT: 0 }, d);
+    if (d.team !== 'hero') d.dmg *= this.L.hazardDmg; // niveau de difficulté
     this.dangers.push(d);
     if (d.sound !== false) Sfx.warn(Sfx.panX(d.x));
     return d;
@@ -586,7 +593,7 @@ const Game = {
   updateEnemy(e, dt) {
     e.tickTimers(dt);
     if (e.isBoss && !e.dead) {
-      if (!e.phase2 && e.hp <= e.maxHp * BALANCE.boss.phase2At && e.entering <= 0) this.enterPhase2(e);
+      if (!e.phase2 && e.hp <= e.maxHp * this.L.phase2At && e.entering <= 0) this.enterPhase2(e);
       if (e.entering <= 0) this.updateBossTier(e);
       if (e.p2Cd > 0) e.p2Cd -= dt;
     }
@@ -701,7 +708,7 @@ const Game = {
     // attaque de phase 2 (nouvelle attaque à partir de 50 % de vie)
     if (e.isBoss && e.phase2 && e.p2Cd <= 0 && onScreen) {
       e.p2Cd = rand(...BALANCE.boss.phase2Every) * (e.tierCd || 1);
-      e.startWindup('p2', BALANCE.boss.windupPhase2);
+      e.startWindup('p2', BALANCE.boss.windupPhase2 * this.L.windup);
       Sfx.warn(Sfx.panX(e.x));
       return;
     }
@@ -710,7 +717,7 @@ const Game = {
       const sp = BOSS_SPECIAL[e.kind];
       const near = dxAbs < 260 && Math.abs(dy) < 60;
       const lined = Math.abs(dy) < 40;
-      if ((sp === 'truelle' || sp === 'rolex' || sp === 'fumee') ? near : sp === 'agneaux' ? true : lined) { e.startWindup('special', BALANCE.boss.windupSpecial); return; }
+      if ((sp === 'truelle' || sp === 'rolex' || sp === 'fumee') ? near : sp === 'agneaux' ? true : lined) { e.startWindup('special', BALANCE.boss.windupSpecial * this.L.windup); return; }
     }
     if (e.beh === 'flyer') {
       if (e.attackCd <= 0 && dxAbs < 240 && onScreen) e.startWindup('swoop', 0.35);
@@ -718,8 +725,8 @@ const Game = {
     }
     if (e.beh === 'ranged' || (e.isBoss && (e.kind === 'faouzi' || e.kind === 'purf') && dxAbs > 160)) {
       if (aligned && e.attackCd <= 0 && onScreen && dxAbs < 520) {
-        e.attackCd = e.isBoss ? rand(...BALANCE.boss.shootCd) * (e.tierCd || 1) : rand(1.8, 3.0) / Math.sqrt(this.diff) * BALANCE.enemies.cdMul;
-        e.startWindup('shoot', e.isBoss ? BALANCE.boss.windupShoot : 0.45);
+        e.attackCd = e.isBoss ? rand(...BALANCE.boss.shootCd) * (e.tierCd || 1) * this.L.bossCd : rand(1.8, 3.0) / Math.sqrt(this.diff) * BALANCE.enemies.cdMul * this.L.enemyCd;
+        e.startWindup('shoot', (e.isBoss ? BALANCE.boss.windupShoot : 0.45) * this.L.windup);
       }
       if (e.beh === 'ranged') return;
     }
@@ -730,9 +737,9 @@ const Game = {
     if (!e.hasToken && !e.isBoss) return;
     if (!e.isBoss && Math.random() < 0.25 * dt) { e.feint = rand(0.3, 0.7); return; }
     if (aligned && e.attackCd <= 0 && dxAbs < e.halfW + e.reach + h.halfW * 0.5) {
-      e.attackCd = e.isBoss ? rand(...BALANCE.boss.attackCd) * (e.tierCd || 1) : rand(1.3, 2.4) / Math.sqrt(this.diff) * BALANCE.enemies.cdMul;
-      e.combo = e.isBoss && Math.random() < BALANCE.boss.comboChance ? 1 : -1; e.comboT = e.isBoss ? 1 : 0;
-      e.startWindup('attack', e.isBoss ? BALANCE.boss.windupAttack : 0.42);
+      e.attackCd = e.isBoss ? rand(...BALANCE.boss.attackCd) * (e.tierCd || 1) * this.L.bossCd : rand(1.3, 2.4) / Math.sqrt(this.diff) * BALANCE.enemies.cdMul * this.L.enemyCd;
+      e.combo = e.isBoss && Math.random() < BALANCE.boss.comboChance + this.L.combo ? 1 : -1; e.comboT = e.isBoss ? 1 : 0;
+      e.startWindup('attack', (e.isBoss ? BALANCE.boss.windupAttack : 0.42) * this.L.windup);
     }
   },
 
@@ -743,8 +750,8 @@ const Game = {
     const y = o.y !== undefined ? o.y : rand(GROUND_TOP + 20, GROUND_BOTTOM - 10);
     const m = MINIONS[kind];
     const e = new Fighter(kind, 'enemy', x, y, {
-      hp: m.hp * this.diff * (o.hpMul || 1) * (o.mustKill ? BALANCE.boss.entourageHpMul : BALANCE.enemies.hpMul * (this.pw.minionHp || 1)),
-      dmg: m.dmg * (0.85 + this.diff * 0.15) * (o.mustKill ? 1 : BALANCE.enemies.dmgMul * (this.pw.minionDmg || 1)),
+      hp: m.hp * this.diff * (o.hpMul || 1) * (o.mustKill ? BALANCE.boss.entourageHpMul : BALANCE.enemies.hpMul * (this.pw.minionHp || 1)) * this.L.enemyHp,
+      dmg: m.dmg * (0.85 + this.diff * 0.15) * (o.mustKill ? 1 : BALANCE.enemies.dmgMul * (this.pw.minionDmg || 1)) * this.L.enemyDmg,
       speed: m.speed * rand(0.9, 1.05), scale: (o.scale || 1) * (o.mustKill ? 1 : this.minionScale), mustKill: o.mustKill,
     });
     if (e.fly) e.z = e.cruiseZ;
@@ -792,7 +799,7 @@ const Game = {
     const w = this.world, c = CHARACTERS[w.boss], B = BALANCE.boss, d = this.bossDiff();
     const pb = (B.perBoss && B.perBoss[w.boss]) || {};
     const b = new Fighter(w.boss, 'enemy', x, y, { boss: true, scale: w.small ? 1.0 : 1.4,
-      hp: c.hp * (w.entourage ? B.hpMulEntourage : B.hpMul) * d * hpMul * (pb.hp || 1), dmg: c.dmg * B.dmgMul * d * (pb.dmg || 1), speed: c.speed * 0.95 });
+      hp: c.hp * (w.entourage ? B.hpMulEntourage : B.hpMul) * d * hpMul * (pb.hp || 1) * this.L.bossHp, dmg: c.dmg * B.dmgMul * d * (pb.dmg || 1) * this.L.bossDmg, speed: c.speed * 0.95 });
     b.dir = -1; b.specialCd = c.specialCd * B.firstSpecial; b.attackCd = 1.2; b.p2Cd = 0;
     this.enemies.push(b); this.boss = b;
     return b;
@@ -841,7 +848,7 @@ const Game = {
 
   // Attaque de phase 2, différente pour chaque boss
   bossPhase2Attack(e) {
-    const h = this.hero, P = BALANCE.boss.phase2Dmg * this.bossDiff(), B = this.bounds();
+    const h = this.hero, P = BALANCE.boss.phase2Dmg * this.bossDmgK(), B = this.bounds();
     const say = i => e.say(e.def.phrases[i % e.def.phrases.length]);
     switch (e.kind) {
       case 'christian': // pluie de briques sur des zones marquées
@@ -917,7 +924,7 @@ const Game = {
     // dangers du monde (annoncés, évitables), plus rares pendant le boss
     if (this.bossPhase !== 1 && this.bossPhase !== 3 && !this.hero.dead) {
       this.hazardT -= dt;
-      if (this.hazardT <= 0) { this.hazardT = rand(...BALANCE.hazards.every) * (this.pw.hazardEvery || 1) * (this.bossPhase === 2 || this.survBoss ? 1.6 : 1); this.spawnWorldHazard(); }
+      if (this.hazardT <= 0) { this.hazardT = rand(...BALANCE.hazards.every) * (this.pw.hazardEvery || 1) * this.L.hazardEvery * (this.bossPhase === 2 || this.survBoss ? 1.6 : 1); this.spawnWorldHazard(); }
     }
     if (this.mode === 'survival') { this.updateSurvival(dt, alive); return; }
     for (const w of this.waves) {
@@ -929,7 +936,7 @@ const Game = {
     }
     if (this.spawnQueue.length) {
       this.spawnT -= dt;
-      if (this.spawnT <= 0 && alive.length < BALANCE.enemies.maxAlive) { this.spawnEnemy(this.spawnQueue.shift()); this.spawnT = rand(0.6, 1.1); }
+      if (this.spawnT <= 0 && alive.length < BALANCE.enemies.maxAlive + this.L.maxAlive) { this.spawnEnemy(this.spawnQueue.shift()); this.spawnT = rand(0.6, 1.1); }
     }
     if (this.wave && !this.wave.done && this.spawnQueue.length === 0 && alive.length === 0) {
       this.wave.done = true; this.wave = null; this.lockMax = this.levelLen; this.goT = 3; Sfx.jingle('stage');
@@ -959,7 +966,7 @@ const Game = {
       this.bossMinionT -= dt;
       if (this.bossMinionT <= 0) {
         this.bossMinionT = rand(...BALANCE.boss.reinforceEvery);
-        if (alive.filter(e => !e.mustKill).length < BALANCE.boss.reinforceMax) this.spawnEnemy(pickWeighted(this.world.minions));
+        if (alive.filter(e => !e.mustKill).length < Math.max(1, BALANCE.boss.reinforceMax + this.L.maxAlive)) this.spawnEnemy(pickWeighted(this.world.minions));
       }
       const left = this.enemies.filter(e => e.mustKill && !e.dead);
       if (left.length === 0) {
@@ -996,7 +1003,7 @@ const Game = {
     const n = Math.min(S.maxCount, Math.round(S.baseCount + (this.survWave - 1) * S.perWave));
     for (let i = 0; i < n; i++) this.spawnQueue.push(pickWeighted(this.world.minions));
     this.spawnT = 0.4;
-    if (this.survWave > 1) { Sfx.jingle('stage'); this.score += 100 * (this.survWave - 1); if (this.hero.state === 'idle') this.hero.setState('taunt', 0.8); }
+    if (this.survWave > 1) { Sfx.jingle('stage'); this.addScore(100 * (this.survWave - 1)); if (this.hero.state === 'idle') this.hero.setState('taunt', 0.8); }
     if (this.survWave % S.bossEvery === 0) { // retour du boss du monde
       const B = this.bounds(), right = this.spawnFromRight();
       const b = this.makeBoss(right ? B.R + 80 : B.L - 80, (GROUND_TOP + GROUND_BOTTOM) / 2, S.bossHpMul);
@@ -1008,8 +1015,8 @@ const Game = {
   },
 
   finish(result) {
-    const timeBonus = result === 'win' ? Math.max(0, Math.round((240 - this.time) * 3)) : 0;
-    const hpBonus = result === 'win' ? Math.round(this.hero.hp * 4) : 0;
+    const timeBonus = result === 'win' ? Math.max(0, Math.round((240 - this.time) * 3 * this.L.score)) : 0;
+    const hpBonus = result === 'win' ? Math.round(this.hero.hp * 4 * this.L.score) : 0;
     this.score += timeBonus + hpBonus;
     const res = { result, score: this.score, levelScore: this.score - this.startScore, timeBonus, hpBonus, heroHp: this.hero.hp, kills: this.kills, time: this.time, worldId: this.world.id, wave: this.survWave, mode: this.mode };
     setTimeout(() => { this.stop(); this.onEnd && this.onEnd(res); }, result === 'win' ? 200 : 600);
@@ -1023,7 +1030,22 @@ const Game = {
   dust(x, y, n) {
     for (let i = 0; i < n; i++) this.particles.push({ type: 'dust', x: x + rand(-15, 15), y: y + rand(-5, 5), z: 2, vx: rand(-60, 60), vy: 0, vz: rand(20, 90), life: rand(0.35, 0.7), max: 0.7 });
   },
-  text(x, y, z, s, col = '#fff', size = 20, life = 0.8) { this.texts.push({ x, y, z, s, col, size, life, max: life }); },
+  text(x, y, z, s, col = '#fff', size = 20, life = 0.8, o = {}) { this.texts.push(Object.assign({ x, y, z, s, col, size, life, max: life }, o)); },
+  // Pet ou rot au KO : on le MONTRE, pour qu'il n'y ait aucun doute sur ce qu'on entend
+  //  pet : « PROUUUT ! » vert qui tremble + nuage verdâtre qui sort de l'arrière + lignes d'odeur
+  //  rot : « BUUURP ! » jaune qui sort de la bouche + ondes devant le visage
+  gagFx(e, gag) {
+    const dir = e.dir || 1, big = e.isBoss ? 1.5 : 1, top = e.height || 90;
+    if (gag === 'pet') {
+      this.text(e.x - dir * 30, e.y, top * 0.55, pick(['PROUUUT !', 'PROUT !', 'PRRRRT !', 'POUÊÊÊT !', 'PFFFRT !']), '#9be15d', 30 * big, 1.5, { wob: 1, rot: -dir * 0.12, stroke: '#1f3d0c' });
+      for (let i = 0; i < 9 * big; i++) this.particles.push({ type: 'gas', x: e.x - dir * rand(10, 30), y: e.y + rand(-6, 6), z: top * rand(0.3, 0.45), vx: -dir * rand(30, 110), vy: rand(-12, 12), vz: rand(10, 45), life: rand(1.2, 2), max: 2, r: rand(14, 24) * big });
+      for (let i = 0; i < 3; i++) this.particles.push({ type: 'stink', x: e.x - dir * (18 + i * 16), y: e.y, z: top * 0.5, vx: -dir * 12, vy: 0, vz: 38, life: 1.6, max: 1.6, ph: i * 2 });
+    } else {
+      this.text(e.x + dir * 34, e.y, top * 0.95, pick(['BUUUURP !', 'BEUARRP !', 'BURRP !', 'ROOOT !']), '#ffd166', 30 * big, 1.5, { wob: 1, rot: dir * 0.1, stroke: '#4a2c00' });
+      for (let i = 0; i < 3; i++) this.particles.push({ type: 'burpwave', x: e.x + dir * 20, y: e.y, z: top * 0.85, dir, life: 0.7 + i * 0.18, max: 0.7 + i * 0.18, delay: i * 0.15 });
+      for (let i = 0; i < 4; i++) this.particles.push({ type: 'spit', x: e.x + dir * 22, y: e.y, z: top * 0.85, vx: dir * rand(80, 180), vy: rand(-20, 20), vz: rand(60, 200), life: 0.6, max: 0.6 });
+    }
+  },
   updateFx(dt) {
     this.particles.forEach(p => {
       p.life -= dt;
@@ -1031,7 +1053,8 @@ const Game = {
       p.x += (p.vx || 0) * dt; p.y += (p.vy || 0) * dt;
       if (p.vz !== undefined) {
         p.z += p.vz * dt;
-        if (p.type !== 'pix' && p.type !== 'speed') { p.vz -= (p.type === 'dust' ? 100 : 1200) * dt; if (p.z < 0) { p.z = 0; p.vz *= -0.4; p.vx *= 0.6; } }
+        if (p.type === 'gas' || p.type === 'stink') { p.vx *= 1 - 1.5 * dt; p.vy *= 1 - 1.5 * dt; }
+        else if (p.type !== 'pix' && p.type !== 'speed' && p.type !== 'burpwave') { p.vz -= (p.type === 'dust' ? 100 : 1200) * dt; if (p.z < 0) { p.z = 0; p.vz *= -0.4; p.vx *= 0.6; } }
       }
     });
     this.particles = this.particles.filter(p => p.life > 0);
@@ -1159,6 +1182,21 @@ const Game = {
         ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.beginPath();
         for (let i = 0; i < 10; i++) { const ang = i / 10 * Math.PI * 2, r = i % 2 ? 12 : 30; ctx.lineTo(sx + Math.cos(ang) * r, sy + Math.sin(ang) * r); }
         ctx.fill();
+      } else if (p.type === 'gas') { // bouffée de gaz verdâtre qui gonfle
+        const r = p.r * (1 + (1 - a) * 1.6);
+        const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);
+        g.addColorStop(0, `rgba(170,215,60,${0.8 * a})`); g.addColorStop(0.6, `rgba(115,165,35,${0.5 * a})`); g.addColorStop(1, 'rgba(90,130,30,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
+      } else if (p.type === 'stink') { // lignes d'odeur ondulées (style BD)
+        ctx.strokeStyle = `rgba(110,160,40,${a})`; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.beginPath();
+        for (let k = 0; k <= 10; k++) { const yy = sy - k * 4.5, xx = sx + Math.sin(k * 0.9 + p.ph + p.life * 9) * 6; k ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy); }
+        ctx.stroke(); ctx.lineCap = 'butt';
+      } else if (p.type === 'burpwave') { // ondes de choc du rot, devant la bouche
+        const t = 1 - a; if (t * p.max < p.delay) return;
+        const r = 10 + t * 55;
+        ctx.strokeStyle = `rgba(255,209,102,${a})`; ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.arc(sx + p.dir * t * 30, sy, r, p.dir > 0 ? -0.9 : Math.PI - 0.9, p.dir > 0 ? 0.9 : Math.PI + 0.9); ctx.stroke();
+      } else if (p.type === 'spit') { ctx.fillStyle = `rgba(200,235,255,${a})`; ctx.beginPath(); ctx.arc(sx, sy, 3.5, 0, Math.PI * 2); ctx.fill();
       } else if (p.type === 'coin') {
         ctx.fillStyle = '#f1c40f'; ctx.strokeStyle = '#8a6d00'; ctx.lineWidth = 2; ctx.globalAlpha = a;
         ctx.beginPath(); ctx.ellipse(sx, sy, 7 * Math.abs(Math.sin(p.life * 12)) + 1, 7, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.globalAlpha = 1;
@@ -1167,9 +1205,12 @@ const Game = {
     this.texts.forEach(t => {
       const a = Math.min(1, t.life / (t.max * 0.4));
       const sc = 1 + Math.max(0, (t.life - t.max * 0.8) / (t.max * 0.2)) * 0.5;
-      ctx.save(); ctx.globalAlpha = a; ctx.translate(t.x - cx, t.y - t.z); ctx.scale(sc, sc);
-      ctx.font = `900 ${t.size}px "Arial Black", Arial`; ctx.textAlign = 'center';
-      ctx.lineWidth = 5; ctx.strokeStyle = '#000'; ctx.strokeText(t.s, 0, 0); ctx.fillStyle = t.col; ctx.fillText(t.s, 0, 0);
+      const wx = t.wob ? Math.sin(t.life * 47) * 3 : 0, wy = t.wob ? Math.cos(t.life * 39) * 2 : 0;
+      ctx.save(); ctx.globalAlpha = a; ctx.translate(t.x - cx + wx, t.y - t.z + wy); ctx.scale(sc, sc); if (t.rot) ctx.rotate(t.rot);
+      ctx.font = `900 ${t.size}px "Arial Black", Arial`; ctx.textAlign = 'center'; ctx.lineJoin = 'round';
+      if (t.stroke) { ctx.lineWidth = 10; ctx.strokeStyle = '#000'; ctx.strokeText(t.s, 0, 0); ctx.lineWidth = 5; ctx.strokeStyle = t.stroke; ctx.strokeText(t.s, 0, 0); }
+      else { ctx.lineWidth = 5; ctx.strokeStyle = '#000'; ctx.strokeText(t.s, 0, 0); }
+      ctx.fillStyle = t.col; ctx.fillText(t.s, 0, 0);
       ctx.restore();
     });
     drawAmbientParticles(ctx, this.ambient);

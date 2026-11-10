@@ -53,6 +53,7 @@ function registerSW() {
   };
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloading) return; reloading = true; location.reload(); });
   navigator.serviceWorker.register('sw.js').then(reg => {
+    window.SWReg = reg; // pour le bouton « Mettre à jour » (UI.checkUpdate)
     // une version attend déjà (téléchargée lors d'une visite précédente)
     if (reg.waiting && navigator.serviceWorker.controller) showBanner(reg);
     reg.addEventListener('updatefound', () => {
@@ -65,4 +66,20 @@ function registerSW() {
     // vérifie s'il y a une nouvelle version quand on revient sur l'appli
     document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
   }).catch(() => {});
+}
+
+// Bouton « ⟳ Mettre à jour » : cherche une nouvelle version sur le serveur.
+// Résultat : 'latest' (déjà à jour), 'updating' (téléchargée : la page va se recharger), 'offline', 'reload' (pas de service worker)
+function checkForUpdate() {
+  return new Promise(resolve => {
+    const reg = window.SWReg;
+    if (!reg) { resolve('reload'); setTimeout(() => location.reload(), 300); return; }
+    const activate = w => { resolve('updating'); if (w.state === 'installed') w.postMessage({ type: 'SKIP_WAITING' }); else w.addEventListener('statechange', () => { if (w.state === 'installed') w.postMessage({ type: 'SKIP_WAITING' }); }); };
+    if (reg.waiting) { activate(reg.waiting); return; }
+    reg.update().then(() => {
+      if (reg.installing) activate(reg.installing);
+      else if (reg.waiting) activate(reg.waiting);
+      else resolve('latest');
+    }).catch(() => resolve('offline'));
+  });
 }

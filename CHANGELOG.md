@@ -1,3 +1,21 @@
+# Les laïquistes — v3.4.0 : difficulté, version, pets et rots lisibles
+
+## Niveaux de difficulté
+- **3 niveaux** : ★ Tranquille (score ×1), ★★ Costaud (×1,5, = l'équilibrage de la v3.3), ★★★ Laïque ultime (×2).
+- Tout le monde commence en Tranquille ; finir le mode histoire débloque le niveau suivant **pour tous les héros**. Choix sur l'écran du perso (niveaux verrouillés : 🔒 + explication).
+- Le niveau touche : vie, dégâts et rythme d'attaque des ennemis et des boss, durée des « ! » d'annonce, nombre d'ennemis à l'écran et de renforts, fréquence et dégâts des dangers, nourriture, enchaînements des boss, début de la phase 2 (80 % en Laïque ultime). Réglages : `BALANCE.levels`.
+- Le niveau est rappelé sur l'écran d'intro de chaque monde.
+- Sauvegarde en ligne du niveau débloqué (`diffMax`) : nouvelles règles Firestore dans le README. Avec les anciennes règles, le jeu renvoie la sauvegarde sans ce champ (rien n'est perdu).
+
+## Version et mise à jour
+- **Version en bas à gauche de tous les menus** + bouton **⟳ Mettre à jour** (cherche, charge et relance ; sinon « Tu as la dernière version »).
+
+## Pets et rots lisibles
+- Pet : « PROUUUT ! » vert qui tremble, nuage verdâtre qui sort de l'arrière, lignes d'odeur.
+- Rot : « BUUURP ! » jaune qui sort de la bouche, ondes et postillons.
+
+---
+
 # Les laïquistes — v3.3.0 : son et iPad
 
 ## Mixage

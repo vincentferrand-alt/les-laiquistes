@@ -215,13 +215,18 @@ const Sfx = {
   fart(pan, which) { if (!Samples.play(which || Samples.next('pet'), pan, 1)) this.synthFart(pan); },
   burp(pan, which) { if (!Samples.play(which || Samples.next('rot'), pan, 1)) this.synthBurp(pan); },
   // Ennemi KO : un « pouf » cartoon la plupart du temps, et de temps en temps un pet ou un rot (8 pets, 5 rots)
+  // renvoie 'pet', 'rot' ou rien : le jeu affiche alors le gag à l'écran (texte BD + nuage), pour qu'il n'y ait aucun doute
   kill(pan, boss = false) {
-    if (!this.ctx) return;
-    if (boss) { this.fart(pan, pick(['pet-3', 'pet-8', 'pet-6'])); return; } // un boss vaincu part toujours… avec panache
+    if (!this.ctx) return null;
+    if (boss) { this.fart(pan, pick(['pet-3', 'pet-8', 'pet-6'])); return 'pet'; } // un boss vaincu part toujours… avec panache
     this.killN = (this.killN || 0) + 1;
     // ≈ 1 fois sur 3, et jamais deux KO de suite
     const lucky = this.killN - (this.lastGag || -9) >= 2 && Math.random() < 0.33;
-    if (lucky && this.gate('gag', 1, 0.8)) { this.lastGag = this.killN; Math.random() < 0.62 ? this.fart(pan) : this.burp(pan); return; }
+    if (lucky && this.gate('gag', 1, 0.8)) {
+      this.lastGag = this.killN;
+      if (Math.random() < 0.62) { this.fart(pan); return 'pet'; }
+      this.burp(pan); return 'rot';
+    }
     if (!this.gate('ko', 2, 0.2)) return;
     const p = 0.9 + Math.random() * 0.25;
     this.noise(0.22, 0.3, 380 * p, 0, 0.8, pan, null, 'lowpass');               // « pouf » (nuage de poussière)

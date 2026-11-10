@@ -66,6 +66,19 @@ const BALANCE = {
     fateh: { hazardEvery: 0.8 },
   },
   diveMul: 1.8,             // dégâts du coup plongeant (× dégâts du héros)
+  // NIVEAUX DE DIFFICULTÉ 1 à 3 (v3.4) — multiplient tout le reste. Le niveau 2 = l'équilibrage de la v3.3.
+  // Finir le mode histoire en niveau N débloque le niveau N+1 (pour tous les héros) ; ensuite on choisit librement.
+  levels: {
+    1: { name: 'Tranquille', enemyHp: 0.8, enemyDmg: 0.7, enemyCd: 1.2, maxAlive: -1, extraPerWave: -1,
+         bossHp: 0.8, bossDmg: 0.7, bossCd: 1.15, windup: 1.2, combo: 0, phase2At: 0.6,
+         hazardEvery: 1.3, hazardDmg: 0.7, food: 1.35, score: 1 },
+    2: { name: 'Costaud', enemyHp: 1, enemyDmg: 1, enemyCd: 1, maxAlive: 0, extraPerWave: 0,
+         bossHp: 1, bossDmg: 1, bossCd: 1, windup: 1, combo: 0, phase2At: 0.6,
+         hazardEvery: 1, hazardDmg: 1, food: 1, score: 1.5 },
+    3: { name: 'Laïque ultime', enemyHp: 1.3, enemyDmg: 1.3, enemyCd: 0.85, maxAlive: 1, extraPerWave: 1,
+         bossHp: 1.3, bossDmg: 1.3, bossCd: 0.85, windup: 0.85, combo: 0.15, phase2At: 0.8,
+         hazardEvery: 0.8, hazardDmg: 1.25, food: 0.7, score: 2 },
+  },
   survival: { baseCount: 4, perWave: 1.2, maxCount: 14, diffPerWave: 0.05, bossEvery: 5, bossHpMul: 0.7 },
 };
 
@@ -204,6 +217,9 @@ const Save = {
     this.data.storyWinsBy = this.data.storyWinsBy || {};
     this.data.survival = this.data.survival || {};  // meilleure vague atteinte en Survie, par monde
     this.data.rushBest = this.data.rushBest || 0;    // meilleur score en Boss Rush
+    // niveau de difficulté le plus haut débloqué (1 à 3) et niveau choisi. Qui avait déjà fini l'histoire avant la v3.4 a le niveau 2.
+    if (!this.data.diffMax) this.data.diffMax = (this.data.storyWins || 0) > 0 ? 2 : 1;
+    this.data.diff = Math.max(1, Math.min(this.data.diffMax, this.data.diff || 1));
     // réglages : volumes séparés (0..1), voix des boss, vibrations
     // music / sfx / amb = position du curseur (échelle progressive, voir volGain dans audio.js) ; ctlSize = taille des commandes tactiles
     const old = this.data.settings;
@@ -230,12 +246,14 @@ const Save = {
   // Règles de déblocage (appelées à la fin du mode histoire). Renvoie les noms débloqués.
   //  - Senoussi : terminer le mode histoire avec n'importe quel héros
   //  - The Purf : terminer le mode histoire EN JOUANT Senoussi
-  storyCompleted(heroId) {
+  storyCompleted(heroId, level = 1) {
     const d = this.data, out = [];
     d.storyWins = (d.storyWins || 0) + 1;
     d.storyWinsBy[heroId] = (d.storyWinsBy[heroId] || 0) + 1;
     if (!d.unlocked.senoussi) { d.unlocked.senoussi = true; out.push('Senoussi'); }
     if (heroId === 'senoussi' && !d.unlocked.purf) { d.unlocked.purf = true; out.push('The Purf'); }
+    // niveau de difficulté suivant (valable pour tous les héros)
+    if (level >= d.diffMax && d.diffMax < 3) { d.diffMax++; d.diff = d.diffMax; out.push('Le niveau de difficulté ' + d.diffMax + ' (« ' + BALANCE.levels[d.diffMax].name + ' »)'); }
     this.save();
     return out;
   },
