@@ -13,6 +13,20 @@ window.addEventListener('load', () => {
   // Débloque l'audio au premier geste (exigence des navigateurs mobiles)
   const unlock = () => { Sfx.init(); window.removeEventListener('pointerdown', unlock); };
   window.addEventListener('pointerdown', unlock);
+  // Écran d'accueil : un vrai clic démarre l'audio (la musique de menu attend déjà dans Sfx.wanted)
+  const splash = document.getElementById('splash');
+  if (splash) {
+    let done = false;
+    const go = () => {
+      if (done) return; done = true;
+      Sfx.init(); Voice.prime();
+      Sfx.music('menu'); // relance explicitement la musique de menu une fois le son débloqué
+      splash.remove();
+    };
+    splash.addEventListener('click', go);
+    splash.addEventListener('touchend', e => { e.preventDefault(); go(); });
+    window.addEventListener('keydown', go, { once: true });
+  }
   // iPad / iPhone : la synthèse vocale ne se débloque que sur un vrai geste (click, touchend)
   ['click', 'touchend', 'keydown'].forEach(ev => window.addEventListener(ev, () => { if (typeof Voice !== 'undefined' && !Voice.primed) Voice.prime(); }, { capture: true }));
   // Application installable (PWA) — uniquement quand le jeu est servi en https

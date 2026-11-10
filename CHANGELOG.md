@@ -1,3 +1,10 @@
+# Les laïquistes — v3.2.4
+
+- **Écran d’accueil « Touche pour jouer »** : les navigateurs interdisent tout son avant un geste ; le premier toucher débloque désormais l’audio et lance tout de suite la musique de menu.
+- **Bouton « Partager sur WhatsApp »** sur l’écran titre (aperçu avec image via les balises Open Graph).
+
+---
+
 # Les laïquistes — v3.2.3
 
 - **Voix sur iPad / iPhone** : le déblocage de la synthèse vocale se faisait sur « pointerdown », que Safari iOS ne reconnaît pas comme un vrai geste, et n’était tenté qu’une fois. Il est maintenant retenté à chaque clic / fin de toucher jusqu’à confirmation.

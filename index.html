@@ -52,6 +52,12 @@
     </div>
   </div>
 
+  <!-- Écran d'accueil : le premier toucher débloque le son (obligatoire dans les navigateurs) et lance la musique -->
+  <div id="splash" role="button" tabindex="0">
+    <div class="logo"><span>LES</span>LAÏQUISTES</div>
+    <div class="splash-go">▶ TOUCHE POUR JOUER</div>
+  </div>
+
   <div id="screens">
     <!-- Titre -->
     <section id="s-title" class="screen">
@@ -71,6 +77,7 @@
         <button class="btn small" id="b-settings">⚙ Réglages</button>
         <button class="btn small" id="b-fs">⛶ Plein écran</button>
         <button class="btn small hidden" id="b-install">📲 Installer l'appli</button>
+        <button class="btn small" id="b-share">💬 Partager sur WhatsApp</button>
       </div>
       <div class="hint">PC : flèches ou ZQSD · Espace = saut · J / X = frapper · K / C = spécial · Échap = pause</div>
       <div class="version" id="version"></div>

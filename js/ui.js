@@ -16,6 +16,7 @@ const UI = {
     $('#b-scores').onclick = () => { Sfx.init(); Sfx.click(); this.openScores('histoire'); };
     $('#b-mute').onclick = () => this.toggleMute();
     $('#b-fs').onclick = () => this.fullscreen();
+    $('#b-share').onclick = () => this.shareWhatsApp();
     $('#b-char-go').onclick = () => { Sfx.click(); this.confirmHero(); };
     $('#b-intro-go').onclick = () => { Sfx.click(); this.launch(); };
     // Retour depuis l'intro : choix du niveau → choix du monde ; histoire → choix du personnage
@@ -76,6 +77,14 @@ const UI = {
   toggleMute() {
     Save.data.muted = !Save.data.muted; Save.save();
     Sfx.setMuted(Save.data.muted); this.updateMuteBtn();
+  },
+  // Partage par WhatsApp (appli sur téléphone, WhatsApp Web sur ordinateur). L'aperçu avec l'image est
+  // fabriqué par WhatsApp à partir des balises Open Graph de index.html.
+  shareWhatsApp() {
+    const meta = document.querySelector('meta[property="og:url"]');
+    const url = (meta && meta.content) || (location.origin + location.pathname);
+    const text = '🎮 Viens jouer à Les laïquistes : 7 héros, 7 mondes, 7 boss ! ' + url;
+    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
   },
   updateMuteBtn() { $('#b-mute').textContent = Save.data.muted ? '🔇 Son coupé' : '🔊 Son activé'; },
   fullscreen() {
