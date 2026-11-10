@@ -1,0 +1,19 @@
+{
+  "id": "les-laiquistes",
+  "name": "Les laïquistes",
+  "short_name": "Laïquistes",
+  "description": "Beat'em up déjanté : 7 laïquistes, 7 mondes, 7 boss.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#120a24",
+  "theme_color": "#2d1b4e",
+  "lang": "fr",
+  "categories": ["games"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

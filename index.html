@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Les laïquistes</title>
+  <meta name="theme-color" content="#2d1b4e">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="description" content="Beat'em up déjanté : 7 laïquistes, 7 mondes, 7 boss. Jouable sur PC et téléphone.">
+
+  <!-- ================================================================
+       APERÇU DE PARTAGE (WhatsApp, Messenger, réseaux sociaux)
+       ⚠ URL DU SITE : remplace https://vincentferrand-alt.github.io/les-laiquistes/
+         par l'adresse finale du jeu, aux 3 endroits ci-dessous
+         (og:url, og:image, twitter:image). Les adresses doivent être complètes (https://…).
+       ================================================================ -->
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:site_name" content="Les laïquistes">
+  <meta property="og:title" content="Les laïquistes">
+  <meta property="og:description" content="Beat'em up déjanté : 7 laïquistes, 7 mondes, 7 boss. Jouable sur PC et téléphone, gratuit.">
+  <meta property="og:url" content="https://vincentferrand-alt.github.io/les-laiquistes/">
+  <meta property="og:image" content="https://vincentferrand-alt.github.io/les-laiquistes/icons/og-image.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Les 7 laïquistes alignés sous le titre du jeu">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Les laïquistes">
+  <meta name="twitter:description" content="Beat'em up déjanté : 7 laïquistes, 7 mondes, 7 boss.">
+  <meta name="twitter:image" content="https://vincentferrand-alt.github.io/les-laiquistes/icons/og-image.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <div id="banner"><div class="b-title"></div><div class="b-sub"></div></div>
+
+  <!-- Contrôles en jeu -->
+  <div id="controls" class="hidden">
+    <button id="btn-pause" aria-label="Pause">❚❚</button>
+    <div id="stick-zone"><div id="stick-base"><div id="stick-knob"></div></div></div>
+    <div id="btns">
+      <button class="pad special" data-btn="special">★<small>SPÉCIAL</small></button>
+      <button class="pad jump" data-btn="jump">⤒<small>SAUT</small></button>
+      <button class="pad attack" data-btn="attack">✊<small>FRAPPE</small></button>
+    </div>
+  </div>
+
+  <div id="screens">
+    <!-- Titre -->
+    <section id="s-title" class="screen">
+      <div class="logo"><span>LES</span>LAÏQUISTES</div>
+      <canvas id="title-art" width="900" height="170"></canvas>
+      <div class="menu">
+        <button class="btn primary big" id="b-story">MODE HISTOIRE</button>
+        <button class="btn big" id="b-levels">CHOIX DU NIVEAU</button>
+        <div class="menu row">
+          <button class="btn" id="b-rush">💀 BOSS RUSH</button>
+          <button class="btn" id="b-surv">🌊 SURVIE</button>
+          <button class="btn" id="b-scores">🏆 CLASSEMENT</button>
+        </div>
+      </div>
+      <div class="menu row">
+        <button class="btn small" id="b-mute">🔊</button>
+        <button class="btn small" id="b-settings">⚙ Réglages</button>
+        <button class="btn small" id="b-fs">⛶ Plein écran</button>
+        <button class="btn small hidden" id="b-install">📲 Installer l'appli</button>
+      </div>
+      <div class="hint">PC : flèches ou ZQSD · Espace = saut · J / X = frapper · K / C = spécial · Échap = pause</div>
+      <div class="version" id="version"></div>
+    </section>
+
+    <!-- Choix du personnage -->
+    <section id="s-chars" class="screen">
+      <h2>CHOISIS TON LAÏQUISTE</h2>
+      <div class="sub" id="chars-sub"></div>
+      <div class="chars-layout">
+        <div id="char-grid"></div>
+        <div class="char-side">
+          <div id="char-detail"></div>
+          <button class="btn primary big" id="b-char-go">C'EST PARTI !</button>
+          <button class="btn small" data-go="s-title">← Retour</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Choix du monde -->
+    <section id="s-worlds" class="screen">
+      <h2>CHOISIS TON MONDE</h2>
+      <div id="world-grid"></div>
+      <button class="btn small" onclick="UI.openChars()">← Changer de perso</button>
+    </section>
+
+    <!-- Intro de monde -->
+    <section id="s-intro" class="screen">
+      <div class="intro-step" id="intro-step"></div>
+      <div class="intro-name" id="intro-name"></div>
+      <div class="intro-sub" id="intro-sub"></div>
+      <canvas id="intro-art" width="960" height="380"></canvas>
+      <div class="intro-boss" id="intro-boss"></div>
+      <div class="menu row">
+        <button class="btn small" id="b-intro-back">← Retour</button>
+        <button class="btn primary big" id="b-intro-go">GO !</button>
+      </div>
+    </section>
+
+    <!-- Pause -->
+    <section id="s-pause" class="screen dim">
+      <h2>PAUSE</h2>
+      <div id="pause-controls"></div>
+      <div class="menu row">
+        <button class="btn primary big" id="b-resume">REPRENDRE</button>
+        <button class="btn" id="b-pause-settings">⚙ Réglages</button>
+        <button class="btn" id="b-restart">Recommencer le monde</button>
+        <button class="btn" id="b-quit">Quitter</button>
+      </div>
+    </section>
+
+    <!-- Réglages (depuis le titre ou la pause) -->
+    <section id="s-settings" class="screen">
+      <h2>⚙ RÉGLAGES</h2>
+      <div class="settings">
+        <label class="rng"><span>🎵 Musique</span><input type="range" min="0" max="100" step="5" data-set="music"><output></output></label>
+        <label class="rng"><span>💥 Effets</span><input type="range" min="0" max="100" step="5" data-set="sfx"><output></output></label>
+        <label class="rng"><span>🗣 Voix</span><input type="range" min="0" max="100" step="5" data-set="voice"><output></output></label>
+        <label class="tog"><input type="checkbox" data-set="voiceOn"> Voix des boss (synthèse vocale)</label>
+        <label class="tog"><input type="checkbox" data-set="vibrate"> Vibrations (téléphone)</label>
+        <div class="set-note" id="voice-note"></div>
+        <div class="account">
+          <div id="acct-status" class="set-note"></div>
+          <button class="btn small hidden" id="b-link-google">🔗 Relier à Google</button>
+          <div class="set-note">Relier à Google (facultatif) permet de retrouver ta progression sur un autre appareil.</div>
+        </div>
+      </div>
+      <div class="version" id="version-settings"></div>
+      <button class="btn small" id="b-settings-back">← Retour</button>
+    </section>
+
+    <!-- Game over -->
+    <section id="s-over" class="screen dim">
+      <div class="gameover">ALORS LA !!!</div>
+      <div class="big-score">Score : <b id="over-score">0</b></div>
+      <div id="over-save" class="save-box hidden"></div>
+      <div class="menu row">
+        <button class="btn primary big" id="b-over-retry">RÉESSAYER</button>
+        <button class="btn" id="b-over-menu">Menu</button>
+      </div>
+    </section>
+
+    <!-- Victoire -->
+    <section id="s-win" class="screen dim">
+      <div class="win-title" id="win-title"></div>
+      <div class="win-stats" id="win-stats"></div>
+      <div class="win-unlock" id="win-unlock"></div>
+      <div id="win-save" class="save-box hidden"></div>
+      <div class="menu row" id="win-buttons"></div>
+    </section>
+
+    <!-- Classement -->
+    <section id="s-scores" class="screen">
+      <h2>🏆 CLASSEMENT</h2>
+      <select id="score-board"></select>
+      <div class="sub" id="score-src"></div>
+      <ol id="score-list"></ol>
+      <button class="btn small" data-go="s-title">← Retour</button>
+    </section>
+  </div>
+
+  <!-- Bandeau de mise à jour de l'appli (service worker) -->
+  <div id="update-banner" class="hidden">✨ Nouvelle version disponible — <button class="btn small primary" id="b-update">Mettre à jour</button></div>
+  <div id="toast" class="hidden"></div>
+
+  <div id="rotate"><div>📱↻</div>Tourne ton téléphone en mode paysage</div>
+
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/draw.js"></script>
+  <script src="js/backgrounds.js"></script>
+  <script src="js/entities.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/cloud.js"></script>
+  <script src="js/scores.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

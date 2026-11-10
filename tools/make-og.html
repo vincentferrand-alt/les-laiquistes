@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Les laïquistes — fabrique d'images (partage + icônes)</title>
+<style>
+  body { background: #120a24; color: #fff; font-family: 'Trebuchet MS', Arial, sans-serif; padding: 20px; }
+  h1 { color: #feca57; } .item { margin: 18px 0; } canvas { max-width: 100%; border: 2px solid #444; background: repeating-conic-gradient(#333 0 25%, #222 0 50%) 0 0 / 20px 20px; }
+  button { font-size: 16px; padding: 8px 18px; border-radius: 20px; border: 2px solid #fff; background: #10ac84; color: #fff; cursor: pointer; margin-left: 10px; }
+  p { opacity: .8; max-width: 760px; }
+</style>
+</head>
+<body>
+<h1>Les laïquistes — images de partage et icônes</h1>
+<p>Cette page dessine, avec le code du jeu, l'image d'aperçu (WhatsApp, réseaux sociaux) et les icônes de l'appli.
+Clique sur « Télécharger » puis mets chaque fichier à l'endroit indiqué dans le dépôt GitHub.
+Ouvre la page depuis le dossier du jeu (http://localhost:8000/tools/make-og.html ou directement le fichier).</p>
+<div id="list"></div>
+
+<script src="../js/config.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/draw.js"></script>
+<script src="../js/backgrounds.js"></script>
+<script>
+// ---------- dessins ----------
+const HEROES5 = ['christian', 'guilhem', 'fateh', 'faouzi', 'venum'];
+
+// Fond « soleil levant » violet/orange, comme le menu du jeu
+function burst(ctx, W, H, cx, cy) {
+  const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#3b2266'); g.addColorStop(1, '#140a28');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.save(); ctx.translate(cx, cy);
+  for (let i = 0; i < 24; i++) { ctx.rotate(Math.PI / 12); ctx.fillStyle = i % 2 ? 'rgba(255,255,255,.05)' : 'rgba(254,202,87,.07)'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.max(W, H) * 1.5, -Math.max(W, H) * 0.2); ctx.lineTo(Math.max(W, H) * 1.5, Math.max(W, H) * 0.2); ctx.fill(); }
+  ctx.restore();
+  const r = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.6); r.addColorStop(0, 'rgba(255,159,67,.45)'); r.addColorStop(1, 'rgba(255,159,67,0)');
+  ctx.fillStyle = r; ctx.fillRect(0, 0, W, H);
+}
+// Tête ronde d'un héros dans un médaillon coloré
+function medal(ctx, kind, x, y, R) {
+  const c = CHARACTERS[kind];
+  ctx.save(); ctx.lineJoin = 'round';
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.arc(x + R * 0.06, y + R * 0.08, R, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = c.light; ctx.strokeStyle = '#000'; ctx.lineWidth = R * 0.09; ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.save(); ctx.beginPath(); ctx.arc(x, y, R * 0.94, 0, Math.PI * 2); ctx.clip();
+  drawHead(ctx, kind, x, y + R * 0.02, R * 1.95);
+  ctx.restore(); ctx.restore();
+}
+// 5 têtes en couronne autour du centre. rr = rayon de la couronne, R = rayon d'un médaillon
+function heads(ctx, S, rr, R) {
+  const cx = S / 2, cy = S / 2;
+  HEROES5.forEach((k, i) => { const a = -Math.PI / 2 + i * Math.PI * 2 / 5; medal(ctx, k, cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, R); });
+}
+function drawIcon(ctx, S, maskable) {
+  ctx.clearRect(0, 0, S, S);
+  ctx.save();
+  if (!maskable) { // icône « any » : carré arrondi, coins transparents
+    const r = S * 0.2; ctx.beginPath(); ctx.roundRect(0, 0, S, S, r); ctx.clip();
+  }
+  burst(ctx, S, S, S / 2, S * 0.55);
+  ctx.restore();
+  // maskable : tout le contenu tient dans le cercle central (80 % de la taille)
+  if (maskable) heads(ctx, S, S * 0.245, S * 0.142);
+  else heads(ctx, S, S * 0.29, S * 0.17);
+}
+function drawOG(ctx, W, H) {
+  burst(ctx, W, H, W / 2, H * 1.05);
+  // sol
+  const g = ctx.createLinearGradient(0, H - 120, 0, H); g.addColorStop(0, '#d4a76a'); g.addColorStop(1, '#8a6a3c');
+  ctx.fillStyle = g; ctx.fillRect(0, H - 120, W, 120); ctx.fillStyle = '#000'; ctx.fillRect(0, H - 122, W, 4);
+  // titre
+  ctx.save(); ctx.translate(W / 2, 150); ctx.rotate(-0.04); ctx.textAlign = 'center'; ctx.lineJoin = 'round';
+  ctx.font = '900 54px "Arial Black", Arial'; ctx.lineWidth = 10; ctx.strokeStyle = '#000'; ctx.fillStyle = '#feca57';
+  ctx.strokeText('LES', 0, -78); ctx.fillText('LES', 0, -78);
+  ctx.font = '900 128px "Arial Black", Arial'; ctx.lineWidth = 16;
+  ctx.fillStyle = '#5f27cd'; ctx.fillText('LAÏQUISTES', 10, 46); ctx.strokeText('LAÏQUISTES', 0, 36);
+  ctx.fillStyle = '#00d2d3'; ctx.fillText('LAÏQUISTES', 0, 36);
+  ctx.restore();
+  ctx.textAlign = 'center'; ctx.font = 'bold 30px "Trebuchet MS", Arial'; ctx.fillStyle = '#fff'; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(0,0,0,.6)';
+  const sub = "Beat'em up déjanté · 7 laïquistes · 7 mondes · 7 boss";
+  ctx.strokeText(sub, W / 2, 238); ctx.fillText(sub, W / 2, 238);
+  // les 7 laïquistes alignés
+  ROSTER.forEach((k, i) => {
+    const x = 105 + i * 165, y = H - 40;
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(x, y, 52, 11, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.save(); ctx.translate(x, y); ctx.lineJoin = 'round';
+    drawCharacter(ctx, k, { dir: i < 3 ? 1 : -1, scale: k === 'guilhem' || k === 'fateh' ? 2.0 : 2.25, t: 0.7 + i, pose: i % 3 === 1 ? 'attack' : 'idle', poseT: 0.5, companion: k === 'fateh' });
+    ctx.restore();
+  });
+  ctx.font = 'bold 22px "Trebuchet MS", Arial'; ctx.fillStyle = '#feca57'; ctx.textAlign = 'right';
+  ctx.fillText('Jouable sur PC et téléphone · gratuit', W - 24, 290);
+}
+
+// ---------- liste des images ----------
+const IMAGES = [
+  { file: 'og-image.png', where: 'icons/og-image.png', w: 1200, h: 630, draw: (c, w, h) => drawOG(c, w, h) },
+  { file: 'icon-512.png', where: 'icons/icon-512.png', w: 512, h: 512, draw: (c, w) => drawIcon(c, w, false) },
+  { file: 'icon-192.png', where: 'icons/icon-192.png', w: 192, h: 192, draw: (c, w) => drawIcon(c, w, false) },
+  { file: 'icon-maskable-512.png', where: 'icons/icon-maskable-512.png', w: 512, h: 512, draw: (c, w) => drawIcon(c, w, true) },
+  { file: 'apple-touch-icon.png', where: 'icons/apple-touch-icon.png', w: 180, h: 180, draw: (c, w) => drawIcon(c, w, true) },
+];
+const list = document.getElementById('list');
+window.RENDERED = {};
+IMAGES.forEach(it => {
+  const div = document.createElement('div'); div.className = 'item';
+  const cv = document.createElement('canvas'); cv.width = it.w; cv.height = it.h;
+  it.draw(cv.getContext('2d'), it.w, it.h);
+  const btn = document.createElement('button'); btn.textContent = '⬇ Télécharger ' + it.file;
+  btn.onclick = () => cv.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = it.file; a.click(); }, 'image/png');
+  div.innerHTML = `<div><b>${it.file}</b> (${it.w}×${it.h}) → à placer dans <code>${it.where}</code></div>`;
+  div.appendChild(cv); div.appendChild(btn); list.appendChild(div);
+  window.RENDERED[it.file] = cv;
+});
+</script>
+</body>
+</html>
