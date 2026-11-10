@@ -48,6 +48,14 @@ const UI = {
 
     this.initSettings();
     $('#version').textContent = 'v' + (window.GAME_VERSION || '?');
+    $('#b-check-update').onclick = () => {
+      Sfx.init(); Sfx.click();
+      const msg = $('#upd-msg'); msg.textContent = 'Recherche…';
+      checkForUpdate().then(r => {
+        msg.textContent = { latest: '✓ Tu as la dernière version', updating: 'Nouvelle version : chargement…', offline: 'Pas de connexion', reload: 'Rechargement…' }[r] || '';
+        if (r === 'latest' || r === 'offline') setTimeout(() => { msg.textContent = ''; }, 3000);
+      });
+    };
     $('#version-settings').textContent = 'Les laïquistes v' + (window.GAME_VERSION || '?');
     $('#b-link-google').onclick = () => { Sfx.click(); Cloud.linkGoogle(); };
     this.refreshAccount();
@@ -158,6 +166,7 @@ const UI = {
       grid.appendChild(card);
     });
     this.showHeroDetail();
+    this.renderDiff();
     $('#chars-sub').textContent = {
       story: 'Mode histoire : les 6 autres mondes, dans un ordre aléatoire',
       select: 'Choix du niveau',
@@ -167,6 +176,27 @@ const UI = {
     this.show('s-chars');
   },
 
+  // Niveaux de difficulté (écran du choix du perso) : 1 débloqué d'office, 2 et 3 en finissant l'histoire
+  renderDiff() {
+    const box = $('#diff-pick'); if (!box) return;
+    const d = Save.data;
+    box.innerHTML = '<div class="dp-title">Difficulté</div>';
+    [1, 2, 3].forEach(n => {
+      const L = BALANCE.levels[n], locked = n > d.diffMax;
+      const b = document.createElement('button');
+      b.className = 'btn small dp' + (n === d.diff ? ' primary' : '') + (locked ? ' locked' : '');
+      b.innerHTML = `${locked ? '🔒' : '★'.repeat(n)} <b>${L.name}</b><small>score ×${String(L.score).replace('.', ',')}</small>`;
+      b.onclick = () => {
+        Sfx.init();
+        if (locked) { Sfx.burp(); b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); $('#diff-hint').textContent = `Termine le mode histoire en « ${BALANCE.levels[n - 1].name} » pour débloquer ce niveau.`; return; }
+        Sfx.click(); d.diff = n; Save.save(); this.renderDiff();
+      };
+      box.appendChild(b);
+    });
+    const hint = document.createElement('div'); hint.id = 'diff-hint'; hint.className = 'dp-hint';
+    hint.textContent = d.diffMax < 3 ? `Termine le mode histoire en « ${BALANCE.levels[d.diffMax].name} » pour débloquer le niveau suivant.` : 'Tous les niveaux sont débloqués.';
+    box.appendChild(hint);
+  },
   showHeroDetail() {
     const c = CHARACTERS[this.selHero];
     const bar = (label, v, max) => `<div class="stat"><span>${label}</span><div class="bar"><i style="width:${Math.round(v / max * 100)}%"></i></div></div>`;
@@ -181,6 +211,7 @@ const UI = {
   confirmHero() {
     if (!Save.isUnlocked(this.selHero)) return;
     this.run.hero = this.selHero;
+    this.run.level = Save.data.diff || 1; // le niveau est fixé pour toute la partie
     if (this.run.mode === 'story' || this.run.mode === 'bossrush') {
       this.run.order = shuffle(WORLDS.filter(w => w.id !== this.run.hero).map(w => w.id)); this.run.idx = 0; this.run.score = 0; this.run.heroHp = null;
       this.openIntro();
@@ -226,7 +257,8 @@ const UI = {
   openIntro() {
     const wid = this.run.order[this.run.idx], w = worldById(wid), boss = CHARACTERS[w.boss];
     const n = `${this.run.idx + 1} / ${this.run.order.length}`;
-    $('#intro-step').textContent = { story: 'MONDE ' + n, select: 'CHOIX DU NIVEAU', bossrush: 'BOSS RUSH — BOSS ' + n, survival: 'SURVIE — VAGUES SANS FIN' }[this.run.mode];
+    $('#intro-step').textContent = { story: 'MONDE ' + n, select: 'CHOIX DU NIVEAU', bossrush: 'BOSS RUSH — BOSS ' + n, survival: 'SURVIE — VAGUES SANS FIN' }[this.run.mode]
+      + '  ·  ' + '★'.repeat(this.run.level || 1) + ' ' + BALANCE.levels[this.run.level || 1].name;
     $('#intro-name').textContent = w.name;
     $('#intro-sub').textContent = w.sub;
     $('#intro-boss').innerHTML = `Boss : <b style="color:${boss.light}">${boss.name}</b> — ${boss.title}`;
@@ -251,7 +283,7 @@ const UI = {
     this.run.worldScoreStart = this.run.score;
     const diff = { story: BALANCE.story.base + this.run.idx * BALANCE.story.perWorld, bossrush: 1 + this.run.idx * 0.08, survival: 1 }[this.run.mode] || 1.15;
     this.hideScreens(); this.setControls(true);
-    Game.start({ worldId: wid, heroKind: this.run.hero, mode: this.run.mode, difficulty: diff, score: this.run.score, heroHp: retry ? null : this.run.heroHp });
+    Game.start({ worldId: wid, heroKind: this.run.hero, mode: this.run.mode, difficulty: diff, level: this.run.level, score: this.run.score, heroHp: retry ? null : this.run.heroHp });
   },
 
   pause() {
@@ -348,7 +380,7 @@ const UI = {
     // Déblocages : uniquement en terminant le mode histoire (voir Save.storyCompleted dans data.js)
     const storyDone = this.run.mode === 'story' && this.run.idx >= this.run.order.length - 1;
     const rush = this.run.mode === 'bossrush', rushDone = rush && this.run.idx >= this.run.order.length - 1;
-    const unlocks = storyDone ? Save.storyCompleted(this.run.hero) : [];
+    const unlocks = storyDone ? Save.storyCompleted(this.run.hero, this.run.level) : [];
     if (rushDone) Save.data.rushBest = Math.max(Save.data.rushBest || 0, res.score);
     Save.save();
 

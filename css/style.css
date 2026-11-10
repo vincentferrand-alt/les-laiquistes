@@ -204,8 +204,12 @@ h2, .logo, .win-title, .intro-name, .intro-step, .gameover, .b-title, .b-sub, .c
 }
 
 /* ---------- Version, sauvegarde en ligne, bandeau de mise à jour, toast ---------- */
-.version { position: absolute; left: max(10px, env(safe-area-inset-left)); bottom: 6px; font-size: 11px; opacity: .5; }
-#s-settings .version { position: static; }
+/* version + bouton de mise à jour, en bas à gauche de tous les menus */
+#ver-box { position: fixed; left: max(10px, env(safe-area-inset-left)); bottom: max(8px, env(safe-area-inset-bottom)); z-index: 55; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; }
+#ver-box #version { opacity: .85; text-shadow: 1px 1px 0 #000; }
+#ver-box .btn.small { padding: 4px 10px; font-size: 11px; }
+#upd-msg { font-size: 11px; opacity: .9; text-shadow: 1px 1px 0 #000; }
+#s-settings .version { position: static; font-size: 11px; opacity: .5; }
 .account { border-top: 1px solid rgba(255,255,255,.15); padding-top: 8px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 #update-banner { position: fixed; left: 50%; top: max(8px, env(safe-area-inset-top)); transform: translateX(-50%); z-index: 60; background: #2d1b4e; border: 3px solid #feca57; border-radius: 30px; padding: 6px 8px 6px 18px; font-weight: bold; display: flex; gap: 10px; align-items: center; box-shadow: 0 6px 0 #000; white-space: nowrap; }
 #toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 60; background: rgba(0,0,0,.85); border: 2px solid #fff; border-radius: 14px; padding: 8px 16px; font-size: 14px; max-width: 90vw; }
@@ -226,3 +230,13 @@ h2, .logo, .win-title, .intro-name, .intro-step, .gameover, .b-title, .b-sub, .c
 .seg { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-weight: bold; }
 .seg span { width: 100%; }
 .seg .btn.small { padding: 6px 12px; font-size: 12px; }
+
+/* Niveaux de difficulté (écran du choix du perso) */
+.diff-pick { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 4px 0 8px; }
+.diff-pick .dp-title { width: 100%; font-weight: 900; font-size: 13px; letter-spacing: 1px; opacity: .8; text-transform: uppercase; }
+.diff-pick .dp { display: flex; flex-direction: column; align-items: center; line-height: 1.15; padding: 6px 10px; min-width: 88px; }
+.diff-pick .dp small { font-size: 10px; opacity: .8; font-weight: 700; }
+.diff-pick .dp.locked { opacity: .5; }
+.diff-pick .dp-hint { width: 100%; font-size: 11px; opacity: .7; }
+
+.diff-pick .dp.shake { animation: shake .35s; }

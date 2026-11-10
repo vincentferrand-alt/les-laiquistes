@@ -59,13 +59,14 @@ const Cloud = {
       survWave: ints(d.survival, s => s.wave),
       survScore: ints(d.survival, s => s.score),
       rushBest: Math.max(0, Math.round(d.rushBest || 0)),
+      diffMax: Math.max(1, Math.min(3, d.diffMax || 1)),
       updatedAt: M.serverTimestamp(),
     };
   },
   fromDoc(r) {
     const survival = {};
     HERO_IDS.forEach(k => { if (r.survWave && r.survWave[k] != null) survival[k] = { wave: r.survWave[k], score: (r.survScore || {})[k] || 0 }; });
-    return { name: r.name || '', unlocked: r.unlocked || {}, storyWinsBy: r.storyWinsBy || {}, cleared: r.cleared || {}, survival, rushBest: r.rushBest || 0 };
+    return { name: r.name || '', unlocked: r.unlocked || {}, storyWinsBy: r.storyWinsBy || {}, cleared: r.cleared || {}, survival, rushBest: r.rushBest || 0, diffMax: r.diffMax || 1 };
   },
   // Fusion : union des déblocages, meilleur de chaque record, plus grand nombre d'histoires terminées
   merge(local, remote) {
@@ -80,6 +81,7 @@ const Cloud = {
       if (!a || b.wave > a.wave || (b.wave === a.wave && b.score > a.score)) local.survival[k] = b;
     }
     local.rushBest = Math.max(local.rushBest || 0, remote.rushBest || 0);
+    local.diffMax = Math.max(local.diffMax || 1, remote.diffMax || 1);
     local.storyWins = Math.max(local.storyWins || 0, Object.values(local.storyWinsBy).reduce((s, n) => s + n, 0));
     if (!local.name && remote.name) local.name = remote.name;
     // cohérence des déblocages avec les histoires terminées
@@ -108,7 +110,13 @@ const Cloud = {
     if (!this.online()) return;
     clearTimeout(this.pushTimer);
     try { await this.mods.setDoc(this.ref(), this.toDoc()); }
-    catch (e) { console.warn('Envoi de la sauvegarde impossible (elle reste sur l\'appareil)', e); }
+    catch (e) {
+      // Règles Firestore d'avant la v3.4 (sans « diffMax ») : on renvoie sans ce champ, le reste est sauvegardé
+      if (String(e && e.code).includes('permission')) {
+        try { const d = this.toDoc(); delete d.diffMax; await this.mods.setDoc(this.ref(), d); return; } catch (e2) { e = e2; }
+      }
+      console.warn('Envoi de la sauvegarde impossible (elle reste sur l\'appareil)', e);
+    }
   },
 
   // ---------- Relier à Google ----------

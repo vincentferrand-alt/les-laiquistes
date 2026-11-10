@@ -53,6 +53,20 @@ Déblocages :
 
 Les histoires terminées sont comptées par héros dans la sauvegarde (`storyWinsBy`).
 
+## Niveaux de difficulté
+
+| Niveau | Nom | Score | Comment le débloquer |
+|---|---|---|---|
+| ★ | Tranquille | ×1 | dès le départ |
+| ★★ | Costaud | ×1,5 | finir le mode histoire en Tranquille |
+| ★★★ | Laïque ultime | ×2 | finir le mode histoire en Costaud |
+
+- Le choix se fait sur l'écran du choix du perso, une fois les niveaux débloqués. Le déblocage vaut **pour tous les héros**, et le niveau est fixé pour toute la partie.
+- **Costaud = l'équilibrage de la v3.3.** Tranquille : ennemis et boss moins solides et moins violents, coups mieux annoncés, dangers plus rares, plus de nourriture. Laïque ultime : l'inverse, un ennemi de plus à l'écran, boss qui enchaînent plus et passent en **phase 2 dès 80 % de vie**.
+- Tous les réglages sont dans `BALANCE.levels` (`js/data.js`).
+- Qui avait déjà fini l'histoire avant la v3.4 commence avec Costaud débloqué.
+- Le niveau débloqué est sauvegardé en ligne (champ `diffMax`) si les règles Firestore ci-dessous sont à jour ; sinon il reste sur l'appareil et tout le reste se sauvegarde normalement.
+
 ## Boss, dangers et difficulté
 
 - La **barre de vie d'un boss compte 5 niveaux**. Il dit une de ses phrases au début du combat puis à chaque niveau perdu, et devient un peu plus rapide et plus dur à chaque fois. Une fois le boss vaincu, le héros dit une de ses phrases.
@@ -93,7 +107,7 @@ Musiques, ambiances et la plupart des bruitages sont synthétisés en direct (We
 - **Thème de boss** dérivé du monde, qui démarre **pile sur la mesure** (plus de coupure sèche) par une mesure de montée. L'intensité monte avec le compteur de coups (charleston, arpèges, octaves, cymbales). Jingles de vague terminée, de victoire et de défaite.
 - **Ambiances par monde** (curseur à part) : goélands et vent (chantier), klaxons et ballon (Rap City), cigales et oiseaux (Allauch), bips rétro, bourdonnement électrique, vent du désert et bêlements, crépitement Geiger et bulles toxiques.
 - **Coups** : trois couches (choc, claquement, chair) + la « couleur » de l'arme du héros (tintement de truelle, « ting » de la Rolex, cuir des gants de Venum, « bôngg » de la pelle, cartouche en plastique, grésillement toxique). Le son monte un peu à chaque coup du combo et avec la série en cours.
-- **KO** : un « pouf » cartoon, et **environ une fois sur trois un pet ou un rot** (jamais deux de suite, tirés sans répétition parmi les 13). Un boss vaincu part toujours sur un long pet.
+- **KO** : un « pouf » cartoon, et **environ une fois sur trois un pet ou un rot** (jamais deux de suite, tirés sans répétition parmi les 13). Un boss vaincu part toujours sur un long pet. Pour qu'il n'y ait aucun doute, c'est aussi **montré** : « PROUUUT ! » vert qui tremble, nuage verdâtre et lignes d'odeur pour un pet ; « BUUURP ! » jaune, ondes et postillons devant la bouche pour un rot.
 - Bruits de pas discrets selon le sol, moteurs des véhicules de boss, panoramique stéréo selon la position à l'écran.
 - **iPad / iPhone** : le jeu joue **même avec l'interrupteur silencieux activé** (iOS 17 et plus). Revers : la musique d'une autre appli se met en pause pendant le jeu.
 - **⚙ Réglages** : curseurs Musique / Effets / Ambiance / Voix sur une **échelle progressive** (on règle finement dans les volumes bas). Par défaut : Musique 50 %, Effets 50 %, Ambiance 50 %, Voix 100 %. Les appareils qui n'avaient jamais touché aux curseurs passent à ces niveaux (un peu plus bas qu'avant) ; ceux qui les avaient réglés gardent leur volume. En pause, la musique continue, étouffée.
@@ -121,6 +135,8 @@ Les phrases sont lues dans `js/data.js` : si tu en changes une, relance le scrip
 5. Sur téléphone, ouvre ce lien dans Chrome puis menu ⋮ > **Installer l'application** (ou le bouton « 📲 Installer l'appli » sur l'écran titre).
 
 ### Mises à jour (bandeau « Nouvelle version disponible »)
+
+Le numéro de version est affiché **en bas à gauche de tous les menus**, avec un bouton **⟳ Mettre à jour** : il cherche une nouvelle version, la charge et relance le jeu (ou répond « Tu as la dernière version »).
 
 À chaque mise en ligne, change **deux** numéros :
 - `VERSION` dans `sw.js` (par exemple `laiquistes-v3.0.1`) : c'est ce changement qui fait télécharger la nouvelle version aux joueurs ;
@@ -216,7 +232,7 @@ service cloud.firestore {
     }
     function validSave(d, uid) {
       return d.keys().hasOnly(['uid', 'v', 'name', 'unlocked', 'storyWinsBy', 'cleared',
-                               'survWave', 'survScore', 'rushBest', 'updatedAt'])
+                               'survWave', 'survScore', 'rushBest', 'diffMax', 'updatedAt'])
         && d.keys().hasAll(['uid', 'v', 'unlocked', 'updatedAt'])
         && d.uid == uid                                     // uid obligatoire, et c'est bien le sien
         && d.v is int
@@ -226,6 +242,7 @@ service cloud.firestore {
         && intMap(d.get('storyWinsBy', {})) && intMap(d.get('cleared', {}))
         && intMap(d.get('survWave', {})) && intMap(d.get('survScore', {}))
         && (!('rushBest' in d) || okInt(d.rushBest))
+        && (!('diffMax' in d) || (d.diffMax is int && d.diffMax >= 1 && d.diffMax <= 3))
         && d.updatedAt == request.time;                     // horodatage du serveur
     }
   }
