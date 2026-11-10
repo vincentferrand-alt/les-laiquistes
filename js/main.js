@@ -13,6 +13,11 @@ window.addEventListener('load', () => {
   // Débloque l'audio au premier geste (exigence des navigateurs mobiles)
   const unlock = () => { Sfx.init(); window.removeEventListener('pointerdown', unlock); };
   window.addEventListener('pointerdown', unlock);
+  // Retour dans l'appli (après WhatsApp, un appel…) : iOS coupe l'audio et ne le rend qu'à un vrai geste.
+  // À chaque geste, si le son ne tourne pas, on le relance ; la voix est aussi re-débloquée.
+  ['pointerdown', 'click', 'touchend', 'keydown'].forEach(ev => window.addEventListener(ev, () => {
+    if (Sfx.ctx && Sfx.ctx.state !== 'running' && !document.hidden) Sfx.ctx.resume();
+  }, { capture: true }));
   // Écran d'accueil : un vrai clic démarre l'audio (la musique de menu attend déjà dans Sfx.wanted)
   const splash = document.getElementById('splash');
   if (splash) {

@@ -47,7 +47,7 @@ const Sfx = {
       if (this.wanted) { const w = this.wanted; this.wanted = null; this.music(w); }
       Voice.prime();
     }
-    if (this.ctx.state === 'suspended' && !document.hidden) this.ctx.resume();
+    if (this.ctx.state !== 'running' && !document.hidden) this.ctx.resume(); // iOS : l'état peut être « interrupted », pas seulement « suspended »
   },
 
   applyVolumes() {
@@ -831,5 +831,5 @@ Voice.init();
 // Onglet caché : on suspend l'audio (le séquenceur se recale tout seul au retour)
 document.addEventListener('visibilitychange', () => {
   if (!Sfx.ctx) return;
-  if (document.hidden) Sfx.ctx.suspend(); else Sfx.ctx.resume();
+  if (document.hidden) Sfx.ctx.suspend(); else { Sfx.ctx.resume(); Voice.primed = false; }
 });
