@@ -27,7 +27,7 @@ OUT = os.path.join(ROOT, 'voices')
 
 VOIX = {
     'christian': dict(voice='fr-FR-HenriNeural',   pitch='-6Hz',  rate='+6%'),    # maçon bourru
-    'guilhem':   dict(voice='fr-FR-RemyMultilingualNeural', pitch='+0Hz', rate='-6%'),  # posé, frimeur
+    'guilhem':   dict(voice='fr-CA-JeanNeural',    pitch='-4Hz',  rate='-6%'),    # posé, frimeur
     'fateh':     dict(voice='fr-BE-GerardNeural',  pitch='-2Hz',  rate='+0%'),    # autoritaire
     'faouzi':    dict(voice='fr-CH-FabriceNeural', pitch='+14Hz', rate='+10%'),   # geek excité
     'venum':     dict(voice='fr-CA-AntoineNeural', pitch='-10Hz', rate='+2%'),    # boxeur

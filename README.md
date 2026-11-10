@@ -102,6 +102,10 @@ Musiques, ambiances et la plupart des bruitages sont synthétisés en direct (We
 
 Sans fichiers, les personnages parlent avec la synthèse vocale du navigateur (qualité variable selon l'appareil). Pour avoir **les mêmes voix partout, de bien meilleure qualité** :
 
+**Le plus simple (rien à installer)** : le fichier `.github/workflows/voix.yml` demande à GitHub de fabriquer les voix sur ses serveurs. Il se lance tout seul quand il arrive sur GitHub et à chaque changement de `js/data.js` ; sinon onglet **Actions → Générer les voix → Run workflow**. Le dossier `voices/` apparaît dans le dépôt une minute plus tard.
+
+**Ou sur ton ordinateur** :
+
 1. Installer Python 3, puis dans un terminal : `pip install edge-tts`
 2. Dans le dossier du jeu : `python tools/make-voices.py` (Windows : `py tools/make-voices.py`). Il faut Internet : ce sont les voix neuronales gratuites de Microsoft.
 3. Le dossier `voices/` se remplit (un MP3 par phrase + `manifest.json`). Le mettre sur GitHub, puis changer `VERSION` (sw.js) et `GAME_VERSION` (config.js).

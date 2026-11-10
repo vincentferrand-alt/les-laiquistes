@@ -1,0 +1,104 @@
+{
+ "files": [
+  {
+   "kind": "christian",
+   "text": "Qui peut l'en blâmer ?",
+   "file": "christian-1.mp3"
+  },
+  {
+   "kind": "christian",
+   "text": "Mon oreille !!!!",
+   "file": "christian-2.mp3"
+  },
+  {
+   "kind": "christian",
+   "text": "J'ai tout vu, j'ai tout fait !",
+   "file": "christian-3.mp3"
+  },
+  {
+   "kind": "guilhem",
+   "text": "Popeck",
+   "file": "guilhem-1.mp3"
+  },
+  {
+   "kind": "guilhem",
+   "text": "Je n'ai pas les moyens d'être pauvre",
+   "file": "guilhem-2.mp3"
+  },
+  {
+   "kind": "guilhem",
+   "text": "Elle a de belles dents ! Héhé",
+   "file": "guilhem-3.mp3"
+  },
+  {
+   "kind": "fateh",
+   "text": "Je t'ordonne de partir",
+   "file": "fateh-1.mp3"
+  },
+  {
+   "kind": "fateh",
+   "text": "J'ai un impératif",
+   "file": "fateh-2.mp3"
+  },
+  {
+   "kind": "fateh",
+   "text": "Aïka, j'ai de la confiture !",
+   "file": "fateh-3.mp3"
+  },
+  {
+   "kind": "faouzi",
+   "text": "Ça ne coûte rien de dépenser",
+   "file": "faouzi-1.mp3"
+  },
+  {
+   "kind": "faouzi",
+   "text": "Je suis Short Stack",
+   "file": "faouzi-2.mp3"
+  },
+  {
+   "kind": "faouzi",
+   "text": "Regarde, un conifère !",
+   "file": "faouzi-3.mp3"
+  },
+  {
+   "kind": "venum",
+   "text": "Je vais demander à l'IA de t'éliminer",
+   "file": "venum-1.mp3"
+  },
+  {
+   "kind": "venum",
+   "text": "À mort les voitures essence",
+   "file": "venum-2.mp3"
+  },
+  {
+   "kind": "venum",
+   "text": "Maybe Later",
+   "file": "venum-3.mp3"
+  },
+  {
+   "kind": "senoussi",
+   "text": "Alors là !",
+   "file": "senoussi-1.mp3"
+  },
+  {
+   "kind": "senoussi",
+   "text": "Approche que je te montre mon outil",
+   "file": "senoussi-2.mp3"
+  },
+  {
+   "kind": "senoussi",
+   "text": "Que le Chapiste soit avec moi !",
+   "file": "senoussi-3.mp3"
+  },
+  {
+   "kind": "purf",
+   "text": "Rendez-moi mon argent !!!!",
+   "file": "purf-1.mp3"
+  },
+  {
+   "kind": "purf",
+   "text": "Attaque de parmesan",
+   "file": "purf-2.mp3"
+  }
+ ]
+}
