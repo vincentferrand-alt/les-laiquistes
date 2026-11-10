@@ -5,6 +5,7 @@ name: Générer les voix
 on:
   workflow_dispatch:
   push:
+    branches: [main]   # seulement sur la branche publiée (sinon conflits entre branches)
     paths: ['js/data.js', 'tools/make-voices.py', '.github/workflows/voix.yml']
 permissions:
   contents: write

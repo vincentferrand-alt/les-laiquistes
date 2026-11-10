@@ -75,14 +75,29 @@ async def generer(texte, reglage, chemin):
 async def main():
     os.makedirs(OUT, exist_ok=True)
     phrases = lire_phrases()
+    # On ne refait que ce qui a changé (phrase ou réglage de voix) : sinon les fichiers changeraient à chaque fois
+    # et GitHub signalerait des conflits. « --tout » pour tout refaire.
+    tout = '--tout' in sys.argv
+    avant = {}
+    try:
+        for f in json.load(open(os.path.join(OUT, 'manifest.json'), encoding='utf-8')).get('files', []):
+            avant[f['file']] = f
+    except Exception:
+        pass
     manifest = []
     for cid, liste in phrases.items():
         reglage = VOIX.get(cid, dict(voice=SECOURS, pitch='+0Hz', rate='+0%'))
         for n, texte in enumerate(liste, 1):
             nom = f'{cid}-{n}.mp3'
+            entree = {'kind': cid, 'text': texte, 'file': nom, 'voice': reglage['voice'], 'pitch': reglage['pitch'], 'rate': reglage['rate']}
+            a = avant.get(nom)
+            if not tout and a and os.path.exists(os.path.join(OUT, nom)) and a.get('text') == texte \
+                    and (a.get('voice'), a.get('pitch'), a.get('rate')) in ((reglage['voice'], reglage['pitch'], reglage['rate']), (None, None, None)):
+                print(f'{nom:16} inchangé')
+                manifest.append(entree); continue
             print(f'{nom:16} « {texte} »')
             if await generer(texte, reglage, os.path.join(OUT, nom)):
-                manifest.append({'kind': cid, 'text': texte, 'file': nom})
+                manifest.append(entree)
     with open(os.path.join(OUT, 'manifest.json'), 'w', encoding='utf-8') as f:
         json.dump({'files': manifest}, f, ensure_ascii=False, indent=1)
     print(f'\n{len(manifest)} voix créées dans voices/. Pense à changer VERSION (sw.js) avant la mise en ligne.')
