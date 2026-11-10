@@ -1,7 +1,7 @@
 // Service worker : met le jeu en cache pour qu'il marche hors-ligne et s'installe comme une appli.
 // ⚠ Change VERSION à chaque mise en ligne (et GAME_VERSION dans js/config.js) :
 // les joueurs verront alors le bandeau « Nouvelle version disponible — Mettre à jour ».
-const VERSION = 'laiquistes-v3.2.0';
+const VERSION = 'laiquistes-v3.2.1';
 const FILES = [
   './', 'index.html', 'css/style.css', 'manifest.webmanifest',
   'js/config.js', 'js/data.js', 'js/audio.js', 'js/draw.js', 'js/backgrounds.js', 'js/entities.js',

@@ -5,11 +5,18 @@
 //  projet Firebase (console Firebase > Paramètres du projet > Vos applications).
 //  Voir README.md, section « Classement en ligne ».
 // ============================================================
-window.FIREBASE_CONFIG = null;
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDJsiB1bN5OdrWSflLfk0V5FqzaqmTQvfE",
+  authDomain: "les-laiquistes.firebaseapp.com",
+  projectId: "les-laiquistes",
+  storageBucket: "les-laiquistes.firebasestorage.app",
+  messagingSenderId: "461388879896",
+  appId: "1:461388879896:web:37fad393278dd15ed40b6d"
+};
 
 // Numéro de version affiché dans le menu. Pense à changer aussi VERSION dans sw.js
 // à chaque mise en ligne (c'est ce qui déclenche le bandeau « Nouvelle version disponible »).
-window.GAME_VERSION = '3.2.0';
+window.GAME_VERSION = '3.2.1';
 /* Exemple :
 window.FIREBASE_CONFIG = {
   apiKey: "AIza...",
