@@ -13,6 +13,8 @@ window.addEventListener('load', () => {
   // Débloque l'audio au premier geste (exigence des navigateurs mobiles)
   const unlock = () => { Sfx.init(); window.removeEventListener('pointerdown', unlock); };
   window.addEventListener('pointerdown', unlock);
+  // iPad / iPhone : la synthèse vocale ne se débloque que sur un vrai geste (click, touchend)
+  ['click', 'touchend', 'keydown'].forEach(ev => window.addEventListener(ev, () => { if (typeof Voice !== 'undefined' && !Voice.primed) Voice.prime(); }, { capture: true }));
   // Application installable (PWA) — uniquement quand le jeu est servi en https
   if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.NO_SW) registerSW();
 });

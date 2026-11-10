@@ -768,10 +768,16 @@ const Voice = {
     else speechSynthesis.onvoiceschanged = onChange;
   },
   // iPhone : la synthèse vocale doit d'abord être lancée par un geste de l'utilisateur
+  // iOS/iPadOS n'accepte ce déblocage que dans un vrai geste (clic / fin de toucher), pas dans « pointerdown » :
+  // on retente donc à chaque geste, jusqu'à ce que le moteur confirme qu'il a bien démarré.
   prime() {
     if (this.primed || !this.supported()) return;
-    this.primed = true;
-    try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch (e) {}
+    try {
+      const u = new SpeechSynthesisUtterance('.'); u.volume = 0;
+      const ok = () => { this.primed = true; };
+      u.onstart = ok; u.onend = ok;
+      speechSynthesis.speak(u);
+    } catch (e) {}
   },
   available() { return !!this.voice; },
   unduck() { if (Sfx.ctx) Sfx.duck.gain.setTargetAtTime(Sfx.paused ? 0.55 : 1, Sfx.ctx.currentTime, 0.2); },
