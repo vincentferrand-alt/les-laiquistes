@@ -205,7 +205,7 @@ const Save = {
     this.data.survival = this.data.survival || {};  // meilleure vague atteinte en Survie, par monde
     this.data.rushBest = this.data.rushBest || 0;    // meilleur score en Boss Rush
     // réglages : volumes séparés (0..1), voix des boss, vibrations
-    this.data.settings = Object.assign({ music: 0.7, sfx: 0.9, voice: 1, voiceOn: true, vibrate: true }, this.data.settings || {});
+    this.data.settings = Object.assign({ music: 0.2, sfx: 0.2, voice: 1, voiceOn: true, vibrate: true }, this.data.settings || {});
     return this.data;
   },
   // sauvegarde locale (toujours) + envoi groupé vers Firestore si la sauvegarde en ligne est active

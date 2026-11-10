@@ -1,3 +1,9 @@
+# Les laïquistes — v3.2.2
+
+- Volumes par défaut : musique 20 %, effets 20 %, voix 100 % (pour les nouveaux appareils ; les réglages déjà enregistrés sont conservés).
+
+---
+
 # Les laïquistes — v3.2.0
 
 ## Corrections
