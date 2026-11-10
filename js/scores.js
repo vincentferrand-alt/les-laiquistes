@@ -18,7 +18,7 @@ const Scores = {
     (all[board] = all[board] || []).push(entry);
     all[board].sort((a, b) => b.score - a.score); all[board] = all[board].slice(0, 20);
     try { localStorage.setItem(this.localKey, JSON.stringify(all)); } catch (e) {}
-    if (this.online && BOARDS.includes(board)) {
+    if (this.online && (BOARDS.includes(board) || /^defi-\d{8}$/.test(board))) { // (défi du jour : 'defi-AAAAMMJJ')
       // les règles exigent d'être connecté (compte anonyme créé automatiquement)
       const ok = await Promise.race([Cloud.ready, new Promise(r => setTimeout(() => r(false), 6000))]);
       if (ok) {

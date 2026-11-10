@@ -79,6 +79,17 @@ Entre la 2e et la 3e vague (mode histoire et choix du niveau), une épreuve prop
 
 Le temps imparti dépend du niveau de difficulté. Réglages : `EVENTS` en haut de `js/events.js`.
 
+## Progression (v3.7)
+
+- **Étoiles** (3 par monde, 21 en tout), affichées sur les cartes des mondes : ★ boss vaincu, ★ épreuve de milieu de monde réussie, ★ fini avec plus de la moitié de sa vie. On garde le meilleur résultat.
+- **Niveaux des héros** (1 à 10) : expérience à chaque partie (10 par ennemi, 150 par boss, 100 par épreuve réussie, même en cas de défaite pour les ennemis). Chaque niveau : +3 % de vie et +2 % de force. Niveau et barre d'XP sur l'écran du choix du perso.
+- **22 trophées** (écran 🏅 TROPHÉES) : premier boss, histoire en Costaud / Laïque ultime, combos ×25 / ×50 / ×100, strike, carreau, roi du flow, intouchable, 21 étoiles, héros niveau 10, pétomane… Annoncés par un message quand on les gagne.
+- Réglages : `XP` et `TROPHIES` en haut de `js/progress.js`.
+
+## Défi du jour (v3.7)
+
+Bouton **📅 DÉFI DU JOUR** : le même défi pour tout le monde, tiré au sort d'après la date — un monde, un héros imposé (parmi les 5 de départ), difficulté Costaud et une **règle du jour** : Turbo (tout va 20 % plus vite), Ennemis géants, Fragile (moitié de vie, score ×2), Déluge (dangers ×2), Combo fou (coups ×3), Déménagement (caisses ×2). Avec l'épreuve de milieu de monde. Classement du jour partagé (règles Firestore à jour nécessaires) ; on peut rejouer autant qu'on veut.
+
 ## Niveaux de difficulté
 
 | Niveau | Nom | Score | Comment le débloquer |
@@ -237,9 +248,9 @@ service cloud.firestore {
 
     // ---------- Classements : un tableau par mode ----------
     match /boards/{board}/scores/{id} {
-      allow read: if board in boards();
+      allow read: if board in boards() || board.matches('defi-[0-9]{8}');
       allow create: if request.auth != null
-        && board in boards()
+        && (board in boards() || board.matches('defi-[0-9]{8}'))   // défi du jour : un tableau par date
         && request.resource.data.keys().hasOnly(['name', 'score', 'hero', 'ts'])
         && request.resource.data.keys().hasAll(['name', 'score', 'hero'])
         && request.resource.data.name is string
@@ -260,7 +271,8 @@ service cloud.firestore {
     }
     function validSave(d, uid) {
       return d.keys().hasOnly(['uid', 'v', 'name', 'unlocked', 'storyWinsBy', 'cleared',
-                               'survWave', 'survScore', 'rushBest', 'diffMax', 'updatedAt'])
+                               'survWave', 'survScore', 'rushBest', 'diffMax',
+                               'stars', 'xp', 'trophies', 'updatedAt'])
         && d.keys().hasAll(['uid', 'v', 'unlocked', 'updatedAt'])
         && d.uid == uid                                     // uid obligatoire, et c'est bien le sien
         && d.v is int
@@ -271,13 +283,17 @@ service cloud.firestore {
         && intMap(d.get('survWave', {})) && intMap(d.get('survScore', {}))
         && (!('rushBest' in d) || okInt(d.rushBest))
         && (!('diffMax' in d) || (d.diffMax is int && d.diffMax >= 1 && d.diffMax <= 3))
+        && intMap(d.get('stars', {})) && intMap(d.get('xp', {}))
+        && (!('trophies' in d) || (d.trophies is list && d.trophies.size() <= 60))
         && d.updatedAt == request.time;                     // horodatage du serveur
     }
   }
 }
 ```
 
-Ces règles acceptent tous les tableaux du jeu (`histoire`, `bossrush`, un par monde, `survie-<monde>`) et refusent les autres. Envoyer un score demande d'être connecté : le compte anonyme créé automatiquement suffit (c'est pourquoi la connexion **Anonyme** doit être activée).
+Ces règles acceptent tous les tableaux du jeu (`histoire`, `bossrush`, un par monde, `survie-<monde>`, et `defi-AAAAMMJJ` pour le défi du jour) et refusent les autres.
+
+**À recoller après la v3.7** : sans ces règles, le classement du défi du jour reste sur l'appareil, et les étoiles, trophées et niveaux des héros ne suivent pas d'un appareil à l'autre (rien n'est perdu pour autant). Envoyer un score demande d'être connecté : le compte anonyme créé automatiquement suffit (c'est pourquoi la connexion **Anonyme** doit être activée).
 
 ## Structure
 
@@ -292,6 +308,7 @@ js/entities.js        combattants (héros et ennemis)
 js/game.js            niveau, vagues, IA, boss et phases, dangers, modes, HUD
 js/combat.js          combos, attraper/lancer, caisses et objets à lancer, bonus des dangers
 js/events.js          événements de milieu de monde (briques d'or, battle de rap, pétanque…)
+js/progress.js        étoiles, trophées, niveaux des héros, défi du jour
 js/audio.js           mixage, bruitages, musiques écrites et arrangement, ambiances, voix (fichiers ou synthèse)
 sounds/               sons enregistrés (pets, rots, arrivée des boss, voiture, game over, fin de niveau)
 voices/               voix des personnages, facultatif (générées par tools/make-voices.py)

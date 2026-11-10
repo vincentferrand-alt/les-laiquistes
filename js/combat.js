@@ -30,8 +30,9 @@ const Combat = {
   combatStart() {
     this.props = []; this.heldItem = null; this.carry = null; this.holdT = 0;
     this.comboFxT = 0; this.comboPop = 0; this.lastMilestone = 0; this.multiT = 0; this.multiN = 0;
-    if (this.mode === 'story' || this.mode === 'select') {
-      COMBAT.crates.forEach(x => this.props.push({ type: CRATE_TYPE[this.world.id] || 'palette', x: x + rand(-60, 60), y: rand(GROUND_TOP + 40, GROUND_BOTTOM - 20), hp: COMBAT.crateHp, shakeT: 0 }));
+    if (['story', 'select', 'daily'].includes(this.mode)) {
+      const xs = this.mod.crates ? COMBAT.crates.concat(COMBAT.crates.map(x => x + 330)) : COMBAT.crates; // défi « Déménagement » : deux fois plus
+      xs.forEach(x => this.props.push({ type: CRATE_TYPE[this.world.id] || 'palette', x: x + rand(-60, 60), y: rand(GROUND_TOP + 40, GROUND_BOTTOM - 20), hp: COMBAT.crateHp, shakeT: 0 }));
     }
   },
 
@@ -45,6 +46,7 @@ const Combat = {
       this.comboFxT = 1.6; this.comboFxLabel = '×' + m[0] + '  ' + m[1]; this.comboFxBonus = '+' + Math.round(m[2] * this.L.score);
       this.slowT = Math.max(this.slowT, 0.3); this.flashA = Math.max(this.flashA, 0.25); this.flashCol = '255,230,120';
       Sfx.comboUp(COMBAT.milestones.indexOf(m));
+      if (m[0] >= 25) Progress.unlock('combo' + m[0]);
       Haptics.vibrate([30, 30, 60]);
     }
   },
@@ -67,6 +69,8 @@ const Combat = {
       const word = this.multiN >= 4 ? 'CARNAGE !' : this.multiN === 3 ? 'TRIPLÉ !' : this.multiN === 2 ? 'DOUBLÉ !' : how === 'danger' ? 'BIEN ENVOYÉ !' : 'STRIKE !';
       this.text(e.x, e.y, e.height + 50, word + ' +' + Math.round((base + extra) * this.L.score), '#7bed9f', this.multiN >= 2 ? 30 : 24, 1.3, { wob: 1, stroke: '#0b3d1f' });
       if (this.multiN >= 2) Sfx.comboUp(Math.min(3, this.multiN - 2));
+      Progress.count(how === 'danger' ? 'hazard' : 'thrown');
+      if (how === 'lancer' && this.multiN >= 3) Progress.unlock('strike3');
     }
     // dernier ennemi d'une vague : ralenti + « K.O. ! »
     if (this.wave && !this.spawnQueue.length && this.enemies.every(x => x === e || x.dead)) {
@@ -168,7 +172,8 @@ const Combat = {
     if (p.hp <= 0) {
       this.addScore(60); this.shake = Math.max(this.shake, 0.2);
       for (let i = 0; i < 12; i++) this.particles.push({ type: 'pix', x: p.x + rand(-25, 25), y: p.y, z: rand(5, 55), vx: rand(-260, 260), vy: rand(-40, 40), vz: rand(200, 560), col: PROP_COL[p.type] || '#a0522d', life: 1, max: 1 });
-      if (Math.random() < COMBAT.itemChance) this.pickups.push({ item: WORLD_ITEM[this.world.id] || 'brique', x: p.x, y: p.y, t: 0, life: 20 });
+      Progress.count('crates');
+      if (this.mod.crates || Math.random() < COMBAT.itemChance) this.pickups.push({ item: WORLD_ITEM[this.world.id] || 'brique', x: p.x, y: p.y, t: 0, life: 20 });
       else this.pickups.push({ type: this.world.food, x: p.x, y: p.y, t: 0, life: 14 });
       Sfx.bigHit(Sfx.panX(p.x), null, 0);
     }

@@ -24,7 +24,7 @@ const EVENTS = {
 const EV_BONUS = 800, EV_HEAL = 30, EV_AT = 1900; // bonus, vie rendue, position de déclenchement
 
 const Events = {
-  evReset() { this.ev = null; this.evDone = !(this.mode === 'story' || this.mode === 'select'); },
+  evReset() { this.ev = null; this.evDone = !['story', 'select', 'daily'].includes(this.mode); },
 
   // Appelé par updateLevel. Renvoie true tant qu'un événement occupe la scène (pas de vagues ni d'ennemis isolés).
   evUpdate(dt) {
@@ -85,6 +85,8 @@ const Events = {
   evFinish(ok, msg) {
     const ev = this.ev; ev.phase = 'end'; ev.t = 0; ev.ok = ok;
     if (ok) {
+      this.evOk = true; Progress.eventDone(this.world.id);
+      if (ev.type === 'rhythm' && ev.miss === 0) Progress.unlock('flow');
       this.addScore(EV_BONUS); const h = this.hero; h.hp = Math.min(h.maxHp, h.hp + EV_HEAL);
       this.banner('BRAVO !', (msg ? msg + ' · ' : '') + '+' + Math.round(EV_BONUS * this.L.score) + ' points · +' + EV_HEAL + ' vie', 2.4);
       Sfx.jingle('victory'); if (h.state === 'idle' || h.state === 'walk') { h.setState('victory', 1.4); h.vz = 380; }
@@ -204,7 +206,7 @@ const Events = {
           const pts = d < 24 ? 3 : d < 60 ? 2 : d < 110 ? 1 : 0; ev.points += pts;
           const word = pts === 3 ? 'CARREAU !' : pts === 2 ? 'BIEN PLACÉE !' : pts === 1 ? 'PAS MAL' : 'TROP LOIN…';
           this.text(b.x, b.y, 60, word + (pts ? ' +' + pts : ''), pts === 3 ? '#feca57' : pts ? '#fff' : '#ff6b6b', pts === 3 ? 30 : 22, 1.2, pts === 3 ? { wob: 1 } : {});
-          if (pts === 3) { Sfx.comboUp(2); this.shake = 0.25; }
+          if (pts === 3) { Sfx.comboUp(2); this.shake = 0.25; Progress.unlock('carreau'); }
           ev.wait = 0.9;
         }
       }

@@ -111,12 +111,13 @@ h2 { margin: 0; font-family: var(--fx); font-size: clamp(22px, 5vh, 40px); color
 
 /* ---------- Classement ---------- */
 #score-board { font-size: 16px; padding: 6px 12px; border-radius: 12px; border: 3px solid #000; font-family: inherit; }
-#score-list { list-style: none; margin: 0; padding: 0; width: min(520px, 92vw); max-height: 52vh; overflow-y: auto; background: rgba(0,0,0,.4); border: 3px solid #000; border-radius: 14px; }
-#score-list li { display: flex; gap: 10px; align-items: center; padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,.1); text-align: left; }
+#score-list, #daily-list { list-style: none; margin: 0; padding: 0; width: min(520px, 92vw); max-height: 52vh; overflow-y: auto; background: rgba(0,0,0,.4); border: 3px solid #000; border-radius: 14px; }
+#score-list li, #daily-list li { display: flex; gap: 10px; align-items: center; padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,.1); text-align: left; }
 #score-list li:nth-child(1) .rk { background: #f1c40f; } #score-list li:nth-child(2) .rk { background: #bdc3c7; } #score-list li:nth-child(3) .rk { background: #cd6133; }
+#daily-list li:nth-child(1) .rk { background: #f1c40f; } #daily-list li:nth-child(2) .rk { background: #bdc3c7; } #daily-list li:nth-child(3) .rk { background: #cd6133; }
 .rk { width: 26px; height: 26px; border-radius: 50%; background: #444; display: grid; place-items: center; font-weight: 900; border: 2px solid #000; flex: none; }
 .nm { flex: 1; font-weight: bold; } .hr { opacity: .6; font-size: 12px; }
-#score-list .empty { justify-content: center; opacity: .7; }
+#score-list .empty, #daily-list .empty { justify-content: center; opacity: .7; }
 
 /* ---------- Bannière ---------- */
 #banner { position: fixed; left: 0; right: 0; top: 30%; z-index: 15; text-align: center; pointer-events: none; opacity: 0; }
@@ -240,3 +241,29 @@ h2, .logo, .win-title, .intro-name, .intro-step, .gameover, .b-title, .b-sub, .c
 .diff-pick .dp-hint { width: 100%; font-size: 11px; opacity: .7; }
 
 .diff-pick .dp.shake { animation: shake .35s; }
+
+/* ---------- v3.7 : progression, trophées, défi du jour ---------- */
+.daily-btn { background: linear-gradient(#ff9f43, #e67e22); }
+#daily-art { width: min(760px, 94vw); height: auto; border: 3px solid #000; border-radius: 14px; }
+.daily-card { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 8px 0; }
+.daily-card > div { background: rgba(0,0,0,.45); border: 2px solid #000; border-radius: 12px; padding: 6px 12px; font-size: 13px; }
+.daily-card b { color: #feca57; }
+.daily-card .mod { border-color: #ff9f43; }
+#daily-list { max-height: 30vh; }
+#troph-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; width: min(980px, 94vw); max-height: 62vh; overflow-y: auto; padding: 4px; }
+.troph { display: flex; gap: 8px; align-items: center; text-align: left; background: rgba(0,0,0,.45); border: 2px solid #000; border-radius: 12px; padding: 6px 10px; }
+.troph .ti { font-size: 26px; }
+.troph b { display: block; font-size: 13px; }
+.troph small { font-size: 11px; opacity: .8; }
+.troph.locked { opacity: .45; filter: grayscale(1); }
+.troph.got { border-color: #feca57; box-shadow: 0 0 0 2px rgba(254,202,87,.3) inset; }
+.cc-lv { position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: 900; background: #000; color: #feca57; border-radius: 8px; padding: 1px 6px; }
+.char-card { position: relative; }
+.xpbar { display: inline-block; width: 90px; height: 8px; background: #300; border: 1px solid #000; border-radius: 4px; vertical-align: middle; overflow: hidden; }
+.xpbar i { display: block; height: 100%; background: #feca57; }
+.cd-lv { font-size: 12px; margin: 2px 0 4px; }
+.wc-stars { position: absolute; top: 6px; right: 10px; font-size: 20px; color: #feca57; text-shadow: 0 2px 0 #000; letter-spacing: 1px; }
+.world-card { position: relative; }
+.win-stars { font-size: 44px; color: #feca57; text-shadow: 0 3px 0 #000; letter-spacing: 4px; }
+.win-xp, .win-lvl { font-size: 14px; margin-top: 4px; }
+.win-lvl { color: #7bed9f; font-weight: 900; }
