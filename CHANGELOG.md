@@ -1,3 +1,16 @@
+# Les laïquistes — v3.4.1 : vrais sons
+
+- **Sons enregistrés** fournis par Vincent, nettoyés (blancs coupés, volumes égalisés, MP3 mono pour les bruitages) :
+  - 5 pets et 2 rots à la place des sons de synthèse (même règle : environ 1 KO sur 3, montrés à l'écran) ; un boss vaincu part sur le pet en 4 temps ;
+  - **arrivée des boss** (remplace le grondement de synthèse ; le rugissement de phase 2 reste synthétisé) ;
+  - **camionnette de Christian** : le moteur enregistré tourne en boucle tant qu'elle roule, puis freinage et klaxon ;
+  - **game over** (remplace le trombone de synthèse) ;
+  - **fin de niveau** : « blague nulle » sur l'écran de victoire (la victoire totale garde sa fanfare).
+- Si un fichier manque, le jeu retombe sur l'ancien son de synthèse.
+- `tools/make-bruitages.py` supprimé (plus utilisé).
+
+---
+
 # Les laïquistes — v3.4.0 : difficulté, version, pets et rots lisibles
 
 ## Niveaux de difficulté

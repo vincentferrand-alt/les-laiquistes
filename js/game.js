@@ -766,7 +766,7 @@ const Game = {
     this.bossPhase = 1; this.lockMax = this.levelLen - this.VW; this.bossIntroT = 2.6;
     // cinématique : bandes noires, léger zoom, carte avec le nom du boss
     this.cineT = 2.9; this.bossCard = { name: c.name.toUpperCase(), title: c.title, col: c.light, t: 0 };
-    Sfx.bossIntro();
+    Sfx.bossArrival();
     Sfx.music('boss:' + w.id); // le thème de boss prend le relais
     const R = this.camX + this.VW;
     const bossScale = w.small ? 1.0 : 1.4;
@@ -1009,7 +1009,7 @@ const Game = {
       const b = this.makeBoss(right ? B.R + 80 : B.L - 80, (GROUND_TOP + GROUND_BOTTOM) / 2, S.bossHpMul);
       this.bossLine(b); this.survBoss = b;
       this.cineT = 1.6; this.bossCard = { name: b.def.name.toUpperCase(), title: b.def.title, col: b.def.light, t: 0 };
-      Sfx.bossIntro(); Sfx.music('boss:' + this.world.id);
+      Sfx.bossArrival(); Sfx.music('boss:' + this.world.id);
       this.banner('VAGUE ' + this.survWave, 'Le boss est de retour !', 2);
     } else this.banner('VAGUE ' + this.survWave, n + ' ennemis', 1.6);
   },

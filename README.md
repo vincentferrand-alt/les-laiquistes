@@ -97,8 +97,8 @@ Les histoires terminées sont comptées par héros dans la sauvegarde (`storyWin
 
 ## Son
 
-Musiques, ambiances et la plupart des bruitages sont synthétisés en direct (Web Audio). Seuls quelques sons sont des fichiers, tous **générés** (aucun enregistrement) :
-- `sounds/` : **8 pets et 5 rots** fabriqués par `tools/make-bruitages.py` (Python + numpy/scipy + ffmpeg) ;
+Musiques, ambiances et la plupart des bruitages sont synthétisés en direct (Web Audio). Quelques sons sont des fichiers :
+- `sounds/` : sons enregistrés — 5 pets, 2 rots, arrivée des boss, camionnette de Christian, game over, fin de niveau (« blague nulle »). Si un fichier manque, le jeu utilise un son de synthèse ;
 - `voices/` (facultatif) : **voix des personnages** fabriquées par `tools/make-voices.py` (voir plus bas).
 
 - **Mixage** : musique, effets, ambiance et voix ont chacun leur bus ; la musique et les effets ont chacun leur compresseur (les coups ne font plus « respirer » la musique), puis un limiteur en sortie empêche toute saturation. Un peu de **réverbération** donne de l'espace à la musique et aux effets. Chaque son démarre par une montée de quelques millisecondes (plus de petits « clics »), et le nombre de sons d'une même famille joués en même temps est limité.
@@ -263,7 +263,7 @@ js/backgrounds.js     décors des 7 mondes (parallaxe), premier plan, particules
 js/entities.js        combattants (héros et ennemis)
 js/game.js            niveau, vagues, IA, boss et phases, dangers, modes, HUD
 js/audio.js           mixage, bruitages, musiques écrites et arrangement, ambiances, voix (fichiers ou synthèse)
-sounds/               8 pets + 5 rots (générés par tools/make-bruitages.py)
+sounds/               sons enregistrés (pets, rots, arrivée des boss, voiture, game over, fin de niveau)
 voices/               voix des personnages, facultatif (générées par tools/make-voices.py)
 js/input.js           clavier, joystick, boutons, vibrations
 js/cloud.js           sauvegarde en ligne (Firebase Auth anonyme + Google, Firestore)
@@ -271,7 +271,6 @@ js/scores.js          classements (local / Firestore)
 js/ui.js              menus, modes, réglages
 sw.js, manifest.webmanifest, icons/   appli installable (PWA) et mises à jour
 tools/make-og.html    fabrique l'image de partage et les icônes
-tools/make-bruitages.py  fabrique les pets et les rots (sounds/)
 tools/make-voices.py  fabrique les voix des personnages (voices/)
 ```
 

@@ -393,6 +393,7 @@ const UI = {
       <div class="total"><span>SCORE</span><b>${res.score}</b></div>`;
     let unlockHtml = unlocks.map(n => `🔓 <b>${n}</b> est débloqué !`).join('<br>');
     if (storyDone || rushDone) setTimeout(() => Sfx.jingle('victory'), 300);
+    else Sfx.levelEnd(); // fin de niveau : « ba-dum-tss »
     if (storyDone && !Save.isUnlocked('purf')) unlockHtml += (unlockHtml ? '<br>' : '') + '<span class="win-hint">Termine l\'histoire avec <b>Senoussi</b> pour débloquer <b>The Purf</b>…</span>';
     $('#win-unlock').innerHTML = unlockHtml;
     const btns = $('#win-buttons'); btns.innerHTML = '';
