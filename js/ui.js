@@ -456,7 +456,8 @@ const UI = {
     let unlockHtml = unlocks.map(n => `🔓 <b>${n}</b> est débloqué !`).join('<br>');
     if (storyDone || rushDone) setTimeout(() => Sfx.jingle('victory'), 300);
     else Sfx.levelEnd(); // fin de niveau : « ba-dum-tss »
-    for (let i = 0; i < (Progress.lastStars || 0); i++) setTimeout(() => { if (this.current === 's-win') Sfx.ding(i); }, 700 + i * 350); // une étoile = un « ding »
+    this.countUp(res); // décompte des points, à la Streets of Rage (v3.10)
+    for (let i = 0; i < (Progress.lastStars || 0); i++) setTimeout(() => { if (this.current === 's-win') Sfx.ding(i); }, 2700 + i * 350); // une étoile = un « ding » (après le décompte)
     Share.prepare(res, this.run, { stars: Progress.lastStars, medal });
     this.startParty();
     if (storyDone && !Save.isUnlocked('purf')) unlockHtml += (unlockHtml ? '<br>' : '') + '<span class="win-hint">Termine l\'histoire avec <b>Senoussi</b> pour débloquer <b>The Purf</b>…</span>';
@@ -490,6 +491,35 @@ const UI = {
     }
     add('📸 Partager', () => Share.share());
     this.show('s-win');
+  },
+
+  // Décompte des points (v3.10) : ennemis, bonus temps et bonus vie défilent l'un après l'autre (« tic-tic-tic », puis « ding »),
+  // et les bonus s'ajoutent au score sous nos yeux
+  countUp(res) {
+    const vals = [...document.querySelectorAll('#win-stats > div:not(.medal-row) b')];
+    if (vals.length < 5) return;
+    const scoreEl = vals[4], base = res.score - res.timeBonus - res.hpBonus;
+    const steps = [
+      { el: vals[0], to: res.kills, fmt: v => v },
+      { el: vals[2], to: res.timeBonus, fmt: v => '+' + v, add: true },
+      { el: vals[3], to: res.hpBonus, fmt: v => '+' + v, add: true },
+    ];
+    steps.forEach(s => { s.el.textContent = s.fmt(0); });
+    scoreEl.textContent = base;
+    const token = this.countTok = {};
+    let i = 0, t0 = performance.now() + 400, last = 0, score = base;
+    const tick = () => {
+      if (this.countTok !== token) return;
+      const s = steps[i], now = performance.now();
+      if (!s || this.current !== 's-win') { steps.forEach(x => { x.el.textContent = x.fmt(x.to); }); scoreEl.textContent = res.score; return; }
+      const k = clamp((now - t0) / 650, 0, 1), v = Math.round(s.to * k);
+      s.el.textContent = s.fmt(v);
+      if (s.add) scoreEl.textContent = score + v;
+      if (k > 0 && k < 1 && now - last > 55) { last = now; Sfx.tone('square', 1500, null, 0.02, 0.05); }
+      if (k >= 1) { if (s.to > 0) Sfx.ding(i); if (s.add) score += s.to; i++; t0 = now + 180; }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
   },
 
   // Écran de victoire : le héros danse et des confettis tombent (v3.8)
@@ -596,6 +626,7 @@ const CONTROLS_HTML = `
     <tr><td>Attaque spéciale</td><td>K ou C</td><td>★ SPÉCIAL</td></tr>
     <tr><td>Attraper puis lancer un ennemi</td><td>Rester appuyé sur J / X, puis lâcher</td><td>Rester appuyé sur FRAPPE, puis lâcher</td></tr>
     <tr><td>Lancer un objet (trouvé dans une caisse)</td><td>J ou X</td><td>✊ FRAPPE</td></tr>
+    <tr><td>Appeler un pote (1 fois par monde)</td><td>L ou V</td><td>📣 POTE</td></tr>
     <tr><td>Pause</td><td>Échap ou P</td><td>❚❚</td></tr>
   </table>
   <div class="ctl-tip">Chaque monde a 3 tiers : un mini-boss 💀, une épreuve 🎯, puis le boss 👑. Si tu tombes, tu reprends au début du tiers.<br>La frappe touche aussi en hauteur (goélands, chauves-souris). Le « ! » rouge annonce une attaque ennemie, et la zone rouge au sol montre où frappe le boss : esquive en changeant de ligne.<br>Ramasse les bonus qui brillent (casque, Rolex, os…) et bats l'ennemi en or avant qu'il s'enfuie !</div>`;

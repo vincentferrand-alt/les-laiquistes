@@ -12,7 +12,7 @@ const Haptics = {
 };
 const Input = {
   keys: {}, mx: 0, my: 0,
-  pressed: { attack: false, jump: false, special: false, pause: false },
+  pressed: { attack: false, jump: false, special: false, pause: false, pote: false },
   held: { attack: false, jump: false },
   stick: { active: false, id: null, ox: 0, oy: 0, dx: 0, dy: 0 },
   isTouch: false, stickR: 55,
@@ -25,7 +25,7 @@ const Input = {
       ArrowUp: 'up', KeyW: 'up',
       ArrowDown: 'down', KeyS: 'down',
     };
-    const actions = { Space: 'jump', KeyJ: 'attack', KeyX: 'attack', Enter: 'attack', KeyK: 'special', KeyC: 'special', KeyE: 'special', Escape: 'pause', KeyP: 'pause' };
+    const actions = { Space: 'jump', KeyJ: 'attack', KeyX: 'attack', Enter: 'attack', KeyK: 'special', KeyC: 'special', KeyE: 'special', Escape: 'pause', KeyP: 'pause', KeyL: 'pote', KeyV: 'pote' }; // L / V : appel à un pote (v3.10)
     window.addEventListener('keydown', e => {
       if (e.target && e.target.tagName === 'INPUT') return;
       if (map[e.code]) { this.keys[map[e.code]] = true; e.preventDefault(); }

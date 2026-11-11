@@ -238,24 +238,34 @@ const MINIONS = {
   aika:     { name: 'Aïka', bw: 56, bh: 62, hp: 55, speed: 310, dmg: 7, range: 42, beh: 'melee' },
   robochat: { name: 'Chat robot', bw: 48, bh: 42, hp: 55, speed: 300, dmg: 7, range: 42, beh: 'melee' },
   agneau:   { name: 'Agneau', bw: 38, bh: 34, hp: 8, speed: 220, dmg: 4, range: 30, beh: 'charger', dash: 420 },
+  // v3.10 : un ennemi spécial par monde (il arrive au 3e tiers et pendant le boss ; dessins dans js/rage.js)
+  marteau:  { name: 'Marteau-piqueur', bw: 40, bh: 78, hp: 34, speed: 150, dmg: 8, range: 30, beh: 'hopper', quake: true },
+  ballon:   { name: 'Ballon de basket', bw: 42, bh: 42, hp: 26, speed: 200, dmg: 8, range: 30, beh: 'roller' },
+  basket:   { name: 'Basket de course', bw: 58, bh: 46, hp: 26, speed: 240, dmg: 7, range: 40, beh: 'charger', dash: 720 },
+  glitch:   { name: 'Glitch', bw: 46, bh: 62, hp: 30, speed: 170, dmg: 8, range: 52, beh: 'melee', blink: true },
+  tableur:  { name: 'Tableur', bw: 54, bh: 58, hp: 30, speed: 140, dmg: 7, range: 30, beh: 'ranged', shot: 'cellule' },
+  chevre:   { name: 'Chèvre', bw: 54, bh: 52, hp: 22, speed: 220, dmg: 7, range: 40, beh: 'charger', dash: 560 },
+  fut:      { name: 'Fût radioactif', bw: 42, bh: 62, hp: 26, speed: 125, dmg: 13, range: 60, beh: 'melee', boom: true },
+  // le gros costaud : impossible à attraper, ne recule pas sous les coups simples (il faut le renverser)
+  costaud:  { name: 'Costaud', bw: 66, bh: 124, hp: 110, speed: 120, dmg: 13, range: 74, beh: 'melee', heavy: true },
 };
 const ROBOT_NAMES = ['CLAUDE', 'OPENAI', 'GEMINI', 'ANTHROPIC'];
 
 // ---------- Les 7 mondes (un par laïquiste, qui en est le boss) ----------
 const WORLDS = [
-  { id: 'christian', boss: 'christian', mini: 'marcel', name: 'MONDE DE CHRISTIAN', sub: 'Le chantier miniature', small: true,
+  { id: 'christian', boss: 'christian', special: 'marteau', mini: 'marcel', name: 'MONDE DE CHRISTIAN', sub: 'Le chantier miniature', small: true,
     minions: [['ouvrier', 5], ['goeland', 3]], food: 'sandwich', entrance: 'van' },
-  { id: 'guilhem', boss: 'guilhem', mini: 'clement', name: 'MONDE DE GUILHEM', sub: 'Rap City', minions: [['rappeur', 5], ['skateur', 3]],
+  { id: 'guilhem', boss: 'guilhem', special: 'ballon', mini: 'clement', name: 'MONDE DE GUILHEM', sub: 'Rap City', minions: [['rappeur', 5], ['skateur', 3]],
     food: 'burger', entrance: 'sport' },
-  { id: 'fateh', boss: 'fateh', mini: 'cecile', name: 'MONDE DE FATEH', sub: 'Allauch', minions: [['berger', 4], ['papy', 3], ['runner', 3]],
+  { id: 'fateh', boss: 'fateh', special: 'basket', mini: 'cecile', name: 'MONDE DE FATEH', sub: 'Allauch', minions: [['berger', 4], ['papy', 3], ['runner', 3]],
     food: 'navette', entrance: 'family', entourage: ['enfant', 'enfant', 'aika'] },
-  { id: 'faouzi', boss: 'faouzi', mini: 'leblond', name: 'MONDE DE FAOUZI', sub: 'Pixel World', pixel: true,
+  { id: 'faouzi', boss: 'faouzi', special: 'glitch', mini: 'leblond', name: 'MONDE DE FAOUZI', sub: 'Pixel World', pixel: true,
     minions: [['chevalier8', 4], ['slime', 3], ['alien8', 2], ['chauve8', 2]], food: 'coeur8', entrance: 'pixel' },
-  { id: 'venum', boss: 'venum', mini: 'clapet', name: 'MONDE DE VENUM', sub: 'IA City', minions: [['chat', 4], ['robot', 4]],
+  { id: 'venum', boss: 'venum', special: 'tableur', mini: 'clapet', name: 'MONDE DE VENUM', sub: 'IA City', minions: [['chat', 4], ['robot', 4]],
     food: 'batterie', entrance: 'suv', entourage: ['robochat', 'robochat'] },
-  { id: 'senoussi', boss: 'senoussi', mini: 'moutong', name: 'MONDE DE SENOUSSI', sub: 'Le grand désert', minions: [['indien', 5], ['mouton', 4]],
+  { id: 'senoussi', boss: 'senoussi', special: 'chevre', mini: 'moutong', name: 'MONDE DE SENOUSSI', sub: 'Le grand désert', minions: [['indien', 5], ['mouton', 4]],
     food: 'dattes', entrance: 'herd' },
-  { id: 'purf', boss: 'purf', mini: 'minipurf', name: 'MONDE DE THE PURF', sub: 'La zone polluée', minions: [['zombie', 5], ['oursin', 3]],
+  { id: 'purf', boss: 'purf', special: 'fut', mini: 'minipurf', name: 'MONDE DE THE PURF', sub: 'La zone polluée', minions: [['zombie', 5], ['oursin', 3]],
     food: 'conserve', entrance: 'smoke' },
 ];
 const worldById = id => WORLDS.find(w => w.id === id);

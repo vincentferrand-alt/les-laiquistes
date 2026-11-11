@@ -314,7 +314,7 @@ function drawHumanoid(ctx, s, o = {}) {
   rrect(ctx, -(armW + 1) / 2, 0, armW + 1, armL, (armW + 1) / 2, s.sleeve || s.light);
   ctx.translate(0, armL);
   ctx.strokeStyle = INK; ctx.lineWidth = 2;
-  const item = typeof s.item === 'function' ? s.item(o) : s.item;
+  const item = o.weaponItem || (typeof s.item === 'function' ? s.item(o) : s.item); // (arme ramassée : rage.js)
   if (item && ITEMS[item]) ITEMS[item](ctx, t);
   drawHand(ctx, s.hand || skin, t, pose === 'attack' || pose === 'special');
   ctx.restore();
@@ -896,7 +896,7 @@ function drawMinion(ctx, type, o = {}) {
     case 'alien8': drawPix(ctx, PIX.saucer, 6.5, -39, -66 + Math.sin(t * 3) * 3); break;
     case 'chauve8': drawPix(ctx, Math.floor(t * 8) % 2 ? PIX.chauve : PIX.chauve.map(r => r.replace(/^P/, '.')), 6.5, -39, -40); break;
     case 'enfant': drawHumanoid(ctx, HUMANS.fateh, o); break;
-    default: if (HUMANS[type]) drawHumanoid(ctx, HUMANS[type], o);
+    default: if (HUMANS[type]) drawHumanoid(ctx, HUMANS[type], o); else if (typeof drawRageMinion === 'function') drawRageMinion(ctx, type, o); // ennemis spéciaux (rage.js)
   }
   ctx.restore();
 }

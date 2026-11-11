@@ -86,6 +86,13 @@ Le temps imparti dépend du niveau de difficulté. Réglages : `EVENTS` en haut 
 - **24 trophées** (écran 🏅 TROPHÉES) : premier boss, histoire en Costaud / Laïque ultime, combos ×25 / ×50 / ×100, strike, carreau, roi du flow, intouchable, 21 étoiles, héros niveau 10, pétomane, ruée vers l'or, médaille d'or… Annoncés par un message quand on les gagne.
 - Réglages : `XP` et `TROPHIES` en haut de `js/progress.js`.
 
+## Un peu de Streets of Rage (v3.10)
+
+- **Ennemi spécial par monde** (3e tiers et renforts du boss) : Marteau-piqueur, Ballon de basket, Basket de course, Glitch, Tableur, Chèvre, Fût radioactif. **Costaud** : impossible à attraper, ne recule que s'il est renversé.
+- **Ennemis qui sortent du décor** (tombent d'en haut, sortent d'une bouche d'égout).
+- **Armes à manier** (une par monde, 8 coups), **appel à un pote** (📣 POTE, touche L ou V, une fois par monde), **barre de l'ennemi visé**, **décompte des points** en fin de niveau.
+- Réglages : `RAGE` en haut de `js/rage.js` (ennemis spéciaux dans `MINIONS`, `js/data.js`).
+
 ## Niveaux en 3 tiers et mini-boss (v3.9)
 
 - Chaque monde : **1er tiers** (2 vagues + mini-boss), **2e tiers** (1 vague + épreuve), **3e tiers** (1 vague + boss). Barre en haut avec 3 repères. Plan du niveau : `LAYOUT` en haut de `js/tiers.js`.
@@ -333,6 +340,7 @@ js/events.js          événements de milieu de monde (briques d'or, battle de r
 js/progress.js        étoiles, trophées, niveaux des héros, défi du jour
 js/tiers.js           niveau en 3 tiers, mini-boss, point de reprise, GO, aides, objectifs (pause)
 js/minis.js           dessins des mini-boss, de leurs armes, projectiles et véhicules
+js/rage.js            ennemis spéciaux, costaud, ennemis du décor, armes à manier, appel à un pote, ennemi visé
 js/extras.js          bonus temporaires, ennemi en or, attaques des boss annoncées, chrono et médailles, onomatopées, entrée et K.O. des boss
 js/share.js           image de score à partager
 js/audio.js           mixage, bruitages, musiques écrites et arrangement, ambiances, voix (fichiers ou synthèse)

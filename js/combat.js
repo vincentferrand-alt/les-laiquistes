@@ -176,6 +176,7 @@ const Combat = {
       for (let i = 0; i < 12; i++) this.particles.push({ type: 'pix', x: p.x + rand(-25, 25), y: p.y, z: rand(5, 55), vx: rand(-260, 260), vy: rand(-40, 40), vz: rand(200, 560), col: PROP_COL[p.type] || '#a0522d', life: 1, max: 1 });
       Progress.count('crates');
       if (Math.random() < EXTRA.powerCrate) this.dropPower(p.x, p.y); // bonus temporaire du monde (extras.js)
+      else if (Math.random() < RAGE.weaponCrate) this.dropWeapon(p.x, p.y); // arme à manier (rage.js)
       else if (this.mod.crates || Math.random() < COMBAT.itemChance) this.pickups.push({ item: WORLD_ITEM[this.world.id] || 'brique', x: p.x, y: p.y, t: 0, life: 20 });
       else this.pickups.push({ type: this.world.food, x: p.x, y: p.y, t: 0, life: 14 });
       Sfx.bigHit(Sfx.panX(p.x), null, 0);
