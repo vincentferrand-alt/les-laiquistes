@@ -293,3 +293,8 @@ h2, .logo, .win-title, .intro-name, .intro-step, .gameover, .b-title, .b-sub, .c
 .pause-ctl summary { cursor: pointer; font-family: var(--fx); font-weight: 900; color: #feca57; margin: 4px 0; list-style: none; }
 .pause-ctl summary::-webkit-details-marker { display: none; }
 #s-pause { justify-content: flex-start; } #s-pause > h2 { margin-top: auto; } #s-pause > .menu { margin-bottom: auto; } /* centré quand ça tient, défilable sinon */
+
+/* ---------- v3.10 : bouton « appel à un pote » ---------- */
+.pad.pote { right: calc(120px * var(--k)); bottom: calc(88px * var(--k)); width: calc(54px * var(--k)); height: calc(54px * var(--k)); background: rgba(255,159,67,.55); font-size: calc(20px * var(--k)); }
+.pad.pote small { font-size: calc(7px * var(--k)); }
+.pad.used { opacity: .25; filter: grayscale(1); }

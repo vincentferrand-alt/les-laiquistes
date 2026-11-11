@@ -99,6 +99,7 @@ const Game = {
       this.waves = []; this.camX = 900; this.lockMax = this.camX; this.hero.x = this.camX + (this.VW - this.marginR) * 0.4;
     }
     this.tiersStart(o); // mini-boss, point de reprise, GO, aides (tiers.js)
+    this.rageStart();   // armes, pote, ennemi visé (rage.js)
     this.running = true; this.paused = false;
     Input.clear();
     this.banner(this.world.name, this.checkpoint ? 'REPRISE AU TIERS ' + this.checkpoint.tier + ' / 3' : this.mode === 'survival' ? 'SURVIE — tiens le plus longtemps possible !' : this.mode === 'bossrush' ? 'BOSS RUSH' : this.world.sub, 2);
@@ -137,6 +138,7 @@ const Game = {
     this.updateCombat(dt);
     this.updateExtras(dt, rdt); // bonus temporaires, ennemi en or (extras.js)
     this.updateTiers(dt, rdt);  // mini-boss, trou noir, GO, aides (tiers.js)
+    this.updateRage(dt);        // ennemis spéciaux, armes, appel à un pote (rage.js)
     // intensité musicale : monte avec le compteur de coups
     Music.setIntensity(this.hits >= 20 ? 3 : this.hits >= 10 ? 2 : this.hits >= 4 ? 1 : 0);
     if (this.cineT > 0) this.cineT -= rdt;
@@ -255,6 +257,7 @@ const Game = {
         else if (a === 'swoop') { f.setState('dash', 1.1); f.dashHits.clear(); }
         else if (a === 'hop') { f.setState('idle'); f.vz = 560; f.kx = Math.sign(this.hero.x - f.x) * 240; f.hopping = true; }
         else if (a === 'p2') this.bossPhase2Attack(f);
+        else if (a === 'boom') this.futBoom(f); // fût radioactif (rage.js)
         else f.startAttack();
       }
     }
@@ -299,8 +302,11 @@ const Game = {
 
   resolveMelee(f) {
     const finisher = f.combo === 2 || (f.z > 20 && f.team === 'hero');
-    const dmg = f.dmg * (finisher ? 1.6 : 1);
-    this.opponents(f).forEach(o => { if (this.inMeleeZone(f, o) && !o.grabbed) this.applyHit(f, o, dmg, { knockdown: finisher }); });
+    const W = f.weapon ? RAGE.weapon : null; // arme ramassée : plus fort, plus loin (rage.js)
+    const dmg = f.dmg * (finisher ? 1.6 : 1) * (W ? W.dmg : 1);
+    let touched = 0;
+    this.opponents(f).forEach(o => { if (this.inMeleeZone(f, o, W ? W.reach : 0) && !o.grabbed && this.applyHit(f, o, dmg, { knockdown: finisher })) touched++; });
+    if (W && touched) this.weaponUsed(f);
     if (f.team === 'hero') { this.meleeProps(f); this.evMelee(f); } // caisses · cible d'un événement
     if (f.team === 'hero' && f.kind === 'fateh') { // Aïka mord en même temps
       this.opponents(f).forEach(o => { if (this.inMeleeZone(f, o, 40) && !o.dead) this.applyHit(f, o, 3, { noStagger: true }); });
@@ -319,6 +325,7 @@ const Game = {
     if (opts.knockdown || big) { Sfx.bigHit(pan, wk, this.hits); this.shake = 0.25; this.hitstop = 0.07; }
     else { Sfx.hit(pan, wk, src ? src.combo || 0 : 0, this.hits); this.hitstop = Math.max(this.hitstop, 0.035); this.shake = Math.max(this.shake, 0.08); }
     if (src && src.team === 'hero') {
+      this.setTarget(o); // barre de l'ennemi visé (rage.js)
       this.hits++; this.hitT = 1.6; this.addScore((5 + Math.min(this.hits, 30)) * (this.mod.hitScore || 1)); this.onHeroHit();
       if (o.dead) this.onKill(o, src, opts);
     } else if (o === this.hero) {
@@ -338,6 +345,8 @@ const Game = {
     const gag = Sfx.kill(Sfx.panX(e.x), e.isBoss);
     if (gag) { this.gagFx(e, gag); Progress.count('gags'); }
     if (e.golden) this.onGoldKill(e); // ennemi en or : jackpot (extras.js)
+    if (e.def.boom) this.futBoom(e);  // un fût radioactif explose quand on le bat (rage.js)
+    if (e.heavy) this.dropWeapon(e.x, e.y); // le costaud lâche une arme (rage.js)
     if (e.isMini) this.onMiniKill(e); // mini-boss (tiers.js)
     else if (e.isBoss) {
       this.addScore(1000);
@@ -604,7 +613,7 @@ const Game = {
     const h = this.hero;
     this.pickups.forEach(p => {
       p.t += dt; p.life -= dt;
-      if (!p.item && !p.power && !h.dead && Math.abs(p.x - h.x) < 34 && Math.abs(p.y - h.y) < 24) {
+      if (!p.item && !p.power && !p.weapon && !h.dead && Math.abs(p.x - h.x) < 34 && Math.abs(p.y - h.y) < 24) {
         p.life = 0; h.hp = Math.min(h.maxHp, h.hp + 25); Sfx.pickup();
         this.text(h.x, h.y, h.height + 20, '+25 MIAM', '#2ecc71', 22);
       }
@@ -628,7 +637,7 @@ const Game = {
       else if (e.canAct() || (e.escaping && e.state !== 'down')) e.golden ? this.thinkGolden(e, dt) : this.think(e, dt);
       this.updateAction(e, dt);
       if (e.fly && e.state !== 'dash') e.z += (e.cruiseZ - e.z) * Math.min(1, dt * 2.5);
-      if (e.beh === 'hopper' && e.hopping && e.z <= 0 && e.vz <= 0) { e.hopping = false; e.kx = 0; this.dust(e.x, e.y, 3); }
+      if (e.beh === 'hopper' && e.hopping && e.z <= 0 && e.vz <= 0) { e.hopping = false; e.kx = 0; this.dust(e.x, e.y, 3); this.onHopLand(e); } // (marteau-piqueur : rage.js)
       if (['hopper', 'roller'].includes(e.beh) && !e.golden) this.contact(e, false);
       if (e.beh === 'roller') e.roll += (e.dir) * dt * 3 * (e.state === 'walk' ? 1 : 0);
     }
@@ -762,6 +771,7 @@ const Game = {
       if (aligned && e.attackCd <= 0 && onScreen && dxAbs > 120) { e.attackCd = 99; e.startWindup('dash', 0.5); }
       return;
     }
+    if (e.def.boom && aligned && dxAbs < 95 && e.attackCd <= 0) { e.attackCd = 99; e.startWindup('boom', 0.9); Sfx.warn(Sfx.panX(e.x)); return; } // fût radioactif (rage.js)
     if (!e.hasToken && !e.isBoss) return;
     if (!e.isBoss && Math.random() < 0.25 * dt) { e.feint = rand(0.3, 0.7); return; }
     if (aligned && e.attackCd <= 0 && dxAbs < e.halfW + e.reach + h.halfW * 0.5) {
@@ -965,13 +975,13 @@ const Game = {
     for (const w of this.waves) {
       if (!w.started && this.camX >= w.x - 2 && this.bossPhase === 0) {
         w.started = true; this.wave = w; this.lockMax = w.x; this.camX = Math.min(this.camX, w.x);
-        for (let i = 0; i < w.n; i++) this.spawnQueue.push(pickWeighted(this.world.minions));
+        this.fillWave(w); // ennemis de la vague, dont l'ennemi spécial et le costaud (rage.js)
         this.spawnT = 0.2;
       }
     }
     if (this.spawnQueue.length) {
       this.spawnT -= dt;
-      if (this.spawnT <= 0 && alive.length < BALANCE.enemies.maxAlive + this.L.maxAlive) { this.spawnEnemy(this.spawnQueue.shift()); this.spawnT = rand(0.6, 1.1); }
+      if (this.spawnT <= 0 && alive.length < BALANCE.enemies.maxAlive + this.L.maxAlive) { this.spawnWave(this.spawnQueue.shift()); this.spawnT = rand(0.6, 1.1); } // (certains sortent du décor : rage.js)
     }
     if (this.wave && !this.wave.done && this.spawnQueue.length === 0 && alive.length === 0) {
       this.wave.done = true; this.wave = null; this.lockMax = this.levelLen; this.goShow(); // gros GO ! (tiers.js)
@@ -1002,7 +1012,7 @@ const Game = {
       this.bossMinionT -= dt;
       if (this.bossMinionT <= 0) {
         this.bossMinionT = rand(...BALANCE.boss.reinforceEvery);
-        if (alive.filter(e => !e.mustKill).length < Math.max(1, BALANCE.boss.reinforceMax + this.L.maxAlive)) this.spawnEnemy(pickWeighted(this.world.minions));
+        if (alive.filter(e => !e.mustKill).length < Math.max(1, BALANCE.boss.reinforceMax + this.L.maxAlive)) this.spawnEnemy(this.pickMinion(null));
       }
       const left = this.enemies.filter(e => e.mustKill && !e.dead);
       if (left.length === 0) {
@@ -1030,7 +1040,7 @@ const Game = {
     if (this.survBoss && this.survBoss.dead) { this.survBoss = null; this.boss = null; Sfx.music(this.world.id); this.heroLine(); }
     if (this.spawnQueue.length) {
       this.spawnT -= dt;
-      if (this.spawnT <= 0 && alive.length < 5) { this.spawnEnemy(this.spawnQueue.shift()); this.spawnT = rand(0.5, 1.0); }
+      if (this.spawnT <= 0 && alive.length < 5) { this.spawnWave(this.spawnQueue.shift()); this.spawnT = rand(0.5, 1.0); }
       return;
     }
     if (alive.length > 0) return;
@@ -1040,7 +1050,8 @@ const Game = {
     if (this.survWave >= 10) Progress.unlock('survie10');
     this.diff = 1 + (this.survWave - 1) * S.diffPerWave;
     const n = Math.min(S.maxCount, Math.round(S.baseCount + (this.survWave - 1) * S.perWave));
-    for (let i = 0; i < n; i++) this.spawnQueue.push(pickWeighted(this.world.minions));
+    for (let i = 0; i < n; i++) this.spawnQueue.push(this.pickMinion(null));
+    if (this.survWave % 4 === 0) this.spawnQueue.push('costaud'); // un costaud toutes les 4 vagues (rage.js)
     this.spawnT = 0.4;
     if (this.survWave > 1) { Sfx.jingle('stage'); this.addScore(100 * (this.survWave - 1)); if (this.hero.state === 'idle') this.hero.setState('taunt', 0.8); }
     if (this.survWave % S.bossEvery === 0) { // retour du boss du monde
@@ -1198,6 +1209,7 @@ const Game = {
     this.dangers.forEach(dg => drawDangerGround(ctx, dg, dg.x - cx, gt)); // annonces au sol
     this.drawBossTelegraphs(ctx, cx, gt); // attaques des boss annoncées au sol (extras.js)
     this.blackholes.forEach(b => drawBlackhole(ctx, b, b.x - cx, gt)); // trou noir du Blond (minis.js)
+    this.rageDrawGround(ctx, cx); // bouches d'égout (rage.js)
     this.particles.forEach(p => {
       if (p.type !== 'ring') return;
       ctx.strokeStyle = p.col || 'rgba(255,255,255,0.9)'; ctx.globalAlpha = p.life / p.max; ctx.lineWidth = 6;
@@ -1217,10 +1229,11 @@ const Game = {
       if (p.life < 3 && Math.floor(p.life * 8) % 2) return;
       ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(p.x - cx, p.y, 14, 5, 0, 0, Math.PI * 2); ctx.fill();
       if (p.power) { drawPowerPickup(ctx, p.power, p.x - cx, p.y, p.t); return; } // bonus temporaire (extras.js)
+      if (p.weapon) { drawWeaponPickup(ctx, p.weapon, p.x - cx, p.y, p.t); return; } // arme à manier (rage.js)
       if (p.item) { ctx.save(); ctx.translate(p.x - cx, p.y - 18 - Math.abs(Math.sin(p.t * 4)) * 8); drawThrowItem(ctx, p.item, 0); ctx.restore(); }
       else drawFood(ctx, p.type, p.x - cx, p.y, p.t);
     } }));
-    this.combatDraw(list, ctx, cx, gt); this.evDraw(list, ctx, cx, gt); this.extrasDraw(list, ctx, cx, gt);
+    this.combatDraw(list, ctx, cx, gt); this.evDraw(list, ctx, cx, gt); this.extrasDraw(list, ctx, cx, gt); this.rageDraw(list, ctx, cx, gt);
     this.dangers.forEach(dg => list.push({ y: dg.y + 2, draw: () => drawDangerObj(ctx, dg, dg.x - cx, gt, VW) }));
     list.sort((a, b) => a.y - b.y).forEach(o => o.draw());
     this.combatOverlay(ctx, cx, gt);
@@ -1309,6 +1322,7 @@ const Game = {
     this.combatHUD(ctx, VW); // compteur de combo + paliers (combat.js)
     this.evHUD(ctx, VW);     // événement en cours (events.js)
     this.extrasHUD(ctx, VW); // bonus en cours, chrono, messages (extras.js)
+    this.rageHUD(ctx, VW);   // pote, arme en main, ennemi visé (rage.js)
     ctx.textAlign = 'center'; ctx.font = '900 17px "Arial Black", Arial'; ctx.fillStyle = '#fff';
     ctx.strokeText(this.world.name, VW / 2, 28); ctx.fillText(this.world.name, VW / 2, 28);
     if (this.mode === 'survival') { // Survie : numéro de vague

@@ -1,3 +1,16 @@
+# Les laïquistes — v3.10.0 : un peu de Streets of Rage
+
+- **Un ennemi spécial par monde**, qui arrive au 3e tiers et pendant le boss : Marteau-piqueur qui fait trembler le sol (Christian), Ballon de basket qui rebondit (Guilhem), Basket de course qui fonce (Fateh), Glitch qui se téléporte derrière toi (Faouzi), Tableur qui lance des « #DIV/0! » (Venum), Chèvres qui chargent (Senoussi), Fût radioactif qui explose — aussi sur les autres ennemis (The Purf).
+- **Le gros Costaud** : un par vague aux 2e et 3e tiers (toutes les 4 vagues en Survie). Impossible à attraper, il ne recule pas sous les coups simples : il faut le renverser (3e coup du combo, coup sauté, plongeant, objet lancé). Il lâche une arme.
+- **Ennemis qui sortent du décor** : certains tombent d'en haut, d'autres sortent d'une bouche d'égout.
+- **Armes à manier**, une par monde (tuyau, micro, témoin de relais, manette géante, sabre néon, houlette, pied-de-biche) : plus fortes, plus d'allonge, cassent après 8 coups. Dans les caisses et sur le Costaud.
+- **Appel à un pote** (bouton 📣 POTE, touche L ou V) : une fois par monde, un autre laïquiste traverse l'écran et renverse tout le monde (toutes les 5 vagues en Survie).
+- **Barre de l'ennemi visé** en haut à droite : petite tête, nom et vie du dernier ennemi touché.
+- **Décompte des points** sur l'écran de victoire : ennemis, bonus temps et bonus vie défilent, et s'ajoutent au score.
+- Le téléphone à clapet n'affiche plus de nom de marque (il porte « CLAPET 3000 »).
+
+---
+
 # Les laïquistes — v3.9.0 : niveaux en 3 tiers et mini-boss
 
 ## Niveaux en 3 tiers

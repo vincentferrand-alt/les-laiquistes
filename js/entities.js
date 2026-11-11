@@ -12,6 +12,7 @@ class Fighter {
     this.beh = this.isChar || this.isMini ? 'melee' : c.beh;
     this.x = x; this.y = y; this.z = opts.z || 0; this.vz = 0; this.kx = 0; this.thrownT = 0; this.grabbed = false;
     this.fly = this.beh === 'flyer';
+    this.heavy = !!c.heavy; // le costaud : ne recule pas sous les coups simples, impossible à attraper (rage.js)
     this.dir = team === 'hero' ? 1 : -1;
     this.isBoss = !!opts.boss;
     this.mustKill = !!opts.mustKill || this.isBoss || this.isMini;
@@ -74,7 +75,7 @@ class Fighter {
     if (this.hp <= 0) { this.hp = 0; this.die(fromDir); return true; }
     this.hitSq = 0.22; // petit rebond élastique sous le coup
     if (o.stun) this.stun = Math.max(this.stun, o.stun);
-    const armored = this.isBoss && ['attack', 'special', 'windup'].includes(this.state);
+    const armored = (this.isBoss && ['attack', 'special', 'windup'].includes(this.state)) || (this.heavy && !o.knockdown);
     if (o.noStagger || armored) return true;
     if (this.fly) { this.setState('hurt', 0.3); this.kx = fromDir * 200; this.dashT = 0; return true; }
     if (o.knockdown && !this.isBoss) { this.setState('down', 1.0); this.vz = 380; this.kx = fromDir * 260; }
@@ -120,6 +121,7 @@ class Fighter {
     if (this.entering > 0) this.entering -= dt;
     if (this.landSq > 0) this.landSq -= dt;
     if (this.hitSq > 0) this.hitSq -= dt;
+    if (this.popT > 0) this.popT -= dt; // sort d'une bouche d'égout (rage.js)
     if (this.bubble) { this.bubble.t -= dt; if (this.bubble.t <= 0) this.bubble = null; }
     if (this.dead) {
       this.deadT += dt; this.rot += (this.rotV || 0) * dt;
@@ -194,6 +196,7 @@ class Fighter {
       // élasticité (v3.8) : écrasement à l'atterrissage, rebond quand il prend un coup
       if (this.landSq > 0) { const k = this.landSq / 0.2; sx2 *= 1 + 0.22 * k; sy2 *= 1 - 0.18 * k; }
       if (this.hitSq > 0) { const k = this.hitSq / 0.22, w = Math.sin((1 - k) * Math.PI * 3) * k; sx2 *= 1 + 0.15 * w; sy2 *= 1 - 0.15 * w; }
+      if (this.popT > 0) { const k = 1 - this.popT / 0.7; sy2 *= Math.max(0.05, k); sx2 *= 0.6 + 0.4 * k; } // il sort du sol
       if (lunge) ctx.translate(this.dir * lunge, 0);
       if (lean) ctx.transform(1, 0, -this.dir * lean, 1, 0, 0); // penche le haut du corps dans le sens du regard
       if (sx2 !== 1 || sy2 !== 1) ctx.scale(sx2, sy2);
@@ -201,7 +204,7 @@ class Fighter {
     // traînée d'arme (couleur propre à chaque héros ; rouge pour les ennemis)
     if (this.state === 'attack' && (this.isChar || (this.isMini && HUMANS[this.kind])) && !this.dead) {
       ctx.save(); ctx.scale(this.dir * this.scale, this.scale);
-      const punch = !!(HUMANS[this.kind] && HUMANS[this.kind].punch);
+      const punch = !this.weapon && !!(HUMANS[this.kind] && HUMANS[this.kind].punch);
       const col = this.team === 'hero' ? (TRAIL_COL[this.kind] || '255,234,120') : '255,90,90';
       drawWeaponTrail(ctx, this.st / this.stateDur, this.def.range + this.def.bw * 0.5, this.def.bh, punch, col, this.combo);
       ctx.restore();
@@ -216,7 +219,7 @@ class Fighter {
       ctx.beginPath(); ctx.ellipse(0, -this.height * 0.5, this.halfW * 1.8, this.height * 0.7, 0, 0, Math.PI * 2); ctx.fill();
     }
     const o = { dir: this.dir, scale: this.scale, t: this.t, walk: this.walk, pose: p.pose, poseT: p.pt, flash: this.flash > 0,
-      variant: this.variant, label: this.label, roll: this.roll, air: this.z > 0, companion: this.team === 'hero' };
+      variant: this.variant, label: this.label, roll: this.roll, air: this.z > 0, companion: this.team === 'hero', weaponItem: this.weapon ? 'w_' + this.weapon.type : null };
     const paint = c => { if (this.isChar) drawCharacter(c, this.kind, o); else if (this.isMini) drawMiniBoss(c, this.kind, o); else drawMinion(c, this.kind, o); };
     // rendu cartoon : gros contour + éclairage + flash blanc à l'impact (voir drawSprite dans draw.js)
     // boîte qui contient le perso ET son arme quand il frappe (au-dessus de la tête, devant lui)

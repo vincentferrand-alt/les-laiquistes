@@ -2,7 +2,7 @@
 //  LES LAÏQUISTES — Dessins des mini-boss (v3.9)
 //   Marcel (vieux Français : béret, canne, baguette) · Clément (ado de 15 ans, voiture sans permis)
 //   Cécile (blonde, pas très grande, au téléphone) · Le Blond (taille de Faouzi, blond, télescope)
-//   Clapet 3000 (téléphone Samsung noir à clapet) · Mouton géant · Mini Purf (The Purf en plus petit)
+//   Clapet 3000 (téléphone noir à clapet) · Mouton géant · Mini Purf (The Purf en plus petit)
 //  + leurs armes, leurs projectiles, le solex et la voiturette, le trou noir.
 //  Tout est dessiné tourné vers la droite (+x) ; le retournement se fait dans drawMiniBoss.
 // ============================================================
@@ -130,7 +130,7 @@ Object.assign(HUMANS, {
   },
 });
 
-// ---------- Clapet 3000 : téléphone Samsung noir à clapet ----------
+// ---------- Clapet 3000 : téléphone noir à clapet ----------
 function drawFlipPhone(ctx, o) {
   const t = o.t || 0, pose = o.pose || 'idle', pt = o.poseT || 0, walk = o.walk || 0;
   const sw = pose === 'walk' ? Math.sin(walk) * 7 : 0;
@@ -168,7 +168,7 @@ function drawFlipPhone(ctx, o) {
   else { ctx.fillRect(-9, -40, 6, 7); ctx.fillRect(7, -40, 6, 7); ctx.fillRect(-10, -44, 9, 2); ctx.fillRect(6, -45, 9, 2); }
   ctx.fillRect(-6, -25, 14, pose === 'attack' || pose === 'windup' ? 5 : 2);
   ctx.save(); ctx.translate(0, -7); if ((o.dir || 1) < 0) ctx.scale(-1, 1); // (texte à l'endroit même quand il regarde à gauche)
-  ctx.fillStyle = '#dfe6e9'; ctx.font = 'bold 7px Arial'; ctx.textAlign = 'center'; ctx.fillText('SAMSUNG', 0, 0); ctx.restore();
+  ctx.fillStyle = '#dfe6e9'; ctx.font = 'bold 7px Arial'; ctx.textAlign = 'center'; ctx.fillText('CLAPET 3000', 0, 0); ctx.restore();
   ctx.restore();
   // petite antenne
   ctx.save(); ctx.translate(0, -72); ctx.rotate(ang);
@@ -258,6 +258,10 @@ function drawMiniProjectile(ctx, p, t, d) {
       for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(-d * i * 12, 0, 16 + i * 10, d > 0 ? -0.9 : Math.PI - 0.9, d > 0 ? 0.9 : Math.PI + 0.9); ctx.stroke(); }
       ctx.fillStyle = '#fff'; ctx.strokeStyle = '#000'; ctx.lineWidth = 3; ctx.font = '900 14px "Arial Black", Arial'; ctx.textAlign = 'center';
       ctx.strokeText('DRING', 0, -30); ctx.fillText('DRING', 0, -30); return true;
+    case 'cellule': // cellule de tableur qui vole (« #DIV/0! »)
+      ctx.translate(0, -50); ctx.rotate(Math.sin(t * 12) * 0.2);
+      rrect(ctx, -24, -10, 48, 20, 2, '#ffffff'); ctx.strokeStyle = '#21a366'; ctx.lineWidth = 2.5; ctx.strokeRect(-24, -10, 48, 20);
+      ctx.fillStyle = '#c0392b'; ctx.font = 'bold 10px Arial'; ctx.textAlign = 'center'; ctx.fillText(p.txt || '#DIV/0!', 0, 4); return true;
     case 'sms': // bulle de texto
       ctx.translate(0, -60); ctx.rotate(Math.sin(t * 9) * 0.15);
       rrect(ctx, -22, -14, 44, 26, 8, '#2ed573'); poly(ctx, [[-10, 10], [-16, 20], [-2, 10]], '#2ed573', false);
