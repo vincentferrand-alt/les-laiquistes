@@ -25,6 +25,38 @@
    "rate": "+6%"
   },
   {
+   "kind": "christian",
+   "text": "J'ai vu le président, moi",
+   "file": "christian-4.mp3",
+   "voice": "fr-FR-HenriNeural",
+   "pitch": "-6Hz",
+   "rate": "+6%"
+  },
+  {
+   "kind": "christian",
+   "text": "J'ai tenu ma grosse voiture à une seule main",
+   "file": "christian-5.mp3",
+   "voice": "fr-FR-HenriNeural",
+   "pitch": "-6Hz",
+   "rate": "+6%"
+  },
+  {
+   "kind": "christian",
+   "text": "Il y avait de la buée à l'extérieur",
+   "file": "christian-6.mp3",
+   "voice": "fr-FR-HenriNeural",
+   "pitch": "-6Hz",
+   "rate": "+6%"
+  },
+  {
+   "kind": "christian",
+   "text": "Je vous promets, c'était bien la porte du garage",
+   "file": "christian-7.mp3",
+   "voice": "fr-FR-HenriNeural",
+   "pitch": "-6Hz",
+   "rate": "+6%"
+  },
+  {
    "kind": "guilhem",
    "text": "Popeck",
    "file": "guilhem-1.mp3",
@@ -44,6 +76,38 @@
    "kind": "guilhem",
    "text": "Elle a de belles dents ! Héhé",
    "file": "guilhem-3.mp3",
+   "voice": "fr-CA-JeanNeural",
+   "pitch": "-4Hz",
+   "rate": "-6%"
+  },
+  {
+   "kind": "guilhem",
+   "text": "Et si je me prenais une autre montre de luxe ?",
+   "file": "guilhem-4.mp3",
+   "voice": "fr-CA-JeanNeural",
+   "pitch": "-4Hz",
+   "rate": "-6%"
+  },
+  {
+   "kind": "guilhem",
+   "text": "De Fursac, c'est nul. C'est mieux Hugo Boss",
+   "file": "guilhem-5.mp3",
+   "voice": "fr-CA-JeanNeural",
+   "pitch": "-4Hz",
+   "rate": "-6%"
+  },
+  {
+   "kind": "guilhem",
+   "text": "Regardez, il n'arrive pas",
+   "file": "guilhem-6.mp3",
+   "voice": "fr-CA-JeanNeural",
+   "pitch": "-4Hz",
+   "rate": "-6%"
+  },
+  {
+   "kind": "guilhem",
+   "text": "Je veux encore des actions Air Liquide",
+   "file": "guilhem-7.mp3",
    "voice": "fr-CA-JeanNeural",
    "pitch": "-4Hz",
    "rate": "-6%"
@@ -73,6 +137,38 @@
    "rate": "+0%"
   },
   {
+   "kind": "fateh",
+   "text": "Je vais me baigner dans mon pédiluve",
+   "file": "fateh-4.mp3",
+   "voice": "fr-BE-GerardNeural",
+   "pitch": "-2Hz",
+   "rate": "+0%"
+  },
+  {
+   "kind": "fateh",
+   "text": "Allô Cécile ? Super, les enfants ont bien fait caca",
+   "file": "fateh-5.mp3",
+   "voice": "fr-BE-GerardNeural",
+   "pitch": "-2Hz",
+   "rate": "+0%"
+  },
+  {
+   "kind": "fateh",
+   "text": "Aïka, viens nettoyer papa",
+   "file": "fateh-6.mp3",
+   "voice": "fr-BE-GerardNeural",
+   "pitch": "-2Hz",
+   "rate": "+0%"
+  },
+  {
+   "kind": "fateh",
+   "text": "L'an prochain, promis, j'essaie de le faire en plus de 2 heures",
+   "file": "fateh-7.mp3",
+   "voice": "fr-BE-GerardNeural",
+   "pitch": "-2Hz",
+   "rate": "+0%"
+  },
+  {
    "kind": "faouzi",
    "text": "Ça ne coûte rien de dépenser",
    "file": "faouzi-1.mp3",
@@ -92,6 +188,38 @@
    "kind": "faouzi",
    "text": "Regarde, un conifère !",
    "file": "faouzi-3.mp3",
+   "voice": "fr-CH-FabriceNeural",
+   "pitch": "+14Hz",
+   "rate": "+10%"
+  },
+  {
+   "kind": "faouzi",
+   "text": "Je l'achèterai pas, promis. Quoique peut-être",
+   "file": "faouzi-4.mp3",
+   "voice": "fr-CH-FabriceNeural",
+   "pitch": "+14Hz",
+   "rate": "+10%"
+  },
+  {
+   "kind": "faouzi",
+   "text": "Arrêtez de parler de caca",
+   "file": "faouzi-5.mp3",
+   "voice": "fr-CH-FabriceNeural",
+   "pitch": "+14Hz",
+   "rate": "+10%"
+  },
+  {
+   "kind": "faouzi",
+   "text": "Si ça continue, je rentre seul en avion",
+   "file": "faouzi-6.mp3",
+   "voice": "fr-CH-FabriceNeural",
+   "pitch": "+14Hz",
+   "rate": "+10%"
+  },
+  {
+   "kind": "faouzi",
+   "text": "On avait dit balade",
+   "file": "faouzi-7.mp3",
    "voice": "fr-CH-FabriceNeural",
    "pitch": "+14Hz",
    "rate": "+10%"
@@ -121,6 +249,30 @@
    "rate": "+2%"
   },
   {
+   "kind": "venum",
+   "text": "Comme vous voulez, ça m'est égal",
+   "file": "venum-4.mp3",
+   "voice": "fr-CA-AntoineNeural",
+   "pitch": "-10Hz",
+   "rate": "+2%"
+  },
+  {
+   "kind": "venum",
+   "text": "C'est confidentiel, mais je vais vous le dire",
+   "file": "venum-5.mp3",
+   "voice": "fr-CA-AntoineNeural",
+   "pitch": "-10Hz",
+   "rate": "+2%"
+  },
+  {
+   "kind": "venum",
+   "text": "Désolé, pas là, je suis en TT",
+   "file": "venum-6.mp3",
+   "voice": "fr-CA-AntoineNeural",
+   "pitch": "-10Hz",
+   "rate": "+2%"
+  },
+  {
    "kind": "senoussi",
    "text": "Alors là !",
    "file": "senoussi-1.mp3",
@@ -145,6 +297,22 @@
    "rate": "-12%"
   },
   {
+   "kind": "senoussi",
+   "text": "C'est un updater, cela, mec",
+   "file": "senoussi-4.mp3",
+   "voice": "fr-FR-HenriNeural",
+   "pitch": "-18Hz",
+   "rate": "-12%"
+  },
+  {
+   "kind": "senoussi",
+   "text": "Qui veut croiser le fer avec moi ?",
+   "file": "senoussi-5.mp3",
+   "voice": "fr-FR-HenriNeural",
+   "pitch": "-18Hz",
+   "rate": "-12%"
+  },
+  {
    "kind": "purf",
    "text": "Rendez-moi mon argent !!!!",
    "file": "purf-1.mp3",
@@ -159,6 +327,86 @@
    "voice": "fr-CA-ThierryNeural",
    "pitch": "-24Hz",
    "rate": "-14%"
+  },
+  {
+   "kind": "purf",
+   "text": "Est-ce que je peux payer avec des pièces de centimes ?",
+   "file": "purf-3.mp3",
+   "voice": "fr-CA-ThierryNeural",
+   "pitch": "-24Hz",
+   "rate": "-14%"
+  },
+  {
+   "kind": "purf",
+   "text": "Je viens que si c'est gratuit et qu'on me ramène chez moi",
+   "file": "purf-4.mp3",
+   "voice": "fr-CA-ThierryNeural",
+   "pitch": "-24Hz",
+   "rate": "-14%"
+  },
+  {
+   "kind": "purf",
+   "text": "Je me suis fabriqué une boîte à chaussures",
+   "file": "purf-5.mp3",
+   "voice": "fr-CA-ThierryNeural",
+   "pitch": "-24Hz",
+   "rate": "-14%"
+  },
+  {
+   "kind": "marcel",
+   "text": "Vive la France !",
+   "file": "marcel-1.mp3",
+   "voice": "fr-FR-HenriNeural",
+   "pitch": "-12Hz",
+   "rate": "-12%"
+  },
+  {
+   "kind": "clement",
+   "text": "Rachète-moi une PS5 !",
+   "file": "clement-1.mp3",
+   "voice": "fr-FR-HenriNeural",
+   "pitch": "+30Hz",
+   "rate": "+12%"
+  },
+  {
+   "kind": "cecile",
+   "text": "Fateh, rappelle-moi tout de suite !",
+   "file": "cecile-1.mp3",
+   "voice": "fr-FR-DeniseNeural",
+   "pitch": "+4Hz",
+   "rate": "+10%"
+  },
+  {
+   "kind": "leblond",
+   "text": "Laissez Faouzi tranquille, son trou noir m'appartient !",
+   "file": "leblond-1.mp3",
+   "voice": "fr-CH-FabriceNeural",
+   "pitch": "+6Hz",
+   "rate": "+4%"
+  },
+  {
+   "kind": "clapet",
+   "text": "Vive Samsung et les téléphones à clapet !",
+   "file": "clapet-1.mp3",
+   "voice": "fr-CA-ThierryNeural",
+   "pitch": "+20Hz",
+   "rate": "+18%"
+  },
+  {
+   "kind": "moutong",
+   "text": "Bêêêêê ! Qu'est-ce que tu veux ?",
+   "file": "moutong-1.mp3",
+   "voice": "fr-FR-HenriNeural",
+   "pitch": "-30Hz",
+   "rate": "-20%"
+  },
+  {
+   "kind": "minipurf",
+   "text": "Vous aimez le parmesan ? Vous allez en avoir !",
+   "file": "minipurf-1.mp3",
+   "voice": "fr-CA-ThierryNeural",
+   "pitch": "-8Hz",
+   "rate": "-6%"
   }
  ]
 }
