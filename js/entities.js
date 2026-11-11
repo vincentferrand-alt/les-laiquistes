@@ -67,10 +67,11 @@ class Fighter {
   }
 
   takeHit(src, dmg, o = {}) {
-    if (this.dead || this.invul > 0 || this.state === 'down' || this.entering > 0) return false;
+    if (this.dead || this.invul > 0 || this.shield > 0 || this.state === 'down' || this.entering > 0) return false; // (shield : casque de chantier)
     this.hp -= dmg; this.flash = 0.12;
     const fromDir = src ? Math.sign(this.x - src.x) || 1 : -this.dir;
     if (this.hp <= 0) { this.hp = 0; this.die(fromDir); return true; }
+    this.hitSq = 0.22; // petit rebond élastique sous le coup
     if (o.stun) this.stun = Math.max(this.stun, o.stun);
     const armored = this.isBoss && ['attack', 'special', 'windup'].includes(this.state);
     if (o.noStagger || armored) return true;
@@ -91,7 +92,14 @@ class Fighter {
   physics(dt) {
     if (!this.fly && (this.z > 0 || this.vz > 0)) {
       this.z += this.vz * dt; this.vz -= GRAVITY * dt;
-      if (this.z <= 0) { this.z = 0; this.vz = this.state === 'victory' && !this.dead ? 330 : 0; } // victoire : il rebondit sur place
+      if (this.z <= 0) {
+        // atterrissage : il s'écrase un peu (sauf piqué, qui a son propre atterrissage)
+        if (this.vz < -380 && !this.dead && this.state !== 'dive' && this.state !== 'land') {
+          this.landSq = 0.2;
+          if (this.team === 'hero' && typeof Game !== 'undefined' && Game.running) Game.dust(this.x, this.y, 4);
+        }
+        this.z = 0; this.vz = this.state === 'victory' && !this.dead ? 330 : 0; // victoire : il rebondit sur place
+      }
     }
     this.x += this.kx * dt;
     this.kx *= Math.pow(0.015, dt);
@@ -109,6 +117,8 @@ class Fighter {
     if (this.specialCd > 0) this.specialCd -= dt;
     if (this.contactCd > 0) this.contactCd -= dt;
     if (this.entering > 0) this.entering -= dt;
+    if (this.landSq > 0) this.landSq -= dt;
+    if (this.hitSq > 0) this.hitSq -= dt;
     if (this.bubble) { this.bubble.t -= dt; if (this.bubble.t <= 0) this.bubble = null; }
     if (this.dead) {
       this.deadT += dt; this.rot += (this.rotV || 0) * dt;
@@ -180,6 +190,9 @@ class Fighter {
       else if (this.state === 'victory') { const w = Math.sin(gt * 9) * 0.04; sx2 = 1 - w; sy2 = 1 + w; if (this.z > 0 && this.vz > 120) { sx2 = 0.93; sy2 = 1.1; } }
       else if (this.state === 'taunt') { sx2 = 1 + Math.sin(gt * 14) * 0.02; sy2 = 1 - Math.sin(gt * 14) * 0.02; }
       else if (this.z > 0 && !this.fly && this.vz > 120) { sx2 = 0.93; sy2 = 1.08; }
+      // élasticité (v3.8) : écrasement à l'atterrissage, rebond quand il prend un coup
+      if (this.landSq > 0) { const k = this.landSq / 0.2; sx2 *= 1 + 0.22 * k; sy2 *= 1 - 0.18 * k; }
+      if (this.hitSq > 0) { const k = this.hitSq / 0.22, w = Math.sin((1 - k) * Math.PI * 3) * k; sx2 *= 1 + 0.15 * w; sy2 *= 1 - 0.15 * w; }
       if (lunge) ctx.translate(this.dir * lunge, 0);
       if (lean) ctx.transform(1, 0, -this.dir * lean, 1, 0, 0); // penche le haut du corps dans le sens du regard
       if (sx2 !== 1 || sy2 !== 1) ctx.scale(sx2, sy2);
@@ -211,7 +224,8 @@ class Fighter {
     const swingUp = p.pose === 'attack' || p.pose === 'windup' || p.pose === 'special' || p.pose === 'victory' || p.pose === 'down';
     const above = (swingUp ? 120 : 60) * sc;
     const box = { x: this.dir > 0 ? -back : -front, y: -this.height - above, w: front + back, h: this.height + above + 20 * sc };
-    drawSprite(ctx, box, paint, { outline: (this.isBoss ? 4 : 3.2) * Math.sqrt(sc), shade: { top: -this.height }, flash: this.flash > 0 && !this.dead, minor: this.team === 'enemy' && !this.isBoss && !this.mustKill });
+    drawSprite(ctx, box, paint, { outline: (this.isBoss ? 4 : 3.2) * Math.sqrt(sc), shade: { top: -this.height }, flash: this.flash > 0 && !this.dead,
+      minor: this.team === 'enemy' && !this.isBoss && !this.mustKill && !this.golden, tint: this.golden ? '255,200,30' : null }); // ennemi en or : teinte dorée
     if (this.state === 'victory' && !this.dead) { // étoiles qui tournent autour de la tête
       ctx.font = '20px Arial'; ctx.textAlign = 'center';
       for (let i = 0; i < 5; i++) {
@@ -234,7 +248,7 @@ class Fighter {
       if (!this.isBoss) {
         const bw = 40, f = this.hp / this.maxHp;
         ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(sx - bw / 2 - 1, top + 5, bw + 2, 6);
-        ctx.fillStyle = f > 0.5 ? '#2ecc71' : f > 0.25 ? '#f39c12' : '#e74c3c'; ctx.fillRect(sx - bw / 2, top + 6, bw * f, 4);
+        ctx.fillStyle = this.golden ? '#ffd32a' : f > 0.5 ? '#2ecc71' : f > 0.25 ? '#f39c12' : '#e74c3c'; ctx.fillRect(sx - bw / 2, top + 6, bw * f, 4);
       }
       if (this.state === 'windup') {
         ctx.font = '900 30px Arial'; ctx.fillStyle = '#ff4757'; ctx.strokeStyle = '#000'; ctx.lineWidth = 4; ctx.textAlign = 'center';

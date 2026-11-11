@@ -73,7 +73,7 @@ const Combat = {
       if (how === 'lancer' && this.multiN >= 3) Progress.unlock('strike3');
     }
     // dernier ennemi d'une vague : ralenti + « K.O. ! »
-    if (this.wave && !this.spawnQueue.length && this.enemies.every(x => x === e || x.dead)) {
+    if (this.wave && !this.spawnQueue.length && this.enemies.every(x => x === e || x.dead || x.golden)) {
       this.slowT = Math.max(this.slowT, 0.9); this.shake = Math.max(this.shake, 0.35);
       this.text(e.x, e.y, e.height + 70, 'K.O. !', '#ff6b6b', 46, 1.4, { wob: 1, stroke: '#3d0000' });
     }
@@ -173,7 +173,8 @@ const Combat = {
       this.addScore(60); this.shake = Math.max(this.shake, 0.2);
       for (let i = 0; i < 12; i++) this.particles.push({ type: 'pix', x: p.x + rand(-25, 25), y: p.y, z: rand(5, 55), vx: rand(-260, 260), vy: rand(-40, 40), vz: rand(200, 560), col: PROP_COL[p.type] || '#a0522d', life: 1, max: 1 });
       Progress.count('crates');
-      if (this.mod.crates || Math.random() < COMBAT.itemChance) this.pickups.push({ item: WORLD_ITEM[this.world.id] || 'brique', x: p.x, y: p.y, t: 0, life: 20 });
+      if (Math.random() < EXTRA.powerCrate) this.dropPower(p.x, p.y); // bonus temporaire du monde (extras.js)
+      else if (this.mod.crates || Math.random() < COMBAT.itemChance) this.pickups.push({ item: WORLD_ITEM[this.world.id] || 'brique', x: p.x, y: p.y, t: 0, life: 20 });
       else this.pickups.push({ type: this.world.food, x: p.x, y: p.y, t: 0, life: 14 });
       Sfx.bigHit(Sfx.panX(p.x), null, 0);
     }

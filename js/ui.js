@@ -34,6 +34,7 @@ const UI = {
     $('#b-quit').onclick = () => { Game.stop(); this.toTitle(); };
     $('#b-over-retry').onclick = () => { Sfx.click(); this.launch(true); };
     $('#b-over-menu').onclick = () => { Sfx.click(); this.toTitle(); };
+    $('#b-over-share').onclick = () => { Sfx.click(); Share.share(); }; // image de score (share.js)
     $('#score-board').onchange = e => this.openScores(e.target.value);
     $('#btn-pause').addEventListener('click', () => this.pause());
 
@@ -241,7 +242,7 @@ const UI = {
       const surv = this.run.mode === 'survival', sb = Save.data.survival[w.id];
       const status = locked ? '🔒 ' + CHARACTERS[w.boss].unlockText : mine ? "C'est ton monde !"
         : surv ? (sb ? `🏆 Vague ${sb.wave} — ${sb.score} pts` : 'Pas encore tenté')
-        : best ? '✓ Record : ' + best : 'Jamais terminé';
+        : best ? '✓ Record : ' + best + this.medalLabel(w.id) : 'Jamais terminé';
       const st = Progress.stars(w.id);
       card.innerHTML = `${!locked && !surv ? `<div class="wc-stars">${'★'.repeat(st)}${'☆'.repeat(3 - st)}</div>` : ''}<canvas width="300" height="150"></canvas><div class="wc-name">${locked ? '🔒 ' : ''}${CHARACTERS[w.boss].name.toUpperCase()}</div><div class="wc-boss">${w.sub}</div><div class="wc-best">${status}</div>`;
       const cv = card.querySelector('canvas');
@@ -261,6 +262,13 @@ const UI = {
     });
     $('#s-worlds h2').textContent = this.run.mode === 'survival' ? 'SURVIE : CHOISIS TON MONDE' : 'CHOISIS TON MONDE';
     this.show('s-worlds');
+  },
+
+  // médaille de vitesse et meilleur temps d'un monde (« · 🥇 2:41 »)
+  medalLabel(id) {
+    const m = (Save.data.medals || {})[id], t = (Save.data.bestTimes || {})[id];
+    if (!t) return '';
+    return ' · ' + (m ? EXTRA.medals.find(x => x.id === m).icon + ' ' : '⏱ ') + Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
   },
 
   // ---------- intro de monde ----------
@@ -380,6 +388,7 @@ const UI = {
       if (mode === 'bossrush') { Save.data.rushBest = Math.max(Save.data.rushBest || 0, res.score); Save.save(); }
       if (mode === 'daily') Daily.record(res.score);
       $('#over-prog').innerHTML = Progress.worldEnd(res, this.run); // expérience gagnée quand même
+      Share.prepare(res, this.run);
       const board = { story: 'histoire', bossrush: 'bossrush', survival: 'survie-' + res.worldId, daily: this.run.daily && this.run.daily.board }[mode];
       this.prepareNameEntry('#over-save', !!board && res.score > 0, board);
       this.show('s-over');
@@ -401,17 +410,33 @@ const UI = {
     const daily = this.run.mode === 'daily';
     if (daily) { Daily.record(res.score); Progress.unlock('defi'); }
     const progHtml = Progress.worldEnd(res, this.run);
+    // médaille de vitesse (histoire, choix du niveau, défi du jour) : meilleure médaille et meilleur temps par monde, sur l'appareil
+    const timed = ['story', 'select', 'daily'].includes(this.run.mode), medal = timed ? Game.medalFor(res.time) : null;
+    if (timed) {
+      const d = Save.data; d.medals = d.medals || {}; d.bestTimes = d.bestTimes || {};
+      if (medal) d.medals[w.id] = Math.max(d.medals[w.id] || 0, medal.id);
+      d.bestTimes[w.id] = Math.round(Math.min(d.bestTimes[w.id] || 9999, res.time));
+      Save.save(true);
+      if (medal && medal.id === 3) Progress.unlock('flash');
+    }
+    const fmt = t => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+    const medalHtml = !timed ? '' : medal
+      ? `<div class="medal-row" style="color:${medal.col}">${medal.icon} ${medal.name} <small>(moins de ${fmt(medal.max)})</small></div>`
+      : `<div class="medal-row off">Pas de médaille — bronze en moins de ${fmt(EXTRA.medals[2].max)}</div>`;
 
     $('#win-title').textContent = storyDone ? 'VICTOIRE TOTALE !' : rushDone ? 'BOSS RUSH TERMINÉ !' : `${CHARACTERS[w.boss].name.toUpperCase()} EST PLANTÉ !`;
     $('#win-stats').innerHTML = `
       <div><span>Ennemis plantés</span><b>${res.kills}</b></div>
-      <div><span>Temps</span><b>${Math.floor(res.time / 60)}:${String(Math.floor(res.time % 60)).padStart(2, '0')}</b></div>
+      <div><span>Temps</span><b>${fmt(res.time)}${medal ? ' ' + medal.icon : ''}</b></div>
       <div><span>Bonus temps</span><b>+${res.timeBonus}</b></div>
       <div><span>Bonus vie</span><b>+${res.hpBonus}</b></div>
-      <div class="total"><span>SCORE</span><b>${res.score}</b></div>`;
+      <div class="total"><span>SCORE</span><b>${res.score}</b></div>${medalHtml}`;
     let unlockHtml = unlocks.map(n => `🔓 <b>${n}</b> est débloqué !`).join('<br>');
     if (storyDone || rushDone) setTimeout(() => Sfx.jingle('victory'), 300);
     else Sfx.levelEnd(); // fin de niveau : « ba-dum-tss »
+    for (let i = 0; i < (Progress.lastStars || 0); i++) setTimeout(() => { if (this.current === 's-win') Sfx.ding(i); }, 700 + i * 350); // une étoile = un « ding »
+    Share.prepare(res, this.run, { stars: Progress.lastStars, medal });
+    this.startParty();
     if (storyDone && !Save.isUnlocked('purf')) unlockHtml += (unlockHtml ? '<br>' : '') + '<span class="win-hint">Termine l\'histoire avec <b>Senoussi</b> pour débloquer <b>The Purf</b>…</span>';
     $('#win-unlock').innerHTML = progHtml + (unlockHtml ? '<div>' + unlockHtml + '</div>' : '');
     const btns = $('#win-buttons'); btns.innerHTML = '';
@@ -441,7 +466,35 @@ const UI = {
       if (!storyDone) { add('Rejouer', () => { this.run.score = 0; this.launch(true); }, 'primary'); if (!daily) add('Autre monde', () => this.openWorlds()); }
       add('Menu', () => this.toTitle());
     }
+    add('📸 Partager', () => Share.share());
     this.show('s-win');
+  },
+
+  // Écran de victoire : le héros danse et des confettis tombent (v3.8)
+  startParty() {
+    const t0 = performance.now() / 1000, hero = this.run.hero;
+    const conf = $('#confetti');
+    conf.width = Math.round(innerWidth); conf.height = Math.round(innerHeight);
+    const COLS = ['#feca57', '#ff6b6b', '#48dbfb', '#1dd1a1', '#ff9ff3', '#ffffff'];
+    this.liveCanvas(conf, (ctx, t, W, H) => {
+      const el = t - t0, fade = clamp(1 - (el - 4) / 1.5, 0, 1); if (fade <= 0) return;
+      ctx.globalAlpha = fade;
+      for (let i = 0; i < 80; i++) {
+        const sp = 90 + (i * 37) % 120, x = (i * 97.3) % W + Math.sin(el * 2 + i) * 22, y = (el * sp + (i * 53) % H) % (H + 40) - 20 - (el < 1.2 ? (1.2 - el) * H * 0.6 : 0);
+        ctx.save(); ctx.translate(x, y); ctx.rotate(el * (2 + i % 4) + i); ctx.scale(1, Math.abs(Math.cos(el * 5 + i)) + 0.15);
+        ctx.fillStyle = COLS[i % COLS.length]; ctx.fillRect(-5, -3, 10, 6); ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+    });
+    this.liveCanvas($('#win-art'), (ctx, t, W, H) => {
+      const el = t - t0, c = CHARACTERS[hero], x = W * 0.36, y = H - 14, jump = Math.abs(Math.sin(el * 4.2)) * 22;
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.beginPath(); ctx.ellipse(x, y, 44 - jump * 0.6, 8, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.translate(x, y - jump);
+      const step = Math.floor(el / 0.6) % 4, pose = step === 3 ? 'attack' : 'taunt'; // il nargue, nargue, nargue… et frappe dans le vide
+      menuSprite(ctx, hero, { dir: 1, scale: 160 / Math.max(80, c.bh), t: el, pose, poseT: (el % 0.6) / 0.6, companion: true });
+      ctx.restore();
+    });
   },
 
   prepareNameEntry(sel, on, board) {
@@ -523,5 +576,5 @@ const CONTROLS_HTML = `
     <tr><td>Lancer un objet (trouvé dans une caisse)</td><td>J ou X</td><td>✊ FRAPPE</td></tr>
     <tr><td>Pause</td><td>Échap ou P</td><td>❚❚</td></tr>
   </table>
-  <div class="ctl-tip">La frappe touche aussi en hauteur (goélands, chauves-souris). Le « ! » rouge annonce une attaque ennemie : esquive en changeant de ligne.</div>`;
+  <div class="ctl-tip">La frappe touche aussi en hauteur (goélands, chauves-souris). Le « ! » rouge annonce une attaque ennemie, et la zone rouge au sol montre où frappe le boss : esquive en changeant de ligne.<br>Ramasse les bonus qui brillent (casque, Rolex, os…) et bats l'ennemi en or avant qu'il s'enfuie !</div>`;
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }

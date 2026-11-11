@@ -165,12 +165,15 @@
       <div id="over-save" class="save-box hidden"></div>
       <div class="menu row">
         <button class="btn primary big" id="b-over-retry">RÉESSAYER</button>
+        <button class="btn" id="b-over-share">📸 Partager</button>
         <button class="btn" id="b-over-menu">Menu</button>
       </div>
     </section>
 
     <!-- Victoire -->
     <section id="s-win" class="screen dim">
+      <canvas id="confetti"></canvas>
+      <canvas id="win-art" width="240" height="260"></canvas>
       <div class="win-title" id="win-title"></div>
       <div class="win-stats" id="win-stats"></div>
       <div class="win-unlock" id="win-unlock"></div>
@@ -228,6 +231,8 @@
   <script src="js/game.js"></script>
   <script src="js/combat.js"></script>
   <script src="js/events.js"></script>
+  <script src="js/extras.js"></script>
+  <script src="js/share.js"></script>
   <script src="js/progress.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/main.js"></script>

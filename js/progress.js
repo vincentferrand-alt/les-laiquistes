@@ -1,7 +1,7 @@
 // ============================================================
 //  LES LAÏQUISTES — Progression (v3.7)
 //  · Étoiles par monde (0 à 3) : ★ boss vaincu · ★ épreuve de milieu de monde réussie · ★ fini avec plus de la moitié de sa vie
-//  · Trophées (22) : affichés dans l'écran 🏅 Trophées, annoncés par un message quand on les gagne
+//  · Trophées (24) : affichés dans l'écran 🏅 Trophées, annoncés par un message quand on les gagne
 //  · Niveaux des héros (1 à 10) : de l'expérience à chaque partie ; chaque niveau donne +3 % de vie et +2 % de force
 //  · Défi du jour : le même pour tout le monde (monde + héros + règle spéciale tirés au sort d'après la date),
 //    avec son propre classement partagé ('defi-AAAAMMJJ')
@@ -31,6 +31,9 @@ const TROPHIES = [
   { id: 'niveau10', icon: '🎖️', name: 'Vétéran', desc: 'Monter un héros au niveau 10' },
   { id: 'petomane', icon: '💨', name: 'Pétomane', desc: 'Provoquer 50 pets ou rots (au total)' },
   { id: 'defi', icon: '📅', name: 'Défi relevé', desc: 'Gagner un défi du jour' },
+  // v3.8
+  { id: 'or', icon: '💰', name: "Ruée vers l'or", desc: 'Battre 5 ennemis en or (au total)' },
+  { id: 'flash', icon: '⏱️', name: 'Éclair', desc: "Gagner une médaille d'or de vitesse" },
 ];
 const XP = { kill: 10, boss: 150, event: 100, maxLevel: 10, perLevel: 250, hpPerLevel: 0.03, dmgPerLevel: 0.02 };
 
@@ -38,7 +41,7 @@ const Progress = {
   data() {
     const d = Save.data;
     d.stars = d.stars || {}; d.trophies = d.trophies || {}; d.xp = d.xp || {};
-    d.stats = Object.assign({ thrown: 0, hazard: 0, crates: 0, gags: 0, events: {}, heroes: {} }, d.stats || {});
+    d.stats = Object.assign({ thrown: 0, hazard: 0, crates: 0, gags: 0, golden: 0, powers: 0, events: {}, heroes: {} }, d.stats || {});
     return d;
   },
   has(id) { return !!this.data().trophies[id]; },
@@ -58,6 +61,7 @@ const Progress = {
     if (stat === 'hazard' && s.hazard >= 25) this.unlock('danger');
     if (stat === 'crates' && s.crates >= 30) this.unlock('demenageur');
     if (stat === 'gags' && s.gags >= 50) this.unlock('petomane');
+    if (stat === 'golden' && s.golden >= EXTRA.goldTrophy) this.unlock('or');
   },
   eventDone(worldId) {
     const s = this.data().stats; s.events[worldId] = true; Save.save(true);
@@ -94,6 +98,7 @@ const Progress = {
   // Renvoie les lignes HTML à afficher sur l'écran de fin (étoiles, expérience, niveau gagné)
   worldEnd(res, run) {
     const d = this.data(), out = [], hero = run.hero;
+    this.lastStars = 0;
     const win = res.result === 'win';
     let xp = res.kills * XP.kill + (win ? XP.boss : 0) + (res.evOk ? XP.event : 0);
     if (win) {
@@ -102,7 +107,8 @@ const Progress = {
         const s = 1 + (res.evOk ? 1 : 0) + (res.hpFrac >= 0.5 ? 1 : 0);
         const prev = d.stars[res.worldId] || 0;
         if (s > prev) d.stars[res.worldId] = s;
-        out.push(`<div class="win-stars">${'★'.repeat(s)}${'☆'.repeat(3 - s)}</div>` +
+        this.lastStars = s; // (l'écran de victoire fait « ding » pour chaque étoile gagnée)
+        out.push(`<div class="win-stars">${[0, 1, 2].map(i => `<span class="${i < s ? 'on' : 'off'}" style="animation-delay:${0.5 + i * 0.35}s">${i < s ? '★' : '☆'}</span>`).join('')}</div>` +
           `<div class="win-hint">${res.evOk ? '✓' : '✗'} épreuve · ${res.hpFrac >= 0.5 ? '✓' : '✗'} plus de la moitié de ta vie${s > prev && prev ? ' · nouveau record !' : ''}</div>`);
       }
     }

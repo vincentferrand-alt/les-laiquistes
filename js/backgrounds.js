@@ -553,9 +553,11 @@ function drawWorldForeground(ctx, worldId, VW, camX, t) {
 const AMBIENT = {
   christian: { n: 16, make: (VW, y) => ({ k: 'plaster', x: rand(0, VW), y: y ?? -10, vx: rand(-12, 12), vy: rand(14, 32), r: rand(1.5, 3), t: 0, life: 40 }) },
   guilhem:   { n: 7,  make: (VW, y) => ({ k: 'bill', x: rand(0, VW), y: y ?? -20, vx: rand(-20, 20), vy: rand(30, 55), r: rand(0, 6), t: 0, life: 40 }) },
-  fateh:     { n: 12, make: (VW, y) => ({ k: 'firefly', x: rand(0, VW), y: y ?? rand(GROUND_TOP - 120, VIEW_H), vx: rand(-14, 14), vy: rand(-8, 8), r: rand(0, 6), t: 0, life: rand(5, 10) }) },
+  // v3.8 : pétales de lavande en plus des lucioles
+  fateh:     { n: 20, make: (VW, y) => Math.random() < 0.45 ? ({ k: 'petal', x: rand(-40, VW), y: y ?? -10, vx: rand(15, 45), vy: rand(22, 45), r: rand(0, 6), t: 0, life: 40 }) : ({ k: 'firefly', x: rand(0, VW), y: y ?? rand(GROUND_TOP - 120, VIEW_H), vx: rand(-14, 14), vy: rand(-8, 8), r: rand(0, 6), t: 0, life: rand(5, 10) }) },
   faouzi:    { n: 14, make: (VW, y) => ({ k: 'twinkle', x: rand(0, VW), y: rand(10, VIEW_H - 20), vx: 0, vy: 0, r: rand(0, 6), t: 0, life: rand(1.2, 3) }) },
-  venum:     { n: 22, make: (VW, y) => ({ k: 'code', x: rand(0, VW), y: y ?? -10, vx: 0, vy: rand(110, 210), r: randi(0, 1), t: 0, life: 20 }) },
+  // v3.8 : pluie de néons en plus des 0 et des 1
+  venum:     { n: 40, make: (VW, y) => Math.random() < 0.5 ? ({ k: 'rain', x: rand(0, VW + 120), y: y ?? -30, vx: -110, vy: rand(620, 780), r: rand(22, 38), t: 0, life: 4 }) : ({ k: 'code', x: rand(0, VW), y: y ?? -10, vx: 0, vy: rand(110, 210), r: randi(0, 1), t: 0, life: 20 }) },
   senoussi:  { n: 26, make: (VW, y) => ({ k: 'sand', x: y === null ? VW + 20 : rand(0, VW), y: rand(40, VIEW_H), vx: rand(-320, -170), vy: rand(-10, 10), r: rand(8, 26), t: 0, life: 20 }) },
   purf:      { n: 30, make: (VW, y) => ({ k: 'ash', x: rand(0, VW), y: y ?? -10, vx: rand(-10, 10), vy: rand(18, 45), r: rand(1.5, 3.5), t: 0, life: 40 }) },
 };
@@ -571,6 +573,10 @@ function drawAmbientParticles(ctx, list) {
         ctx.fillStyle = '#2d6a1f'; ctx.font = 'bold 9px Arial'; ctx.textAlign = 'center'; ctx.fillText('$', 0, 3); ctx.restore(); break;
       case 'firefly': { const g = 0.5 + Math.sin(p.t * 5 + p.r) * 0.5; ctx.fillStyle = `rgba(255,240,120,${0.25 * g * a})`; ctx.beginPath(); ctx.arc(p.x, p.y, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = `rgba(255,250,180,${0.9 * g * a})`; ctx.fillRect(p.x - 1.5, p.y - 1.5, 3, 3); break; }
       case 'twinkle': { const s = Math.sin(p.t / p.life * Math.PI); ctx.fillStyle = ['#fff', '#feca57', '#48dbfb', '#ff6b6b'][Math.floor(p.r) % 4]; ctx.globalAlpha = s; ctx.fillRect(p.x - 3, p.y - 9 * s, 6, 18 * s); ctx.fillRect(p.x - 9 * s, p.y - 3, 18 * s, 6); ctx.globalAlpha = 1; break; }
+      case 'petal': // pétale de lavande qui tournoie
+        ctx.save(); ctx.translate(p.x + Math.sin(p.t * 1.7 + p.r) * 14, p.y); ctx.rotate(p.t * 2 + p.r);
+        ctx.fillStyle = `rgba(165,120,220,${0.75 * a})`; ctx.beginPath(); ctx.ellipse(0, 0, 4.5, 2.2, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore(); break;
+      case 'rain': ctx.strokeStyle = `rgba(140,235,255,${0.6 * a})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + p.r * 0.16, p.y - p.r); ctx.stroke(); break;
       case 'code': ctx.fillStyle = `rgba(0,210,211,${0.45 * a})`; ctx.font = 'bold 12px monospace'; ctx.textAlign = 'center'; ctx.fillText(p.r ? '1' : '0', p.x, p.y); break;
       case 'sand': ctx.strokeStyle = `rgba(240,200,120,${0.45 * a})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + p.r, p.y + 1); ctx.stroke(); break;
       case 'ash': ctx.fillStyle = Math.floor(p.r * 10) % 3 ? `rgba(90,90,80,${0.6 * a})` : `rgba(163,230,53,${0.5 * a})`; ctx.fillRect(p.x + Math.sin(p.t * 2 + p.r) * 6, p.y, p.r, p.r); break;
@@ -603,5 +609,87 @@ function drawWorldOverlay(ctx, worldId, VW, stage, t, boss) {
   }
   ctx.globalAlpha = 0.28 + stage * 0.17 + (boss ? 0.12 : 0);
   ctx.drawImage(_vig.cv, 0, 0, VW, VIEW_H);
+  ctx.restore();
+}
+
+// ============================================================
+//  AMBIANCE ANIMÉE PAR MONDE (v3.8) — effets légers dessinés par-dessus la scène (coordonnées écran) :
+//   Christian : rayons de soleil · Guilhem : projecteurs qui balaient · Fateh : rayons de soleil chauds
+//   Faouzi : lignes d'écran rétro · Venum : lueur des néons (+ pluie, voir AMBIENT) · Senoussi : soleil et mirage
+//   The Purf : nappes de smog. Rien n'est dessiné quand l'appareil rame (Gfx.quality 0).
+// ============================================================
+const _scan = { pat: null };
+function sunRays(ctx, VW, t, col, a, ox) {
+  for (let i = 0; i < 5; i++) {
+    const ang = 0.35 + i * 0.16 + Math.sin(t * 0.25 + i) * 0.03, len = VIEW_H * 1.5, w = 26 + i * 9;
+    const al = a * (0.6 + Math.sin(t * 0.8 + i * 1.7) * 0.4);
+    const x1 = ox - Math.sin(ang) * len, y1 = Math.cos(ang) * len;
+    const g = ctx.createLinearGradient(ox, -40, x1, y1);
+    g.addColorStop(0, `rgba(${col},${al})`); g.addColorStop(1, `rgba(${col},0)`);
+    ctx.fillStyle = g; ctx.beginPath();
+    ctx.moveTo(ox - 8, -40); ctx.lineTo(ox + 8, -40); ctx.lineTo(x1 + w, y1); ctx.lineTo(x1 - w, y1); ctx.closePath(); ctx.fill();
+  }
+}
+function drawWorldAtmos(ctx, id, VW, t, boss) {
+  if (typeof Gfx !== 'undefined' && Gfx.quality === 0) return;
+  ctx.save();
+  switch (id) {
+    case 'christian': sunRays(ctx, VW, t, '255,240,190', 0.12, VW * 0.85); break;
+    case 'fateh': sunRays(ctx, VW, t, '255,214,140', 0.11, VW * 0.12); break;
+    case 'guilhem': { // deux projecteurs qui balaient la scène
+      ctx.globalCompositeOperation = 'lighter';
+      [[VW * 0.2, '255,80,200'], [VW * 0.8, '80,220,255']].forEach(([x, col], i) => {
+        const ang = Math.sin(t * 0.7 + i * 2.2) * 0.45, len = VIEW_H * 1.2, w = 120;
+        const x1 = x + Math.sin(ang) * len, y1 = Math.cos(ang) * len;
+        const g = ctx.createLinearGradient(x, -10, x1, y1);
+        g.addColorStop(0, `rgba(${col},${boss ? 0.2 : 0.14})`); g.addColorStop(1, `rgba(${col},0)`);
+        ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x - 6, -10); ctx.lineTo(x + 6, -10); ctx.lineTo(x1 + w, y1); ctx.lineTo(x1 - w, y1); ctx.closePath(); ctx.fill();
+      });
+      break;
+    }
+    case 'faouzi': { // lignes d'écran cathodique + léger scintillement
+      if (!_scan.pat) {
+        const c = document.createElement('canvas'); c.width = 4; c.height = 4;
+        const x = c.getContext('2d'); x.fillStyle = 'rgba(0,0,0,0.22)'; x.fillRect(0, 0, 4, 1);
+        _scan.pat = ctx.createPattern(c, 'repeat');
+      }
+      ctx.fillStyle = _scan.pat; ctx.fillRect(0, 0, VW, VIEW_H);
+      ctx.fillStyle = `rgba(255,255,255,${0.015 + Math.max(0, Math.sin(t * 13)) * 0.02})`; ctx.fillRect(0, 0, VW, VIEW_H);
+      const by = (t * 90) % (VIEW_H + 80) - 40; // bande lumineuse qui descend
+      const g = ctx.createLinearGradient(0, by - 30, 0, by + 30); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.5, 'rgba(255,255,255,0.05)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, by - 30, VW, 60);
+      break;
+    }
+    case 'venum': { // lueur des néons qui grésille, en haut et en bas
+      const fl = Math.sin(t * 3) * 0.5 + 0.5, cut = Math.sin(t * 23) > 0.93 ? 0.3 : 1; // petite coupure de temps en temps
+      ctx.globalCompositeOperation = 'lighter';
+      let g = ctx.createLinearGradient(0, 0, 0, 120); g.addColorStop(0, `rgba(255,0,170,${(0.18 + fl * 0.08) * cut})`); g.addColorStop(1, 'rgba(255,0,170,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, VW, 120);
+      g = ctx.createLinearGradient(0, VIEW_H - 90, 0, VIEW_H); g.addColorStop(0, 'rgba(0,210,255,0)'); g.addColorStop(1, `rgba(0,210,255,${(0.14 + (1 - fl) * 0.08) * cut})`);
+      ctx.fillStyle = g; ctx.fillRect(0, VIEW_H - 90, VW, 90);
+      break;
+    }
+    case 'senoussi': { // soleil écrasant + mirage au-dessus de l'horizon
+      const g = ctx.createRadialGradient(VW * 0.82, 40, 10, VW * 0.82, 40, 260);
+      g.addColorStop(0, 'rgba(255,255,230,0.35)'); g.addColorStop(1, 'rgba(255,230,160,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, VW, 320);
+      ctx.strokeStyle = 'rgba(255,250,235,0.18)'; ctx.lineWidth = 2;
+      for (let i = 0; i < 5; i++) {
+        const y = GROUND_TOP - 70 + i * 9; ctx.beginPath();
+        for (let x = 0; x <= VW; x += 24) { const yy = y + Math.sin(x * 0.03 + t * 3 + i) * 2.5; x ? ctx.lineTo(x, yy) : ctx.moveTo(x, yy); }
+        ctx.stroke();
+      }
+      break;
+    }
+    case 'purf': { // nappes de smog qui dérivent
+      for (let i = 0; i < 3; i++) {
+        const y = [VIEW_H * 0.12, GROUND_TOP - 30, VIEW_H - 40][i], x = ((t * (12 + i * 7) + i * 300) % (VW + 600)) - 300;
+        const g = ctx.createRadialGradient(x, y, 10, x, y, 320);
+        g.addColorStop(0, `rgba(140,160,70,${0.28 + (boss ? 0.08 : 0)})`); g.addColorStop(1, 'rgba(140,160,70,0)');
+        ctx.fillStyle = g; ctx.save(); ctx.translate(x, y); ctx.scale(1, 0.35); ctx.translate(-x, -y); ctx.fillRect(x - 320, y - 320, 640, 640); ctx.restore();
+      }
+      break;
+    }
+  }
   ctx.restore();
 }

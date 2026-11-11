@@ -267,3 +267,19 @@ h2, .logo, .win-title, .intro-name, .intro-step, .gameover, .b-title, .b-sub, .c
 .win-stars { font-size: 44px; color: #feca57; text-shadow: 0 3px 0 #000; letter-spacing: 4px; }
 .win-xp, .win-lvl { font-size: 14px; margin-top: 4px; }
 .win-lvl { color: #7bed9f; font-weight: 900; }
+
+/* ---------- v3.8 : écran de victoire festif ---------- */
+#confetti { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+/* le héros qui danse, sur le côté gauche (hors du flux : l'écran garde la même hauteur) */
+#win-art { position: absolute; left: max(1.5vw, env(safe-area-inset-left)); bottom: 14vh; height: min(42vh, 260px); width: auto; pointer-events: none; z-index: 1; animation: pop .5s; }
+#s-win { justify-content: flex-start; }
+#s-win > .win-title { margin-top: auto; }
+#s-win > #win-buttons { margin-bottom: auto; } /* centré quand ça tient, défilable sans rien couper sinon */
+.win-stars span { display: inline-block; opacity: 0; animation: starpop .45s cubic-bezier(.2, 1.6, .4, 1) forwards; }
+.win-stars span.off { color: #636e72; }
+@keyframes starpop { from { opacity: 0; transform: scale(3) rotate(-30deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+.medal-row { font-family: var(--fx); font-weight: 900; font-size: clamp(14px, 3vh, 18px); margin-top: 6px; text-shadow: 2px 2px 0 #000; animation: pop .6s .3s both; }
+.medal-row small { font-family: 'Trebuchet MS', Arial, sans-serif; font-weight: normal; font-size: 12px; opacity: .8; }
+.medal-row.off { color: #b2bec3; font-size: 13px; }
+@media (max-height: 500px) { #win-art { height: 46vh; bottom: 6vh; } .win-stars { font-size: 32px; } .medal-row { margin-top: 2px; } }
+@media (max-width: 700px) { #win-art { display: none; } }
