@@ -33,6 +33,14 @@ VOIX = {
     'venum':     dict(voice='fr-CA-AntoineNeural', pitch='-10Hz', rate='+2%'),    # boxeur
     'senoussi':  dict(voice='fr-FR-HenriNeural',   pitch='-18Hz', rate='-12%'),   # berger, voix grave et lente
     'purf':      dict(voice='fr-CA-ThierryNeural', pitch='-24Hz', rate='-14%'),   # toxique, très grave
+    # mini-boss (v3.9)
+    'marcel':    dict(voice='fr-FR-HenriNeural',   pitch='-12Hz', rate='-12%'),   # vieux Français
+    'clement':   dict(voice='fr-FR-HenriNeural',   pitch='+30Hz', rate='+12%'),   # ado de 15 ans
+    'cecile':    dict(voice='fr-FR-DeniseNeural',  pitch='+4Hz',  rate='+10%'),   # voix féminine, pressée
+    'leblond':   dict(voice='fr-CH-FabriceNeural', pitch='+6Hz',  rate='+4%'),    # astronome
+    'clapet':    dict(voice='fr-CA-ThierryNeural', pitch='+20Hz', rate='+18%'),   # petit téléphone nasillard
+    'moutong':   dict(voice='fr-FR-HenriNeural',   pitch='-30Hz', rate='-20%'),   # mouton géant, très grave
+    'minipurf':  dict(voice='fr-CA-ThierryNeural', pitch='-8Hz',  rate='-6%'),    # The Purf en plus petit
 }
 SECOURS = 'fr-FR-HenriNeural'  # si une voix n'existe pas / plus
 

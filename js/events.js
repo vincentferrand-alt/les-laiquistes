@@ -1,6 +1,6 @@
 // ============================================================
 //  LES LAÏQUISTES — Événements de milieu de monde (v3.6)
-//  Entre la 2e et la 3e vague (mode histoire et choix du niveau), une petite épreuve propre au monde :
+//  À la fin du 2e tiers (après la 3e vague ; mode histoire, choix du niveau, défi du jour), une petite épreuve propre au monde :
 //   Christian : pluie de briques d'or (ramasser, sous les palettes de la grue)
 //   Guilhem   : battle de rap (FRAPPE en rythme)
 //   Fateh     : partie de pétanque (viser le cochonnet)
@@ -21,7 +21,7 @@ const EVENTS = {
   senoussi:  { type: 'chase',   title: "LE MOUTON D'OR",         how: 'Frappe-le 5 fois avant qu\'il s\'échappe', target: 'goldsheep', hits: 5, dur: 18 },
   purf:      { type: 'collect', title: 'OPÉRATION NETTOYAGE',    how: 'Ramasse 8 bidons toxiques — évite les flaques', item: 'barrel', n: 8, dur: 22, hazards: 2.6 },
 };
-const EV_BONUS = 800, EV_HEAL = 30, EV_AT = 1900; // bonus, vie rendue, position de déclenchement
+const EV_BONUS = 800, EV_HEAL = 30, EV_AT = LAYOUT.ev; // bonus, vie rendue, position de déclenchement (2e tiers, voir tiers.js)
 
 const Events = {
   evReset() { this.ev = null; this.evDone = !['story', 'select', 'daily'].includes(this.mode); },
@@ -29,7 +29,7 @@ const Events = {
   // Appelé par updateLevel. Renvoie true tant qu'un événement occupe la scène (pas de vagues ni d'ennemis isolés).
   evUpdate(dt) {
     if (!this.ev) {
-      if (this.evDone || this.bossPhase !== 0 || this.wave || !this.waves[1] || !this.waves[1].done || this.camX < EV_AT) return false;
+      if (this.evDone || this.bossPhase !== 0 || this.wave || !this.waves[2] || !this.waves[2].done || this.camX < EV_AT) return false;
       this.evStart();
     }
     const ev = this.ev;
@@ -96,7 +96,8 @@ const Events = {
     }
   },
   evClose() {
-    this.ev = null; this.evDone = true; this.lockMax = this.levelLen; this.goT = 3; this.hazardT = 4;
+    this.ev = null; this.evDone = true; this.lockMax = this.levelLen; this.hazardT = 4;
+    this.saveCheckpoint(3); this.later(() => { if (!this.wave) this.goShow(); }, 1400); // début du 3e tiers (tiers.js)
   },
 
   // ---------- 1. Ramasser (briques d'or, pièces, bidons) ----------

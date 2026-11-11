@@ -17,7 +17,7 @@ const COMBAT = {
   grabHold: 0.32,        // durée d'appui sur FRAPPE pour attraper (s)
   carryMax: 3.5,         // on lâche tout seul au bout de… (s)
   throwSpeed: 640, throwDmgMul: 2.2, landDmgMul: 1.4,
-  crates: [760, 1260, 3150], crateHp: 3, itemChance: 0.6,
+  crates: [760, 1700, 3000, 4500], crateHp: 3, itemChance: 0.6, // (une caisse par étape du niveau en 3 tiers)
   itemSpeed: 780, itemDmgMul: 2.4,
   hazardBonus: 150, strikeBonus: 120,
 };
@@ -89,7 +89,7 @@ const Combat = {
     // appui long sur FRAPPE : attraper
     if (Input.held.attack && !this.heldItem && !(this.ev && this.ev.lockHero)) this.holdT += dt; else this.holdT = 0;
     if (!this.carry && this.holdT > COMBAT.grabHold && (h.canAct() || h.state === 'attack')) {
-      const t = this.enemies.find(e => !e.dead && !e.isBoss && !e.fly && e.entering <= 0 && !e.grabbed && e.thrownT <= 0 && this.inMeleeZone(h, e, 45)); // (marge : le premier coup l'a un peu repoussé)
+      const t = this.enemies.find(e => !e.dead && !e.isBoss && !e.isMini && !e.heavy && !e.fly && e.entering <= 0 && !e.grabbed && e.thrownT <= 0 && this.inMeleeZone(h, e, 45)); // (marge : le premier coup l'a un peu repoussé)
       if (t) this.grab(t);
       this.holdT = -99; // un seul essai par appui
     }
@@ -113,12 +113,14 @@ const Combat = {
   grab(e) {
     const h = this.hero;
     this.carry = { e, t: 0 }; e.grabbed = true; e.setState('hurt', 99); e.bubble = null;
+    if (this.hintOk('grab')) this.hintDone('grab'); // aide « attraper » (tiers.js)
     h.carrying = true; h.setState('idle');
     Sfx.tone('square', 300, 520, 0.08, 0.15); this.text(e.x, e.y, e.height + 40, 'ATTRAPÉ !', '#feca57', 22);
   },
   throwCarry() {
     const h = this.hero, c = this.carry; if (!c) return;
     const e = c.e; this.carry = null; h.carrying = false;
+    if (this.hintOk('throw')) this.hintDone('throw'); // aide « lancer » (tiers.js)
     e.grabbed = false; e.thrownT = 1.2; e.thrownHit = new Set([e]);
     e.kx = h.dir * COMBAT.throwSpeed; e.vz = 260; e.setState('hurt', 1.2); e.rotV = h.dir * 9;
     h.setState('attack', 0.26); h.hitDone = true; h.combo = 2;

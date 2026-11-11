@@ -327,6 +327,11 @@ const Sfx = {
       const a = osc('sawtooth', 46), b = osc('square', 23);
       a.frequency.linearRampToValueAtTime(70, t + 1.2); b.frequency.linearRampToValueAtTime(35, t + 1.2);
       const l = c.createOscillator(), lg = c.createGain(); l.frequency.value = 11; lg.gain.value = 0.12; l.connect(lg); lg.connect(g.gain); l.start(t); nodes.push(l);
+    } else if (type === 'solex' || type === 'voiturette') { // v3.9 : pétrolette (solex de Marcel, voiture sans permis de Clément)
+      lp.frequency.value = type === 'solex' ? 900 : 650;
+      const a = osc('square', type === 'solex' ? 95 : 70);
+      a.frequency.linearRampToValueAtTime(type === 'solex' ? 120 : 90, t + 1);
+      const l = c.createOscillator(), lg = c.createGain(); l.frequency.value = type === 'solex' ? 16 : 11; lg.gain.value = 0.2; l.connect(lg); lg.connect(g.gain); l.start(t); nodes.push(l);
     } else if (type === 'sport') { // moteur qui monte dans les tours
       lp.frequency.value = 1400;
       const a = osc('sawtooth', 90), b = osc('sawtooth', 181);
@@ -394,9 +399,9 @@ function loadBuffer(url) {
     .then(ab => new Promise((res, rej) => { const p = Sfx.ctx.decodeAudioData(ab, res, rej); if (p && p.then) p.then(res, rej); })); // ancien Safari : rappels
 }
 // Bruitages enregistrés (fournis par Vincent, nettoyés : blancs coupés, volumes égalisés) :
-//  5 pets, 2 rots, l'arrivée des boss, la voiture de Christian, le game over et la fin de niveau (« blague nulle »)
+//  5 pets, 2 rots, l'arrivée des boss, la voiture de Christian, le game over, la fin de niveau (« blague nulle ») et deux « GO »
 const Samples = {
-  list: { pet: 5, rot: 2 }, named: ['arrivee-boss', 'voiture-christian', 'game-over', 'blague-nulle'], buf: {}, bag: {}, loading: false,
+  list: { pet: 5, rot: 2 }, named: ['arrivee-boss', 'voiture-christian', 'game-over', 'blague-nulle', 'go-1', 'go-2'], buf: {}, bag: {}, loading: false, // go-1 / go-2 : « Gooooo » et « Go go go » (v3.9)
   load() {
     if (this.loading || !Sfx.ctx) return; this.loading = true;
     for (const k in this.list) for (let i = 1; i <= this.list[k]; i++) {

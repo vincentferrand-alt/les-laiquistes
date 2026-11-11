@@ -79,7 +79,10 @@ const BALANCE = {
          bossHp: 1.3, bossDmg: 1.3, bossCd: 0.85, windup: 0.85, combo: 0.15, phase2At: 0.8,
          hazardEvery: 0.8, hazardDmg: 1.25, food: 0.7, score: 2 },
   },
-  survival: { baseCount: 4, perWave: 1.2, maxCount: 14, diffPerWave: 0.05, bossEvery: 5, bossHpMul: 0.7 },
+  survival: { baseCount: 4, perWave: 1.2, maxCount: 14, diffPerWave: 0.05, bossEvery: 5, bossHpMul: 0.7,
+              miniFrom: 3, miniEvery: 5 }, // mini-boss du monde aux vagues 3, 8, 13… (v3.9)
+  // mini-boss (v3.9) : PV × difficulté × niveau, dégâts, barre en 3 niveaux
+  mini: { hpMul: 1, dmgMul: 0.9, tiers: 3, windupSpecial: 0.8, specialDmg: 0.5, heal: 25, score: 500 },
 };
 
 const VIEW_H = 540;          // hauteur logique du jeu
@@ -96,7 +99,9 @@ const CHARACTERS = {
     weapon: 'Truelle', weaponDesc: 'Courte mais lourde, casque de chantier vissé sur la tête',
     special: 'truelle', specialName: 'Coup de truelle', specialDesc: 'Onde de choc au sol qui renverse tout le monde',
     specialCd: 7,
-    phrases: ["Qui peut l'en blâmer ?", 'Mon oreille !!!!', "J'ai tout vu, j'ai tout fait !"],
+    phrases: ["Qui peut l'en blâmer ?", 'Mon oreille !!!!', "J'ai tout vu, j'ai tout fait !",
+      "J'ai vu le président, moi", "J'ai tenu ma grosse voiture à une seule main", "Il y avait de la buée à l'extérieur",
+      "Je vous promets, c'était bien la porte du garage"],
   },
   guilhem: {
     id: 'guilhem', name: 'Guilhem', title: 'Le Bling',
@@ -105,7 +110,9 @@ const CHARACTERS = {
     weapon: 'Montre en or', weaponDesc: 'Une Rolex dorée en guise de poing, grande allonge',
     special: 'rolex', specialName: 'Éclat de Rolex', specialDesc: 'Aveugle et paralyse les ennemis proches',
     specialCd: 8,
-    phrases: ['Popeck', "Je n'ai pas les moyens d'être pauvre", 'Elle a de belles dents ! Héhé'],
+    phrases: ['Popeck', "Je n'ai pas les moyens d'être pauvre", 'Elle a de belles dents ! Héhé',
+      'Et si je me prenais une autre montre de luxe ?', "De Fursac, c'est nul. C'est mieux Hugo Boss", "Regardez, il n'arrive pas",
+      'Je veux encore des actions Air Liquide'],
   },
   fateh: {
     id: 'fateh', name: 'Fateh', title: 'Le Maître-chien',
@@ -114,7 +121,9 @@ const CHARACTERS = {
     weapon: 'Ses poings + Aïka', weaponDesc: 'Aïka, sa chienne, mord à chaque coup',
     special: 'chien', specialName: 'Lâcher d\'Aïka', specialDesc: 'Aïka fonce et mord tout sur sa ligne',
     specialCd: 6,
-    phrases: ['Je t\'ordonne de partir', "J'ai un impératif", 'Aïka, j\'ai de la confiture !'],
+    phrases: ['Je t\'ordonne de partir', "J'ai un impératif", 'Aïka, j\'ai de la confiture !',
+      'Je vais me baigner dans mon pédiluve', 'Allô Cécile ? Super, les enfants ont bien fait caca', 'Aïka, viens nettoyer papa',
+      "L'an prochain, promis, j'essaie de le faire en plus de 2 heures"],
   },
   faouzi: {
     id: 'faouzi', name: 'Faouzi', title: 'Le Geek',
@@ -123,7 +132,9 @@ const CHARACTERS = {
     weapon: 'Cartouches de jeux', weaponDesc: 'Gilet de papy, cheveux noirs, cartouches à lancer',
     special: 'cartouches', specialName: 'Salve de cartouches', specialDesc: 'Lance trois cartouches de jeux vidéo en éventail',
     specialCd: 5,
-    phrases: ['Ça ne coûte rien de dépenser', 'Je suis Short Stack', 'Regarde, un conifère !'],
+    phrases: ['Ça ne coûte rien de dépenser', 'Je suis Short Stack', 'Regarde, un conifère !',
+      "Je l'achèterai pas, promis. Quoique peut-être", 'Arrêtez de parler de caca', 'Si ça continue, je rentre seul en avion',
+      'On avait dit balade'],
   },
   venum: {
     id: 'venum', name: 'Venum', title: 'Le Boxeur',
@@ -132,7 +143,8 @@ const CHARACTERS = {
     weapon: 'Gants de boxe', weaponDesc: 'Enchaînements rapides, frappe sèche',
     special: 'direct', specialName: 'Direct foudroyant', specialDesc: 'Fonce gants en avant, invincible',
     specialCd: 6,
-    phrases: ["Je vais demander à l'IA de t'éliminer", 'À mort les voitures essence', 'Maybe Later'],
+    phrases: ["Je vais demander à l'IA de t'éliminer", 'À mort les voitures essence', 'Maybe Later',
+      "Comme vous voulez, ça m'est égal", "C'est confidentiel, mais je vais vous le dire", 'Désolé, pas là, je suis en TT'],
   },
   senoussi: {
     id: 'senoussi', name: 'Senoussi', title: 'Le Berger',
@@ -141,7 +153,8 @@ const CHARACTERS = {
     weapon: 'Grande pelle', weaponDesc: 'Énorme allonge, balaie large',
     special: 'moutons', specialName: 'Ruée de moutons', specialDesc: 'Trois moutons chargent sur toute la profondeur',
     specialCd: 7, locked: true, unlockText: 'Termine le mode histoire',
-    phrases: ['Alors là !', 'Approche que je te montre mon outil', 'Que le Chapiste soit avec moi !'],
+    phrases: ['Alors là !', 'Approche que je te montre mon outil', 'Que le Chapiste soit avec moi !',
+      "C'est un updater, cela, mec", 'Qui veut croiser le fer avec moi ?'],
   },
   purf: {
     id: 'purf', name: 'The Purf', title: 'Le Toxique',
@@ -150,10 +163,55 @@ const CHARACTERS = {
     weapon: 'Poudre toxique', weaponDesc: 'Une poudre verte tombe de son visage en continu',
     special: 'fumee', specialName: 'Nuage toxique', specialDesc: 'Un nuage vert qui ronge les ennemis',
     specialCd: 8, locked: true, unlockText: 'Termine l\'histoire avec Senoussi',
-    phrases: ['Rendez-moi mon argent !!!!', 'Attaque de parmesan'],
+    phrases: ['Rendez-moi mon argent !!!!', 'Attaque de parmesan',
+      'Est-ce que je peux payer avec des pièces de centimes ?', "Je viens que si c'est gratuit et qu'on me ramène chez moi",
+      "Je me suis fabriqué une boîte à chaussures"],
   },
 };
 const ROSTER = ['christian', 'guilhem', 'fateh', 'faouzi', 'venum', 'senoussi', 'purf'];
+
+// ---------- Mini-boss (v3.9) : un par monde, à la fin du 1er tiers (et de temps en temps en Survie) ----------
+// Plus simples qu'un boss : barre de vie en 3 niveaux, un coup et UNE attaque spéciale, pas de phase 2.
+// special : baguettes | manettes | dring | sms | trounoir | belier | parmesan (voir js/tiers.js)
+// entrance : solex | voiturette | marche | chute | etoile | charge | fumee
+// (Les phrases sont lues par tools/make-voices.py, comme celles des héros : garder ce format.)
+const MINIBOSSES = {
+  marcel: {
+    id: 'marcel', name: 'Marcel', title: 'Le vrai Français', world: 'christian',
+    bw: 40, bh: 86, hp: 125, speed: 150, dmg: 9, range: 86, special: 'baguettes', specialCd: 5.5, entrance: 'solex',
+    phrases: ['Vive la France !'],
+  },
+  clement: {
+    id: 'clement', name: 'Clément', title: "L'ado", world: 'guilhem',
+    bw: 34, bh: 80, hp: 115, speed: 215, dmg: 8, range: 60, special: 'manettes', specialCd: 5, entrance: 'voiturette',
+    phrases: ['Rachète-moi une PS5 !'],
+  },
+  cecile: {
+    id: 'cecile', name: 'Cécile', title: 'Au téléphone', world: 'fateh',
+    bw: 34, bh: 82, hp: 115, speed: 205, dmg: 8, range: 62, special: 'dring', specialCd: 5, entrance: 'marche',
+    phrases: ['Fateh, rappelle-moi tout de suite !'],
+  },
+  leblond: {
+    id: 'leblond', name: 'Le Blond', title: "L'astronome", world: 'faouzi',
+    bw: 38, bh: 92, hp: 120, speed: 190, dmg: 9, range: 92, special: 'trounoir', specialCd: 6.5, entrance: 'etoile',
+    phrases: ['Laissez Faouzi tranquille, son trou noir m\'appartient !'],
+  },
+  clapet: {
+    id: 'clapet', name: 'Clapet 3000', title: 'Le téléphone à clapet', world: 'venum',
+    bw: 54, bh: 100, hp: 130, speed: 170, dmg: 9, range: 64, special: 'sms', specialCd: 5, entrance: 'chute',
+    phrases: ['Vive Samsung et les téléphones à clapet !'],
+  },
+  moutong: {
+    id: 'moutong', name: 'Mouton géant', title: 'Le bélier', world: 'senoussi',
+    bw: 110, bh: 96, hp: 150, speed: 170, dmg: 10, range: 56, special: 'belier', specialCd: 5.5, entrance: 'charge',
+    phrases: ['Bêêêêê ! Qu\'est-ce que tu veux ?'],
+  },
+  minipurf: {
+    id: 'minipurf', name: 'Mini Purf', title: 'Le petit toxique', world: 'purf',
+    bw: 48, bh: 70, hp: 120, speed: 200, dmg: 9, range: 56, special: 'parmesan', specialCd: 5, entrance: 'fumee',
+    phrases: ['Vous aimez le parmesan ? Vous allez en avoir !'],
+  },
+};
 
 // ---------- Ennemis courants ----------
 // beh : melee | charger (fonce en ligne droite) | ranged | flyer | hopper | roller
@@ -185,19 +243,19 @@ const ROBOT_NAMES = ['CLAUDE', 'OPENAI', 'GEMINI', 'ANTHROPIC'];
 
 // ---------- Les 7 mondes (un par laïquiste, qui en est le boss) ----------
 const WORLDS = [
-  { id: 'christian', boss: 'christian', name: 'MONDE DE CHRISTIAN', sub: 'Le chantier miniature', small: true,
+  { id: 'christian', boss: 'christian', mini: 'marcel', name: 'MONDE DE CHRISTIAN', sub: 'Le chantier miniature', small: true,
     minions: [['ouvrier', 5], ['goeland', 3]], food: 'sandwich', entrance: 'van' },
-  { id: 'guilhem', boss: 'guilhem', name: 'MONDE DE GUILHEM', sub: 'Rap City', minions: [['rappeur', 5], ['skateur', 3]],
+  { id: 'guilhem', boss: 'guilhem', mini: 'clement', name: 'MONDE DE GUILHEM', sub: 'Rap City', minions: [['rappeur', 5], ['skateur', 3]],
     food: 'burger', entrance: 'sport' },
-  { id: 'fateh', boss: 'fateh', name: 'MONDE DE FATEH', sub: 'Allauch', minions: [['berger', 4], ['papy', 3], ['runner', 3]],
+  { id: 'fateh', boss: 'fateh', mini: 'cecile', name: 'MONDE DE FATEH', sub: 'Allauch', minions: [['berger', 4], ['papy', 3], ['runner', 3]],
     food: 'navette', entrance: 'family', entourage: ['enfant', 'enfant', 'aika'] },
-  { id: 'faouzi', boss: 'faouzi', name: 'MONDE DE FAOUZI', sub: 'Pixel World', pixel: true,
+  { id: 'faouzi', boss: 'faouzi', mini: 'leblond', name: 'MONDE DE FAOUZI', sub: 'Pixel World', pixel: true,
     minions: [['chevalier8', 4], ['slime', 3], ['alien8', 2], ['chauve8', 2]], food: 'coeur8', entrance: 'pixel' },
-  { id: 'venum', boss: 'venum', name: 'MONDE DE VENUM', sub: 'IA City', minions: [['chat', 4], ['robot', 4]],
+  { id: 'venum', boss: 'venum', mini: 'clapet', name: 'MONDE DE VENUM', sub: 'IA City', minions: [['chat', 4], ['robot', 4]],
     food: 'batterie', entrance: 'suv', entourage: ['robochat', 'robochat'] },
-  { id: 'senoussi', boss: 'senoussi', name: 'MONDE DE SENOUSSI', sub: 'Le grand désert', minions: [['indien', 5], ['mouton', 4]],
+  { id: 'senoussi', boss: 'senoussi', mini: 'moutong', name: 'MONDE DE SENOUSSI', sub: 'Le grand désert', minions: [['indien', 5], ['mouton', 4]],
     food: 'dattes', entrance: 'herd' },
-  { id: 'purf', boss: 'purf', name: 'MONDE DE THE PURF', sub: 'La zone polluée', minions: [['zombie', 5], ['oursin', 3]],
+  { id: 'purf', boss: 'purf', mini: 'minipurf', name: 'MONDE DE THE PURF', sub: 'La zone polluée', minions: [['zombie', 5], ['oursin', 3]],
     food: 'conserve', entrance: 'smoke' },
 ];
 const worldById = id => WORLDS.find(w => w.id === id);

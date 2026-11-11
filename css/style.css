@@ -283,3 +283,13 @@ h2, .logo, .win-title, .intro-name, .intro-step, .gameover, .b-title, .b-sub, .c
 .medal-row.off { color: #b2bec3; font-size: 13px; }
 @media (max-height: 500px) { #win-art { height: 46vh; bottom: 6vh; } .win-stars { font-size: 32px; } .medal-row { margin-top: 2px; } }
 @media (max-width: 700px) { #win-art { display: none; } }
+
+/* ---------- v3.9 : objectifs (pause), aide sur les boutons tactiles ---------- */
+.pause-goals { background: rgba(0,0,0,.45); border: 2px solid #feca57; border-radius: 12px; padding: 8px 16px; margin: 4px 0 8px; font-size: clamp(12px, 2.4vh, 15px); text-align: left; line-height: 1.5; }
+.pause-goals .g-tier { font-family: var(--fx); color: #feca57; text-align: center; margin-bottom: 2px; }
+.pause-goals .g-ok { color: #2ecc71; font-weight: 900; } .pause-goals .g-ko { color: #ff6b6b; font-weight: 900; } .pause-goals .g-todo { color: #b2bec3; }
+.pad.hint-pulse { animation: hintpulse .7s ease-in-out infinite; }
+@keyframes hintpulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(254,202,87,.9); transform: scale(1); } 50% { box-shadow: 0 0 0 14px rgba(254,202,87,0); transform: scale(1.1); } }
+.pause-ctl summary { cursor: pointer; font-family: var(--fx); font-weight: 900; color: #feca57; margin: 4px 0; list-style: none; }
+.pause-ctl summary::-webkit-details-marker { display: none; }
+#s-pause { justify-content: flex-start; } #s-pause > h2 { margin-top: auto; } #s-pause > .menu { margin-bottom: auto; } /* centré quand ça tient, défilable sinon */

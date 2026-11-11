@@ -1,3 +1,31 @@
+# Les laïquistes — v3.9.0 : niveaux en 3 tiers et mini-boss
+
+## Niveaux en 3 tiers
+- **1er tiers** : deux vagues, puis le **mini-boss** du monde. **2e tiers** : une vague, puis l'**épreuve**. **3e tiers** : une vague, puis le **boss**. Niveaux un peu plus longs.
+- **Barre de progression** en haut avec 3 repères (💀 mini-boss, 🎯 épreuve, 👑 boss) qui passent au vert une fois franchis.
+- **Reprise au début du tiers** : en cas de défaite, « REPRENDRE AU TIERS 2 / 3 » repart du début du tiers avec le score de ce moment-là (« Recommencer le monde » reste possible).
+- Seuils des médailles relevés : 🥇 moins de 3:45, 🥈 moins de 4:45, 🥉 moins de 6:00.
+
+## Les 7 mini-boss
+Plus simples qu'un boss : barre de vie en 3 niveaux, un coup et une attaque spéciale annoncée au sol, pas de phase 2. Battu : 500 points, de la vie et un bonus.
+- **Marcel** (monde de Christian) : vieux Français, béret, canne et baguette. Arrive en solex. « Vive la France ! » · lance des baguettes.
+- **Clément** (Guilhem) : l'ado de 15 ans, sort de sa voiture sans permis. « Rachète-moi une PS5 ! » · lance des manettes.
+- **Cécile** (Fateh) : blonde, pas très grande, au téléphone. « Fateh, rappelle-moi tout de suite ! » · ondes de sonnerie.
+- **Le Blond** (Faouzi) : taille de Faouzi, blond, attaque au télescope, arrive en étoile filante. « Laissez Faouzi tranquille, son trou noir m'appartient ! » · trou noir qui aspire.
+- **Clapet 3000** (Venum) : téléphone Samsung noir à clapet, tombe du ciel. « Vive Samsung et les téléphones à clapet ! » · rafale de SMS.
+- **Mouton géant** (Senoussi) : déboule en chargeant. « Bêêêêê ! Qu'est-ce que tu veux ? » · charge.
+- **Mini Purf** (The Purf) : The Purf en plus petit, sort d'un nuage toxique. « Vous aimez le parmesan ? Vous allez en avoir ! » · parmesan en éventail.
+- En **Survie**, le mini-boss revient aux vagues 3, 8, 13…
+
+## Et aussi
+- **Gros « GO ! »** avec flèches et tes deux voix enregistrées (en alternance). Il reste tant qu'on n'avance pas et revient si on attend plus de 4 s.
+- **Aides de la première fois** : « Maintiens FRAPPE pour l'attraper », « Lâche FRAPPE pour le lancer », « Ton spécial est prêt » (le bouton clignote sur téléphone). Elles disparaissent une fois le geste réussi.
+- **Duel verbal à l'intro** : le héros lance une de ses phrases, le boss lui répond (bulles + voix).
+- **Objectifs dans le menu pause** : tiers en cours, étoiles encore possibles, médaille encore atteignable, ennemi en or. Les commandes sont repliées sous « 🎮 Commandes ».
+- **26 nouvelles phrases** pour les 7 héros/boss. Les voix (héros et mini-boss) sont générées par l'action GitHub « Générer les voix » après la fusion.
+
+---
+
 # Les laïquistes — v3.8.0 : finitions graphiques et petits plus de jeu
 
 ## Graphismes

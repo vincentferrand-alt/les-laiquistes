@@ -1002,6 +1002,7 @@ function drawProjectile(ctx, p, t) {
       for (let i = 0; i < 6; i++) ctx.lineTo((-30 + i * 10) * d, (i % 2 ? -6 : 6));
       ctx.stroke(); ctx.fillStyle = '#c98a2f'; for (let i = 0; i < 4; i++) ctx.fillRect(rand(-14, 14), -rand(6, 40), 6, 6); break;
     case 'item': ctx.translate(0, -58); drawThrowItem(ctx, p.item, t, d); break; // objet lancé par le héros (combat.js)
+    default: if (typeof drawMiniProjectile === 'function') drawMiniProjectile(ctx, p, t, d); break; // projectiles des mini-boss (minis.js)
     case 'parmesan': ctx.translate(0, -60); ctx.rotate(t * 10); poly(ctx, [[-14, 8], [14, 8], [0, -14]], '#f6e58d'); circle(ctx, -3, 2, 2, '#e1c95f', false); circle(ctx, 4, 4, 1.5, '#e1c95f', false); break;
   }
   ctx.restore();
