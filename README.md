@@ -83,8 +83,17 @@ Le temps imparti dépend du niveau de difficulté. Réglages : `EVENTS` en haut 
 
 - **Étoiles** (3 par monde, 21 en tout), affichées sur les cartes des mondes : ★ boss vaincu, ★ épreuve de milieu de monde réussie, ★ fini avec plus de la moitié de sa vie. On garde le meilleur résultat.
 - **Niveaux des héros** (1 à 10) : expérience à chaque partie (10 par ennemi, 150 par boss, 100 par épreuve réussie, même en cas de défaite pour les ennemis). Chaque niveau : +3 % de vie et +2 % de force. Niveau et barre d'XP sur l'écran du choix du perso.
-- **22 trophées** (écran 🏅 TROPHÉES) : premier boss, histoire en Costaud / Laïque ultime, combos ×25 / ×50 / ×100, strike, carreau, roi du flow, intouchable, 21 étoiles, héros niveau 10, pétomane… Annoncés par un message quand on les gagne.
+- **24 trophées** (écran 🏅 TROPHÉES) : premier boss, histoire en Costaud / Laïque ultime, combos ×25 / ×50 / ×100, strike, carreau, roi du flow, intouchable, 21 étoiles, héros niveau 10, pétomane, ruée vers l'or, médaille d'or… Annoncés par un message quand on les gagne.
 - Réglages : `XP` et `TROPHIES` en haut de `js/progress.js`.
+
+## Bonus, ennemi en or, chrono (v3.8)
+
+- **Bonus temporaires**, un par monde : casque de chantier (invincible 6 s), Rolex en or (points ×2), os à moelle (force ×1,6), champignon 8-bit (géant, force ×1,4), boisson énergisante (vitesse ×1,4), thé à la menthe (spécial qui se recharge à toute vitesse), masque à gaz (dangers sans effet + soin). On les trouve dans les caisses (3 chances sur 10), sur l'ennemi en or, et le boss en lâche un quand il perd son 2e niveau de vie. Affichés sous la barre de vie avec le temps restant.
+- **Ennemi en or** : un par monde (histoire, choix du niveau, défi du jour), une vague sur trois en Survie. Il fuit en zigzag et s'échappe au bout de 12 s. Battu : 1 000 points (× niveau de difficulté) et un bonus temporaire.
+- **Attaques des boss annoncées** : pendant qu'un boss prépare un coup ou un spécial, la zone touchée s'affiche au sol en rouge (en jaune pour l'éclat de Rolex, en vert pour le nuage toxique).
+- **Chrono et médailles de vitesse** : 🥇 moins de 2:50, 🥈 moins de 3:35, 🥉 moins de 4:30 pour finir un monde (histoire, choix du niveau, défi du jour). Meilleure médaille et meilleur temps affichés sur les cartes des mondes (gardés sur l'appareil, pas besoin de nouvelles règles Firestore).
+- **Image de score à partager** (bouton 📸 Partager en fin de partie) : décor du monde, héros, boss, phrase en bulle, score, étoiles, médaille et adresse du jeu. Sur téléphone, la feuille de partage s'ouvre (WhatsApp…) ; sur ordinateur, l'image est téléchargée.
+- Réglages : `EXTRA`, `POWERUPS` et `HERO_WORDS` en haut de `js/extras.js`.
 
 ## Défi du jour (v3.7)
 
@@ -130,7 +139,12 @@ Bouton **📅 DÉFI DU JOUR** : le même défi pour tout le monde, tiré au sort
 - **Particules d'ambiance** : poussière de plâtre, billets qui tombent, lucioles, scintillements pixel, pluie de code, sable, cendres.
 - **Teinte et vignettage** par monde, qui s'accentuent du début du niveau vers l'arène du boss (avec une pulsation rouge pendant le combat).
 - **Traînées d'arme**, écrasement et étirement à l'attaque, au saut et à l'atterrissage, **pose de victoire** et petite **raillerie** à la fin d'une vague.
-- **Arrivée des boss** : bandes noires, léger zoom et carte avec son nom.
+- **Arrivée des boss** : ralenti, grand bandeau à rayures avec le boss en grand (v3.8), puis bandes noires, léger zoom et carte avec son nom.
+- **K.O. du boss** (v3.8) : ralenti, zoom, flash et le boss s'envole en tournoyant.
+- **Onomatopées** propres à chaque héros (v3.8) : TCHAK ! (Christian), BLING ! (Guilhem), WOUF ! (Fateh), BLIP ! (Faouzi), POW ! (Venum), BÊÊÊ ! (Senoussi), SPLOTCH ! (The Purf), sur une étoile de BD pour les gros coups.
+- **Ambiance animée par monde** (v3.8) : rayons de soleil (chantier, Allauch), pétales de lavande, projecteurs de Rap City, lignes d'écran rétro chez Faouzi, pluie et néons à IA City, soleil et mirage dans le désert, nappes de smog dans la zone polluée.
+- **Élasticité** (v3.8) : les persos s'écrasent à l'atterrissage et rebondissent quand ils prennent un coup.
+- **Fin de niveau festive** (v3.8) : confettis, le héros danse, les étoiles arrivent une par une avec un « ding ».
 - **Rendu cartoon (v3.5)** : gros contour noir autour des persos, éclairage (haut éclairé, jambes dans l'ombre), ombres douces, yeux expressifs (clignement, sourcils selon l'action), brume au loin et grain sur le sol, halos sur les étincelles. Voir `drawSprite` et `Gfx` dans `js/draw.js`, `drawDepth` dans `js/backgrounds.js`.
 - **Qualité automatique** : si l'appareil rame, le jeu allège tout seul (d'abord le contour des petits ennemis, puis l'éclairage).
 
@@ -309,6 +323,8 @@ js/game.js            niveau, vagues, IA, boss et phases, dangers, modes, HUD
 js/combat.js          combos, attraper/lancer, caisses et objets à lancer, bonus des dangers
 js/events.js          événements de milieu de monde (briques d'or, battle de rap, pétanque…)
 js/progress.js        étoiles, trophées, niveaux des héros, défi du jour
+js/extras.js          bonus temporaires, ennemi en or, attaques des boss annoncées, chrono et médailles, onomatopées, entrée et K.O. des boss
+js/share.js           image de score à partager
 js/audio.js           mixage, bruitages, musiques écrites et arrangement, ambiances, voix (fichiers ou synthèse)
 sounds/               sons enregistrés (pets, rots, arrivée des boss, voiture, game over, fin de niveau)
 voices/               voix des personnages, facultatif (générées par tools/make-voices.py)

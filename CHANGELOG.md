@@ -1,3 +1,25 @@
+# Les laïquistes — v3.8.0 : finitions graphiques et petits plus de jeu
+
+## Graphismes
+- **Onomatopées des héros** : TCHAK ! (Christian), BLING ! (Guilhem), WOUF ! (Fateh), BLIP ! (Faouzi), POW ! (Venum), BÊÊÊ ! (Senoussi), SPLOTCH ! (The Purf). Sur les gros coups, elles sortent sur une étoile de BD.
+- **Entrée des boss** : ralenti et grand bandeau à rayures avec le boss en grand, puis la petite carte habituelle.
+- **K.O. du boss** : ralenti, zoom, flash, il s'envole en tournoyant (la bannière « Je t'ai planté ! » attend la fin).
+- **Ambiance animée par monde** : rayons de soleil, pétales de lavande, projecteurs, lignes d'écran rétro, pluie de néons, mirage, smog. Coupée automatiquement si l'appareil rame.
+- **Élasticité** : écrasement à l'atterrissage, rebond quand on prend un coup.
+- **Fin de niveau festive** : confettis, le héros danse, les étoiles arrivent une par une avec un « ding ».
+
+## Jeu
+- **Bonus temporaires** (un par monde) : casque, Rolex, os, champignon, canette, thé, masque à gaz. Dans les caisses, sur l'ennemi en or, et le boss en lâche un en cours de combat.
+- **Ennemi en or** : un par monde (une vague sur trois en Survie). Il fuit et s'échappe au bout de 12 s. Battu : 1 000 points et un bonus.
+- **Attaques des boss annoncées au sol** pendant leur préparation (zone rouge, couloir avec flèches).
+- **Chrono et médailles de vitesse** par monde (🥇 < 2:50, 🥈 < 3:35, 🥉 < 4:30), sur les cartes des mondes.
+- **Image de score à partager** (📸 Partager) en fin de partie, victoire comme défaite.
+- 2 nouveaux trophées : Ruée vers l'or, Éclair (24 au total).
+
+Rien à changer dans Firebase : médailles et temps restent sur l'appareil.
+
+---
+
 # Les laïquistes — v3.7.0 : progression et défi du jour
 
 ## Correction

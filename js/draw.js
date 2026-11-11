@@ -62,7 +62,7 @@ const _spr = { a: null, ca: null, b: null, cb: null };
 function drawSprite(ctx, box, paint, o = {}) {
   const outline = o.outline || 0;
   // qualité 0, ou sbire en qualité 1 : dessin direct (plus léger), sauf pendant le flash d'impact
-  if (!o.flash && (Gfx.quality === 0 || (o.minor && Gfx.quality < 2) || (!outline && !o.shade))) { paint(ctx); return; }
+  if (!o.flash && !o.tint && (Gfx.quality === 0 || (o.minor && Gfx.quality < 2) || (!outline && !o.shade))) { paint(ctx); return; }
   const m = ctx.getTransform();
   const k = clamp(Math.hypot(m.a, m.b), 0.2, 2); // résolution réelle à l'écran (plafonnée : assez net, pas trop lourd)
   const pad = outline + 1;
@@ -88,6 +88,8 @@ function drawSprite(ctx, box, paint, o = {}) {
     g.addColorStop(0.62, 'rgba(25,15,45,0)'); g.addColorStop(1, 'rgba(25,15,45,0.30)');
     a.fillStyle = g; a.fillRect(0, 0, W, H);
   }
+  // 2 bis) teinte (ennemi en or) : couleur posée par-dessus, à moitié transparente
+  if (o.tint) { a.globalCompositeOperation = 'source-atop'; a.globalAlpha = 0.55; a.fillStyle = `rgb(${o.tint})`; a.fillRect(0, 0, W, H); a.globalAlpha = 1; }
   // 3) flash blanc
   if (o.flash) { a.globalCompositeOperation = 'source-atop'; a.globalAlpha = 0.78; a.fillStyle = '#fff'; a.fillRect(0, 0, W, H); a.globalAlpha = 1; }
   a.globalCompositeOperation = 'source-over';

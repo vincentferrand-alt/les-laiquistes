@@ -79,6 +79,7 @@ const Game = {
     this.cine = 0; this.cineT = 0; this.bossCard = null; // cinématique d'arrivée du boss
     this.minionScale = this.world.small ? 0.72 : 1;
     this.hero = new Fighter(o.heroKind, 'hero', 160, (GROUND_TOP + GROUND_BOTTOM) / 2);
+    this.extrasStart(); // bonus, ennemi en or, chrono (extras.js)
     // niveau du héros (progress.js) : +3 % de vie et +2 % de force par niveau ; défi « Fragile » : moitié de vie
     { const bn = Progress.bonus(o.heroKind), h = this.hero; h.maxHp = Math.round(h.maxHp * bn.hp * (this.mod.heroHp || 1)); h.hp = h.maxHp; h.dmg *= bn.dmg; }
     if (o.heroHp) this.hero.hp = clamp(o.heroHp, 1, this.hero.maxHp);
@@ -136,6 +137,7 @@ const Game = {
     if (Input.consume('pause')) { UI.pause(); return; }
     this.updateHero(dt);
     this.updateCombat(dt);
+    this.updateExtras(dt, rdt); // bonus temporaires, ennemi en or (extras.js)
     // intensité musicale : monte avec le compteur de coups
     Music.setIntensity(this.hits >= 20 ? 3 : this.hits >= 10 ? 2 : this.hits >= 4 ? 1 : 0);
     if (this.cineT > 0) this.cineT -= rdt;
@@ -144,7 +146,7 @@ const Game = {
     this.tokenT -= dt;
     if (this.tokenT <= 0) {
       this.tokenT = 0.5;
-      const alive = this.enemies.filter(e => !e.dead && e.beh === 'melee').sort((a, b) => Math.abs(a.x - this.hero.x) - Math.abs(b.x - this.hero.x));
+      const alive = this.enemies.filter(e => !e.dead && !e.golden && e.beh === 'melee').sort((a, b) => Math.abs(a.x - this.hero.x) - Math.abs(b.x - this.hero.x));
       let n = 0;
       alive.forEach(e => { e.hasToken = e.isBoss || (n < 2 && ++n > 0); });
     }
@@ -173,7 +175,8 @@ const Game = {
       else if (h.canAct()) {
         const mx = Input.mx, my = Input.my;
         if (mx || my) {
-          h.x += mx * h.speed * dt; h.y += my * h.speed * 0.62 * dt;
+          const spd = h.speed * this.boostSpeed(); // boisson énergisante : plus rapide
+          h.x += mx * spd * dt; h.y += my * spd * 0.62 * dt;
           if (mx) h.dir = Math.sign(mx);
           const ph = Math.floor(h.walk / Math.PI);
           h.walk += dt * 12; h.state = 'walk';
@@ -277,7 +280,7 @@ const Game = {
   },
 
   // points gagnés × multiplicateur du niveau de difficulté (×1 / ×1,5 / ×2)
-  addScore(n) { this.score += Math.round(n * this.L.score * (this.mod.score || 1)); },
+  addScore(n) { this.score += Math.round(n * this.L.score * (this.mod.score || 1) * (this.boostIs('rolex') ? 2 : 1)); }, // Rolex en or : points ×2
   specialDmg(f, base) {
     if (f.team === 'hero') return base;
     return f.isBoss ? base * BALANCE.boss.specialDmgMul * this.bossDmgK() : base * 0.55 * this.diff * 0.8 * this.L.enemyDmg;
@@ -306,11 +309,12 @@ const Game = {
   },
 
   applyHit(src, o, dmg, opts = {}, big = false) {
+    if (src && src === this.hero) dmg *= this.boostDmg(); // os à moelle, champignon
     dmg = Math.max(1, Math.round(dmg));
     if (!o.takeHit(src, dmg, opts)) return false;
     const hz = o.z + o.height * 0.55;
     this.spark(o.x, o.y, hz, opts.knockdown || big ? 14 : 8);
-    if (!opts.noStagger || dmg > 4) this.text(o.x + rand(-10, 10), o.y, hz + 20, pick(HIT_WORDS), opts.knockdown ? '#ff9f43' : '#fff', opts.knockdown ? 26 : 20);
+    if (!opts.noStagger || dmg > 4) this.hitText(src, o, hz, opts.knockdown || big); // onomatopée du héros (extras.js)
     const pan = Sfx.panX(o.x);
     const wk = src && src.team === 'hero' ? src.kind : null; // le son prend la « couleur » de l'arme du héros
     if (opts.knockdown || big) { Sfx.bigHit(pan, wk, this.hits); this.shake = 0.25; this.hitstop = 0.07; }
@@ -334,9 +338,11 @@ const Game = {
     this.onKillFx(e, src, opts); // éjection, bonus danger / lancer, dernier ennemi de la vague (combat.js)
     const gag = Sfx.kill(Sfx.panX(e.x), e.isBoss);
     if (gag) { this.gagFx(e, gag); Progress.count('gags'); }
+    if (e.golden) this.onGoldKill(e); // ennemi en or : jackpot (extras.js)
     if (e.isBoss) {
       this.addScore(1000);
       this.slowT = 1.2; this.shake = 0.5;
+      this.bossKO(e); // K.O. au ralenti (extras.js)
       Haptics.vibrate([70, 40, 160]);
       for (let i = 0; i < 24; i++) this.particles.push({ type: 'coin', x: e.x, y: e.y, z: e.height * 0.6, vx: rand(-260, 260), vy: rand(-40, 40), vz: rand(300, 700), life: 1.6, max: 1.6 });
     } else {
@@ -423,7 +429,7 @@ const Game = {
       targets.forEach(o => {
         const dx = (o.x - hz.x) / hz.r, dy = (o.y - hz.y) / (hz.r * 0.45);
         if (dx * dx + dy * dy >= 1 || o.z > 150) return;
-        if (o === this.hero && o.invul > 0) return;
+        if (o === this.hero && (o.invul > 0 || o.shield > 0 || this.boostIs('masque'))) return; // casque, masque à gaz
         o.hp -= hz.dmg; o.flash = 0.08;
         this.text(o.x, o.y, o.height + 10, '-' + Math.round(hz.dmg), '#a3e635', 16, 0.6);
         if (o.hp <= 0) { o.hp = 0; o.die(Math.sign(o.x - hz.x) || 1); if (hz.team === 'hero') this.onKill(o); else { Sfx.gameOver(); Sfx.stopMusic(); } }
@@ -446,7 +452,7 @@ const Game = {
     return d;
   },
   dangerTargets(d) {
-    const hero = this.hero.dead ? [] : [this.hero];
+    const hero = this.hero.dead || this.boostIs('masque') ? [] : [this.hero]; // masque à gaz : les dangers ne le touchent pas
     if (d.team === 'boss') return hero;
     return hero.concat(this.enemies.filter(e => !e.dead && !e.isBoss && !e.mustKill && e.entering <= 0));
   },
@@ -597,7 +603,7 @@ const Game = {
     const h = this.hero;
     this.pickups.forEach(p => {
       p.t += dt; p.life -= dt;
-      if (!p.item && !h.dead && Math.abs(p.x - h.x) < 34 && Math.abs(p.y - h.y) < 24) {
+      if (!p.item && !p.power && !h.dead && Math.abs(p.x - h.x) < 34 && Math.abs(p.y - h.y) < 24) {
         p.life = 0; h.hp = Math.min(h.maxHp, h.hp + 25); Sfx.pickup();
         this.text(h.x, h.y, h.height + 20, '+25 MIAM', '#2ecc71', 22);
       }
@@ -615,18 +621,19 @@ const Game = {
       if (e.p2Cd > 0) e.p2Cd -= dt;
     }
     if (!e.dead) {
+      if (e.golden) this.goldTick(e, dt); // ennemi en or : il finit par s'enfuir (extras.js)
       if (e.entering > 0) { /* cinématique */ }
       else if (e.state === 'dash') this.updateDash(e, dt);
-      else if (e.canAct()) this.think(e, dt);
+      else if (e.canAct() || (e.escaping && e.state !== 'down')) e.golden ? this.thinkGolden(e, dt) : this.think(e, dt);
       this.updateAction(e, dt);
       if (e.fly && e.state !== 'dash') e.z += (e.cruiseZ - e.z) * Math.min(1, dt * 2.5);
       if (e.beh === 'hopper' && e.hopping && e.z <= 0 && e.vz <= 0) { e.hopping = false; e.kx = 0; this.dust(e.x, e.y, 3); }
-      if (['hopper', 'roller'].includes(e.beh)) this.contact(e, false);
+      if (['hopper', 'roller'].includes(e.beh) && !e.golden) this.contact(e, false);
       if (e.beh === 'roller') e.roll += (e.dir) * dt * 3 * (e.state === 'walk' ? 1 : 0);
     }
     e.physics(dt);
     if (e.thrownT > 0) this.updateThrown(e, dt); // lancé par le héros
-    if (!e.dead && e.entering <= 0) this.keepInView(e, dt);
+    if (!e.dead && e.entering <= 0 && !e.escaping) this.keepInView(e, dt);
   },
 
   // Les ennemis restent ENTIÈREMENT dans la zone visible (et non masquée par les boutons).
@@ -785,7 +792,9 @@ const Game = {
     const w = this.world, c = CHARACTERS[w.boss];
     this.bossPhase = 1; this.lockMax = this.levelLen - this.VW; this.bossIntroT = 2.6;
     // cinématique : bandes noires, léger zoom, carte avec le nom du boss
-    this.cineT = 2.9; this.bossCard = { name: c.name.toUpperCase(), title: c.title, col: c.light, t: 0 };
+    // (v3.8 : d'abord un grand bandeau au ralenti, puis la petite carte)
+    this.cineT = 3.3; this.bossCard = { name: c.name.toUpperCase(), title: c.title, col: c.light, kind: w.boss, splash: true, dur: 3.3 };
+    this.slowT = Math.max(this.slowT, 0.9);
     Sfx.bossArrival();
     Sfx.music('boss:' + w.id); // le thème de boss prend le relais
     const R = this.camX + this.VW;
@@ -850,6 +859,7 @@ const Game = {
     e.invul = Math.max(e.invul, B.tierInvul);
     if (e.state === 'idle' || e.state === 'walk' || e.state === 'hurt') { e.setState('taunt', 0.7); e.attackCd = Math.max(e.attackCd, 0.8); }
     this.bossLine(e);
+    if (e.tier === 2 && !e.powerDropped) { e.powerDropped = true; this.dropPower((e.x + this.hero.x) / 2, this.hero.y); } // un bonus pour la suite du combat (extras.js)
     this.shake = Math.max(this.shake, 0.3);
     if (!this.text) return;
     this.text(e.x, e.y, e.height + 70, 'NIVEAU ' + (e.tier + 1) + '/' + T, '#feca57', 24, 1.2);
@@ -940,7 +950,7 @@ const Game = {
   },
 
   updateLevel(dt, rdt) {
-    const alive = this.enemies.filter(e => !e.dead);
+    const alive = this.enemies.filter(e => !e.dead && !e.golden); // (l'ennemi en or ne bloque pas les vagues)
     // dangers du monde (annoncés, évitables), plus rares pendant le boss
     if (this.bossPhase !== 1 && this.bossPhase !== 3 && !this.hero.dead && !this.ev) { // (pendant un événement, c'est lui qui gère les dangers)
       this.hazardT -= dt;
@@ -991,11 +1001,12 @@ const Game = {
       }
       const left = this.enemies.filter(e => e.mustKill && !e.dead);
       if (left.length === 0) {
-        this.bossPhase = 3; this.endT = 3.2;
+        this.bossPhase = 3; this.endT = this.koT > 0 ? 4 : 3.2; // (après un K.O. au ralenti, on laisse le temps de le voir)
         this.flashA = 0.6; this.flashCol = '255,255,240'; this.slowT = 1.4;
         Sfx.victory(); Sfx.stopMusic();
         Progress.unlock('boss1'); if (!this.bossTouched && !this.hero.dead) Progress.unlock('intouchable');
-        this.banner("JE T'AI PLANTÉ !", 'No homo.', 3);
+        if (this.koT > 0) setTimeout(() => { if (this.running) this.banner("JE T'AI PLANTÉ !", 'No homo.', 2.4); }, 1000); // la bannière attend la fin du K.O.
+        else this.banner("JE T'AI PLANTÉ !", 'No homo.', 3);
         this.enemies.forEach(m => { if (!m.dead) m.die(Math.sign(m.x - this.hero.x) || 1); });
         this.dangers = []; this.storm = null;
         this.hero.hp = Math.min(this.hero.maxHp, this.hero.hp + 30);
@@ -1031,7 +1042,7 @@ const Game = {
       const B = this.bounds(), right = this.spawnFromRight();
       const b = this.makeBoss(right ? B.R + 80 : B.L - 80, (GROUND_TOP + GROUND_BOTTOM) / 2, S.bossHpMul);
       this.bossLine(b); this.survBoss = b;
-      this.cineT = 1.6; this.bossCard = { name: b.def.name.toUpperCase(), title: b.def.title, col: b.def.light, t: 0 };
+      this.cineT = 2.4; this.bossCard = { name: b.def.name.toUpperCase(), title: b.def.title, col: b.def.light, kind: b.kind, splash: true, dur: 2.4 };
       Sfx.bossArrival(); Sfx.music('boss:' + this.world.id);
       this.banner('VAGUE ' + this.survWave, 'Le boss est de retour !', 2);
     } else this.banner('VAGUE ' + this.survWave, n + ' ennemis', 1.6);
@@ -1077,7 +1088,7 @@ const Game = {
       if (p.vz !== undefined) {
         p.z += p.vz * dt;
         if (p.type === 'gas' || p.type === 'stink') { p.vx *= 1 - 1.5 * dt; p.vy *= 1 - 1.5 * dt; }
-        else if (p.type !== 'pix' && p.type !== 'speed' && p.type !== 'burpwave') { p.vz -= (p.type === 'dust' ? 100 : 1200) * dt; if (p.z < 0) { p.z = 0; p.vz *= -0.4; p.vx *= 0.6; } }
+        else if (p.type !== 'pix' && p.type !== 'speed' && p.type !== 'burpwave' && p.type !== 'glint') { p.vz -= (p.type === 'dust' ? 100 : 1200) * dt; if (p.z < 0) { p.z = 0; p.vz *= -0.4; p.vx *= 0.6; } }
       }
     });
     this.particles = this.particles.filter(p => p.life > 0);
@@ -1099,8 +1110,11 @@ const Game = {
     const setMain = () => ctx.setTransform(this.s * d, 0, 0, this.s * d, (this.ox + shx) * d, (this.oy + shy) * d);
 
     // léger zoom pendant la cinématique d'arrivée du boss (centré sur le boss)
-    const zoom = 1 + 0.07 * this.cine;
-    const fx = this.boss && !this.boss.dead ? clamp(this.boss.x - this.camX, VW * 0.3, VW * 0.85) : VW * 0.6, fy = GROUND_TOP + 60;
+    // … et zoom plus fort sur le K.O. du boss (extras.js)
+    const ko = this.koAmount();
+    const zoom = 1 + 0.07 * this.cine + 0.2 * ko;
+    const fx = ko > 0 ? clamp(this.koX - this.camX, VW * 0.25, VW * 0.75) : this.boss && !this.boss.dead ? clamp(this.boss.x - this.camX, VW * 0.3, VW * 0.85) : VW * 0.6;
+    const fy = ko > 0 ? clamp(this.koY, 220, 420) : GROUND_TOP + 60;
     const applyZoom = () => { if (zoom > 1.001) { ctx.translate(fx, fy); ctx.scale(zoom, zoom); ctx.translate(-fx, -fy); } };
 
     if (this.world.pixel) {
@@ -1126,6 +1140,7 @@ const Game = {
     // teinte + vignettage du monde : début → milieu → arène du boss
     const inBoss = this.bossPhase >= 1 && this.bossPhase < 3 || !!this.survBoss;
     const stage = this.mode === 'survival' ? (inBoss ? 1 : 0.5) : inBoss ? 1 : clamp(this.camX / (this.levelLen - VW), 0, 1) * 0.6;
+    drawWorldAtmos(ctx, this.world.id, VW, this.t, inBoss); // ambiance animée du monde (backgrounds.js)
     drawWorldOverlay(ctx, this.world.id, VW, stage, this.t, inBoss);
     // tempête de sable : voile qui réduit la visibilité
     if (this.storm) {
@@ -1145,6 +1160,7 @@ const Game = {
     const bar = 58 * c;
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, bar); ctx.fillRect(0, VIEW_H - bar, VW, bar);
     const card = this.bossCard; if (!card) return;
+    if (card.splash && card.dur - this.cineT < 1.75) { this.renderBossSplash(ctx, card, card.dur - this.cineT); return; } // grand bandeau (extras.js)
     const w = 430, x = 30 - (w + 80) * (1 - c), y = VIEW_H * 0.3; // glisse depuis la gauche, au-dessus du décor (le boss reste visible)
     ctx.save(); ctx.globalAlpha = Math.min(1, c * 1.4); ctx.translate(x, y);
     const para = (x0, y0, ww, hh, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x0 + 18, y0); ctx.lineTo(x0 + ww + 18, y0); ctx.lineTo(x0 + ww, y0 + hh); ctx.lineTo(x0, y0 + hh); ctx.closePath(); ctx.fill(); };
@@ -1171,6 +1187,7 @@ const Game = {
       }
     });
     this.dangers.forEach(dg => drawDangerGround(ctx, dg, dg.x - cx, gt)); // annonces au sol
+    this.drawBossTelegraphs(ctx, cx, gt); // attaques des boss annoncées au sol (extras.js)
     this.particles.forEach(p => {
       if (p.type !== 'ring') return;
       ctx.strokeStyle = p.col || 'rgba(255,255,255,0.9)'; ctx.globalAlpha = p.life / p.max; ctx.lineWidth = 6;
@@ -1189,10 +1206,11 @@ const Game = {
     this.pickups.forEach(p => list.push({ y: p.y, draw: () => {
       if (p.life < 3 && Math.floor(p.life * 8) % 2) return;
       ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(p.x - cx, p.y, 14, 5, 0, 0, Math.PI * 2); ctx.fill();
+      if (p.power) { drawPowerPickup(ctx, p.power, p.x - cx, p.y, p.t); return; } // bonus temporaire (extras.js)
       if (p.item) { ctx.save(); ctx.translate(p.x - cx, p.y - 18 - Math.abs(Math.sin(p.t * 4)) * 8); drawThrowItem(ctx, p.item, 0); ctx.restore(); }
       else drawFood(ctx, p.type, p.x - cx, p.y, p.t);
     } }));
-    this.combatDraw(list, ctx, cx, gt); this.evDraw(list, ctx, cx, gt);
+    this.combatDraw(list, ctx, cx, gt); this.evDraw(list, ctx, cx, gt); this.extrasDraw(list, ctx, cx, gt);
     this.dangers.forEach(dg => list.push({ y: dg.y + 2, draw: () => drawDangerObj(ctx, dg, dg.x - cx, gt, VW) }));
     list.sort((a, b) => a.y - b.y).forEach(o => o.draw());
     this.combatOverlay(ctx, cx, gt);
@@ -1207,6 +1225,9 @@ const Game = {
         ctx.fillStyle = `rgba(255,${200 + Math.random() * 55},80,${a})`; ctx.fillRect(sx - 2, sy - 2, 4, 4); }
       else if (p.type === 'dust') { ctx.fillStyle = `rgba(230,220,200,${a * 0.6})`; ctx.beginPath(); ctx.arc(sx, sy, 6 + (1 - a) * 10, 0, Math.PI * 2); ctx.fill(); }
       else if (p.type === 'speed') { ctx.strokeStyle = `rgba(255,255,255,${a * 0.8})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx, sy - 46); ctx.stroke(); }
+      else if (p.type === 'glint') { // paillette (ennemi en or, bonus) : petite étoile à 4 branches
+        const r = p.r * (0.4 + a * 0.6); ctx.fillStyle = p.col || '#ffe066'; ctx.globalAlpha = a; ctx.beginPath();
+        ctx.moveTo(sx, sy - r); ctx.lineTo(sx + r * 0.25, sy - r * 0.25); ctx.lineTo(sx + r, sy); ctx.lineTo(sx + r * 0.25, sy + r * 0.25); ctx.lineTo(sx, sy + r); ctx.lineTo(sx - r * 0.25, sy + r * 0.25); ctx.lineTo(sx - r, sy); ctx.lineTo(sx - r * 0.25, sy - r * 0.25); ctx.fill(); ctx.globalAlpha = 1; }
       else if (p.type === 'pix') { ctx.globalAlpha = a; ctx.fillStyle = p.col; ctx.fillRect(sx - 4, sy - 4, 8, 8); ctx.globalAlpha = 1; }
       else if (p.type === 'burst') {
         ctx.save(); ctx.globalCompositeOperation = 'lighter'; // halo derrière l'étoile d'impact
@@ -1241,6 +1262,7 @@ const Game = {
       const wx = t.wob ? Math.sin(t.life * 47) * 3 : 0, wy = t.wob ? Math.cos(t.life * 39) * 2 : 0;
       ctx.save(); ctx.globalAlpha = a; ctx.translate(t.x - cx + wx, t.y - t.z + wy); ctx.scale(sc, sc); if (t.rot) ctx.rotate(t.rot);
       ctx.font = `900 ${t.size}px "Arial Black", Arial`; ctx.textAlign = 'center'; ctx.lineJoin = 'round';
+      if (t.burst) drawBurst(ctx, ctx.measureText(t.s).width, t.burst, t.life * 0.4); // étoile de BD (extras.js)
       if (t.stroke) { ctx.lineWidth = 10; ctx.strokeStyle = '#000'; ctx.strokeText(t.s, 0, 0); ctx.lineWidth = 5; ctx.strokeStyle = t.stroke; ctx.strokeText(t.s, 0, 0); }
       else { ctx.lineWidth = 5; ctx.strokeStyle = '#000'; ctx.strokeText(t.s, 0, 0); }
       ctx.fillStyle = t.col; ctx.fillText(t.s, 0, 0);
@@ -1276,6 +1298,7 @@ const Game = {
     ctx.strokeText(sc, VW - 90, 40); ctx.fillText(sc, VW - 90, 40);
     this.combatHUD(ctx, VW); // compteur de combo + paliers (combat.js)
     this.evHUD(ctx, VW);     // événement en cours (events.js)
+    this.extrasHUD(ctx, VW); // bonus en cours, chrono, messages (extras.js)
     ctx.textAlign = 'center'; ctx.font = '900 17px "Arial Black", Arial'; ctx.fillStyle = '#fff';
     ctx.strokeText(this.world.name, VW / 2, 28); ctx.fillText(this.world.name, VW / 2, 28);
     if (this.mode === 'survival') { // Survie : numéro de vague
