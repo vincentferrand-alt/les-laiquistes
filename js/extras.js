@@ -26,9 +26,10 @@ const EXTRA = {
   goldTrophy: 5,       // trophée « Ruée vers l'or » au bout de n ennemis en or battus
   // médailles de vitesse : temps maximum (s) pour finir un monde (histoire, choix du niveau, défi du jour)
   medals: [
-    { id: 3, max: 170, icon: '🥇', name: "MÉDAILLE D'OR", col: '#ffd32a' },
-    { id: 2, max: 215, icon: '🥈', name: "MÉDAILLE D'ARGENT", col: '#dfe6e9' },
-    { id: 1, max: 270, icon: '🥉', name: 'MÉDAILLE DE BRONZE', col: '#e1a95f' },
+    // (v3.9 : niveau en 3 tiers, plus long → seuils relevés ; avant : 170 / 215 / 270)
+    { id: 3, max: 225, icon: '🥇', name: "MÉDAILLE D'OR", col: '#ffd32a' },
+    { id: 2, max: 285, icon: '🥈', name: "MÉDAILLE D'ARGENT", col: '#dfe6e9' },
+    { id: 1, max: 360, icon: '🥉', name: 'MÉDAILLE DE BRONZE', col: '#e1a95f' },
   ],
 };
 
@@ -100,7 +101,7 @@ const Extras = {
     ctx.translate(VW / 2, H * 0.5); ctx.rotate(-0.1);
     ctx.translate((1 - easeOut(inP)) * VW * 1.3 - easeOut(outP) * VW * 1.3, 0); // entre par la droite, sort par la gauche
     const bw = VW * 1.7, hh = 190;
-    ctx.fillStyle = (HERO_WORDS[card.kind] || {}).col || card.col; ctx.fillRect(-bw / 2, -hh / 2, bw, hh); // couleur vive du perso
+    ctx.fillStyle = card.mini ? card.col : (HERO_WORDS[card.kind] || {}).col || card.col; ctx.fillRect(-bw / 2, -hh / 2, bw, hh); // couleur vive du perso
     // rayures qui défilent
     ctx.save(); ctx.beginPath(); ctx.rect(-bw / 2, -hh / 2, bw, hh); ctx.clip();
     ctx.fillStyle = 'rgba(0,0,0,0.2)';
@@ -112,18 +113,19 @@ const Extras = {
     ctx.fillStyle = '#000'; ctx.fillRect(-bw / 2, -hh / 2 - 10, bw, 10); ctx.fillRect(-bw / 2, hh / 2, bw, 10);
     ctx.fillStyle = '#fff'; ctx.fillRect(-bw / 2, -hh / 2 - 15, bw, 5); ctx.fillRect(-bw / 2, hh / 2 + 10, bw, 5);
     // le boss en grand, qui déborde du bandeau par le haut
-    if (card.kind && CHARACTERS[card.kind]) {
+    const cdef = card.mini ? MINIBOSSES[card.kind] : CHARACTERS[card.kind];
+    if (cdef) {
       ctx.save(); ctx.beginPath(); ctx.rect(-bw / 2, -hh / 2 - 200, bw, hh + 200); ctx.clip();
       ctx.translate(VW * 0.24, hh / 2 + 4); ctx.rotate(0.1);
-      const sc = 2.6 * 100 / Math.max(80, CHARACTERS[card.kind].bh);
-      menuSprite(ctx, card.kind, { dir: -1, scale: sc, t: el * 1.5 + 2, pose: el < 0.9 ? 'windup' : 'taunt' });
+      const sc = 2.6 * 100 / Math.max(80, cdef.bh), so = { dir: -1, scale: Math.min(sc, card.kind === 'moutong' ? 1.9 : 9), t: el * 1.5 + 2, pose: el < 0.9 ? 'windup' : 'taunt' };
+      if (card.mini) miniSprite(ctx, card.kind, so); else menuSprite(ctx, card.kind, so); // (mini-boss : minis.js)
       ctx.restore();
     }
     // nom
     ctx.textAlign = 'left'; ctx.lineJoin = 'round';
     const tx = -VW * 0.4;
     ctx.font = '900 22px "Arial Black", Arial'; ctx.lineWidth = 6; ctx.strokeStyle = '#000'; ctx.fillStyle = '#feca57';
-    ctx.strokeText('BOSS', tx, -42); ctx.fillText('BOSS', tx, -42);
+    const lab = card.mini ? 'MINI-BOSS' : 'BOSS'; ctx.strokeText(lab, tx, -42); ctx.fillText(lab, tx, -42);
     ctx.font = '900 70px "Arial Black", Arial'; ctx.lineWidth = 10; ctx.fillStyle = '#fff';
     ctx.strokeText(card.name, tx, 22); ctx.fillText(card.name, tx, 22);
     ctx.font = 'italic 900 24px "Trebuchet MS", Arial'; ctx.lineWidth = 6; ctx.fillStyle = '#ffeaa7';
@@ -214,7 +216,7 @@ const Extras = {
   spawnGolden() {
     const kinds = this.world.minions.map(m => m[0]).filter(k => MINIONS[k].beh !== 'flyer');
     const e = this.spawnEnemy(pick(kinds.length ? kinds : [this.world.minions[0][0]]), { hpMul: EXTRA.goldHpMul });
-    e.golden = true; e.goldT = 0; e.speed *= EXTRA.goldSpeed; e.dmg = 0; e.attackCd = 99;
+    e.golden = true; e.goldT = 0; e.speed *= EXTRA.goldSpeed; e.dmg = 0; e.attackCd = 99; this.goldState = 'encours';
     this.flashMsg('UN ENNEMI EN OR !', "Bats-le avant qu'il s'enfuie", '#ffd32a');
     [0, 3, 7, 10, 14, 19].forEach((iv, i) => Sfx.tone('triangle', midiHz(84 + iv), null, 0.12, 0.1, i * 0.05));
   },
@@ -241,14 +243,14 @@ const Extras = {
   goldTick(e, dt) {
     e.goldT += dt;
     if (!e.escaping && (e.goldT > EXTRA.goldFlee || this.ev || this.bossPhase > 0)) {
-      e.escaping = true; e.stun = 0;
+      e.escaping = true; e.stun = 0; this.goldState = 'enfui';
       if (e.state === 'hurt' || e.state === 'down') e.setState('idle');
       this.text(e.x, e.y, e.height + 40, "IL S'ENFUIT !", '#ffd32a', 22, 1.4, { wob: 1, stroke: '#5c3d00' });
       Sfx.tone('triangle', 1200, 300, 0.5, 0.12);
     }
   },
   onGoldKill(e) {
-    this.addScore(EXTRA.goldScore);
+    this.addScore(EXTRA.goldScore); this.goldState = 'battu';
     for (let i = 0; i < 30; i++) this.particles.push({ type: 'coin', x: e.x, y: e.y, z: e.height * 0.6, vx: rand(-300, 300), vy: rand(-40, 40), vz: rand(300, 750), life: 1.6, max: 1.6 });
     this.text(e.x, e.y, e.height + 40, 'JACKPOT !', '#fff', 40, 1.6, { burst: '#ffd32a', rot: -0.1 });
     this.flashMsg('+' + Math.round(EXTRA.goldScore * this.L.score * (this.mod.score || 1) * (this.boostIs('rolex') ? 2 : 1)) + ' POINTS', 'et un bonus à ramasser !', '#ffd32a', 1.8);
@@ -261,7 +263,7 @@ const Extras = {
   // ---------- F. Attaques des boss annoncées au sol ----------
   drawBossTelegraphs(ctx, cx, gt) {
     this.enemies.forEach(e => {
-      if (!e.isBoss || e.dead || e.state !== 'windup' || e.entering > 0) return;
+      if (!(e.isBoss || e.isMini) || e.dead || e.state !== 'windup' || e.entering > 0) return;
       const a = e.nextAction, p = clamp(e.st / (e.stateDur || 1), 0, 1), pul = warnPulse(gt), d = e.dir, sx = e.x - cx, sc = e.scale;
       const ell = (x, y, rx, ry, col = '255,40,40') => {
         ctx.fillStyle = `rgba(${col},${0.1 + 0.25 * p})`; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
@@ -282,6 +284,11 @@ const Extras = {
       ctx.save();
       if (a === 'attack') ell(sx + d * (e.halfW + e.reach * 0.55), e.y, (e.halfW + e.reach) * 0.6, 22 + 9 * (sc + 1));
       else if (a === 'shoot') lane(sx + d * 30, 520, e.y, 18);
+      else if (a === 'special' && e.isMini) { // mini-boss (tiers.js)
+        const sp = e.def.special;
+        if (sp === 'belier' || sp === 'dring') lane(sx, sp === 'belier' ? 380 : 560, e.y, sp === 'belier' ? 40 * sc : 22);
+        else if (sp !== 'trounoir') [-40, 0, 40].forEach(dy => lane(sx + d * 30, 560, e.y + dy, 13));
+      }
       else if (a === 'special') {
         switch (BOSS_SPECIAL[e.kind]) {
           case 'truelle': ell(sx + d * 60 * sc, e.y, 175 * sc, 62 * sc); break;

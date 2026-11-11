@@ -65,7 +65,7 @@ Les histoires terminées sont comptées par héros dans la sauvegarde (`storyWin
 
 ## Événements de milieu de monde (v3.6)
 
-Entre la 2e et la 3e vague (mode histoire et choix du niveau), une épreuve propre au monde. Réussie : **+800 points** (× le niveau de difficulté) et **+30 de vie**. Ratée : rien de perdu.
+À la fin du 2e tiers (mode histoire, choix du niveau, défi du jour), une épreuve propre au monde. Réussie : **+800 points** (× le niveau de difficulté) et **+30 de vie**. Ratée : rien de perdu.
 
 | Monde | Épreuve |
 |---|---|
@@ -86,12 +86,20 @@ Le temps imparti dépend du niveau de difficulté. Réglages : `EVENTS` en haut 
 - **24 trophées** (écran 🏅 TROPHÉES) : premier boss, histoire en Costaud / Laïque ultime, combos ×25 / ×50 / ×100, strike, carreau, roi du flow, intouchable, 21 étoiles, héros niveau 10, pétomane, ruée vers l'or, médaille d'or… Annoncés par un message quand on les gagne.
 - Réglages : `XP` et `TROPHIES` en haut de `js/progress.js`.
 
+## Niveaux en 3 tiers et mini-boss (v3.9)
+
+- Chaque monde : **1er tiers** (2 vagues + mini-boss), **2e tiers** (1 vague + épreuve), **3e tiers** (1 vague + boss). Barre en haut avec 3 repères. Plan du niveau : `LAYOUT` en haut de `js/tiers.js`.
+- **Reprise au début du tiers** après une défaite (score et chrono de ce moment-là).
+- **Mini-boss** (`MINIBOSSES` dans `js/data.js`, dessins dans `js/minis.js`, réglages `BALANCE.mini`) : Marcel (Christian), Clément (Guilhem), Cécile (Fateh), Le Blond (Faouzi), Clapet 3000 (Venum), Mouton géant (Senoussi), Mini Purf (The Purf). Barre de vie en 3 niveaux, un coup et une attaque spéciale. En Survie : vagues 3, 8, 13…
+- **GO !** : sons `sounds/go-1.mp3` et `go-2.mp3` (enregistrés), en alternance.
+- **Aides de la première fois** (attraper, lancer, spécial), **duel verbal** à l'intro, **objectifs** dans le menu pause.
+
 ## Bonus, ennemi en or, chrono (v3.8)
 
 - **Bonus temporaires**, un par monde : casque de chantier (invincible 6 s), Rolex en or (points ×2), os à moelle (force ×1,6), champignon 8-bit (géant, force ×1,4), boisson énergisante (vitesse ×1,4), thé à la menthe (spécial qui se recharge à toute vitesse), masque à gaz (dangers sans effet + soin). On les trouve dans les caisses (3 chances sur 10), sur l'ennemi en or, et le boss en lâche un quand il perd son 2e niveau de vie. Affichés sous la barre de vie avec le temps restant.
 - **Ennemi en or** : un par monde (histoire, choix du niveau, défi du jour), une vague sur trois en Survie. Il fuit en zigzag et s'échappe au bout de 12 s. Battu : 1 000 points (× niveau de difficulté) et un bonus temporaire.
 - **Attaques des boss annoncées** : pendant qu'un boss prépare un coup ou un spécial, la zone touchée s'affiche au sol en rouge (en jaune pour l'éclat de Rolex, en vert pour le nuage toxique).
-- **Chrono et médailles de vitesse** : 🥇 moins de 2:50, 🥈 moins de 3:35, 🥉 moins de 4:30 pour finir un monde (histoire, choix du niveau, défi du jour). Meilleure médaille et meilleur temps affichés sur les cartes des mondes (gardés sur l'appareil, pas besoin de nouvelles règles Firestore).
+- **Chrono et médailles de vitesse** : 🥇 moins de 3:45, 🥈 moins de 4:45, 🥉 moins de 6:00 (depuis la v3.9) pour finir un monde (histoire, choix du niveau, défi du jour). Meilleure médaille et meilleur temps affichés sur les cartes des mondes (gardés sur l'appareil, pas besoin de nouvelles règles Firestore).
 - **Image de score à partager** (bouton 📸 Partager en fin de partie) : décor du monde, héros, boss, phrase en bulle, score, étoiles, médaille et adresse du jeu. Sur téléphone, la feuille de partage s'ouvre (WhatsApp…) ; sur ordinateur, l'image est téléchargée.
 - Réglages : `EXTRA`, `POWERUPS` et `HERO_WORDS` en haut de `js/extras.js`.
 
@@ -323,6 +331,8 @@ js/game.js            niveau, vagues, IA, boss et phases, dangers, modes, HUD
 js/combat.js          combos, attraper/lancer, caisses et objets à lancer, bonus des dangers
 js/events.js          événements de milieu de monde (briques d'or, battle de rap, pétanque…)
 js/progress.js        étoiles, trophées, niveaux des héros, défi du jour
+js/tiers.js           niveau en 3 tiers, mini-boss, point de reprise, GO, aides, objectifs (pause)
+js/minis.js           dessins des mini-boss, de leurs armes, projectiles et véhicules
 js/extras.js          bonus temporaires, ennemi en or, attaques des boss annoncées, chrono et médailles, onomatopées, entrée et K.O. des boss
 js/share.js           image de score à partager
 js/audio.js           mixage, bruitages, musiques écrites et arrangement, ambiances, voix (fichiers ou synthèse)

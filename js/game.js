@@ -67,7 +67,7 @@ const Game = {
     this.evOk = false; this.bossTouched = false;
     this.heroKind = o.heroKind;
     this.score = o.score || 0; this.startScore = this.score;
-    this.levelLen = 4200;
+    this.levelLen = LAYOUT.len; // niveau en 3 tiers (tiers.js)
     this.camX = 0; this.lockMax = this.levelLen;
     this.t = 0; this.time = 0; this.hitstop = 0; this.shake = 0; this.flashA = 0; this.flashCol = '255,255,240'; this.timeScale = 1; this.slowT = 0;
     this.hits = 0; this.hitT = 0; this.kills = 0;
@@ -85,11 +85,8 @@ const Game = {
     if (o.heroHp) this.hero.hp = clamp(o.heroHp, 1, this.hero.maxHp);
     this.pw = (BALANCE.perWorld && BALANCE.perWorld[this.world.id]) || {}; // réglages propres au monde
     const extra = Math.max(0, Math.floor((this.diff - 1) * 6) + (this.pw.extraPerWave || 0) + this.L.extraPerWave);
-    this.waves = [
-      { x: 520, n: 4 + Math.floor(extra / 2), started: false, done: false },
-      { x: 1500, n: 5 + Math.floor(extra / 2), started: false, done: false },
-      { x: 2500, n: 6 + extra, started: false, done: false },
-    ];
+    // vagues : 2 au 1er tiers (avant le mini-boss), 1 au 2e (avant l'épreuve), 1 au 3e (avant le boss) — voir LAYOUT (tiers.js)
+    this.waves = LAYOUT.waves.map((x, i) => ({ x, n: LAYOUT.sizes[i] + (i === LAYOUT.waves.length - 1 ? extra : Math.floor(extra / 2)), started: false, done: false }));
     this.wave = null; this.spawnQueue = []; this.spawnT = 0; this.trickleT = 3;
     this.bossPhase = 0; this.boss = null; this.bossMinionT = 7; this.bossIntroT = 0; this.endT = 0; this.ended = false;
     this.goT = 0; this.tokenT = 0;
@@ -101,9 +98,10 @@ const Game = {
     } else if (this.mode === 'survival') { // Survie : arène fixe, vagues sans fin
       this.waves = []; this.camX = 900; this.lockMax = this.camX; this.hero.x = this.camX + (this.VW - this.marginR) * 0.4;
     }
+    this.tiersStart(o); // mini-boss, point de reprise, GO, aides (tiers.js)
     this.running = true; this.paused = false;
     Input.clear();
-    this.banner(this.world.name, this.mode === 'survival' ? 'SURVIE — tiens le plus longtemps possible !' : this.mode === 'bossrush' ? 'BOSS RUSH' : this.world.sub, 2);
+    this.banner(this.world.name, this.checkpoint ? 'REPRISE AU TIERS ' + this.checkpoint.tier + ' / 3' : this.mode === 'survival' ? 'SURVIE — tiens le plus longtemps possible !' : this.mode === 'bossrush' ? 'BOSS RUSH' : this.world.sub, 2);
     Music.setIntensity(0);
     Sfx.music(this.world.id);       // musique du monde
     Ambience.start(this.world.id);  // ambiance sonore du monde
@@ -138,6 +136,7 @@ const Game = {
     this.updateHero(dt);
     this.updateCombat(dt);
     this.updateExtras(dt, rdt); // bonus temporaires, ennemi en or (extras.js)
+    this.updateTiers(dt, rdt);  // mini-boss, trou noir, GO, aides (tiers.js)
     // intensité musicale : monte avec le compteur de coups
     Music.setIntensity(this.hits >= 20 ? 3 : this.hits >= 10 ? 2 : this.hits >= 4 ? 1 : 0);
     if (this.cineT > 0) this.cineT -= rdt;
@@ -148,7 +147,7 @@ const Game = {
       this.tokenT = 0.5;
       const alive = this.enemies.filter(e => !e.dead && !e.golden && e.beh === 'melee').sort((a, b) => Math.abs(a.x - this.hero.x) - Math.abs(b.x - this.hero.x));
       let n = 0;
-      alive.forEach(e => { e.hasToken = e.isBoss || (n < 2 && ++n > 0); });
+      alive.forEach(e => { e.hasToken = e.isBoss || e.isMini || (n < 2 && ++n > 0); });
     }
     this.enemies.forEach(e => this.updateEnemy(e, dt));
     this.enemies = this.enemies.filter(e => !e.remove);
@@ -183,7 +182,7 @@ const Game = {
           if (h.z <= 0 && Math.floor(h.walk / Math.PI) !== ph) Sfx.step(this.world.id, Sfx.panX(h.x)); // bruits de pas
         } else h.state = 'idle';
         if (Input.consume('jump') && h.z <= 0) { h.vz = 600; Sfx.jump(); this.dust(h.x, h.y, 5); }
-        if (Input.consume('special') && h.specialCd <= 0) { h.startSpecial(); Haptics.vibrate(50); }
+        if (Input.consume('special') && h.specialCd <= 0) { h.startSpecial(); Haptics.vibrate(50); if (this.hintOk('special')) this.hintDone('special'); }
         else if (this.carry) Input.consume('attack'); // il porte un ennemi : lâcher FRAPPE le lance (combat.js)
         else if (Input.consume('attack')) {
           if (this.heldItem) this.throwItem(); // objet en main : on le lance
@@ -204,7 +203,7 @@ const Game = {
     h.remove = false;
   },
 
-  specialOf(f) { return f.team === 'hero' ? f.def.special : BOSS_SPECIAL[f.kind]; },
+  specialOf(f) { return f.team === 'hero' || f.isMini ? f.def.special : BOSS_SPECIAL[f.kind]; },
 
   updateAction(f, dt) {
     if (f.state === 'attack') {
@@ -223,7 +222,7 @@ const Game = {
         f.lastPuddle = f.st;
         this.addDanger({ type: 'puddle', team: 'boss', x: f.x, y: f.y, warn: 0.25, act: 3.2, rx: 46, ry: 16, tick: 0.5, dmg: BALANCE.hazards.tickDmg, kd: false, sound: false });
       }
-      if (sp === 'direct' || sp === 'imperatif' || sp === 'argent') {
+      if (sp === 'direct' || sp === 'imperatif' || sp === 'argent' || sp === 'belier') { // (belier : charge du mouton géant)
         f.invul = Math.max(f.invul, 0.05);
         f.x += f.dir * 640 * dt;
         if (f.team === 'enemy') { const B = this.bounds(); f.x = clamp(f.x, B.L + 20, B.R - 20); }
@@ -339,7 +338,8 @@ const Game = {
     const gag = Sfx.kill(Sfx.panX(e.x), e.isBoss);
     if (gag) { this.gagFx(e, gag); Progress.count('gags'); }
     if (e.golden) this.onGoldKill(e); // ennemi en or : jackpot (extras.js)
-    if (e.isBoss) {
+    if (e.isMini) this.onMiniKill(e); // mini-boss (tiers.js)
+    else if (e.isBoss) {
       this.addScore(1000);
       this.slowT = 1.2; this.shake = 0.5;
       this.bossKO(e); // K.O. au ralenti (extras.js)
@@ -353,6 +353,7 @@ const Game = {
 
   // ---------- spéciaux ----------
   doSpecial(f, sp) {
+    if (f.isMini && this.miniSpecial(f, sp)) return; // attaques des mini-boss (tiers.js)
     Sfx.special(sp, Sfx.panX(f.x));
     const opp = this.opponents(f);
     switch (sp) {
@@ -744,6 +745,8 @@ const Game = {
       const lined = Math.abs(dy) < 40;
       if ((sp === 'truelle' || sp === 'rolex' || sp === 'fumee') ? near : sp === 'agneaux' ? true : lined) { e.startWindup('special', BALANCE.boss.windupSpecial * this.L.windup); return; }
     }
+    // attaque spéciale du mini-boss (tiers.js)
+    if (e.isMini && e.specialCd <= 0 && onScreen && this.miniWantsSpecial(e, dxAbs, dy)) { e.startWindup('special', BALANCE.mini.windupSpecial * this.L.windup); return; }
     if (e.beh === 'flyer') {
       if (e.attackCd <= 0 && dxAbs < 240 && onScreen) e.startWindup('swoop', 0.35);
       return;
@@ -928,8 +931,9 @@ const Game = {
       if (v.state === 'drive') {
         v.x += (v.tx - v.x) * Math.min(1, dt * 2.2) - 30 * dt;
         if (v.x <= v.tx + 4) { v.state = 'park'; v.t = 0; if (v.engine) { v.engine.stop(true); v.engine = null; } } // freinage + klaxon
-      } else if (v.state === 'park' && !v.out && v.t > 0.5) {
+      } else if (v.state === 'park' && !v.out && v.t > (v.mini ? 0.3 : 0.5)) {
         v.out = true; v.door = true;
+        if (v.mini) { this.miniOut(v); return; } // le mini-boss descend du solex / de la voiturette (tiers.js)
         const R = this.camX + this.VW, w = this.world, c = CHARACTERS[w.boss];
         const b = this.makeBoss(v.x - (v.type === 'van' ? 10 : 40), v.y + 50);
         b.entering = 1.0; b.vz = 420; b.kx = -220;
@@ -970,11 +974,12 @@ const Game = {
       if (this.spawnT <= 0 && alive.length < BALANCE.enemies.maxAlive + this.L.maxAlive) { this.spawnEnemy(this.spawnQueue.shift()); this.spawnT = rand(0.6, 1.1); }
     }
     if (this.wave && !this.wave.done && this.spawnQueue.length === 0 && alive.length === 0) {
-      this.wave.done = true; this.wave = null; this.lockMax = this.levelLen; this.goT = 3; Sfx.jingle('stage');
+      this.wave.done = true; this.wave = null; this.lockMax = this.levelLen; this.goShow(); // gros GO ! (tiers.js)
       if (this.hero.state === 'idle' || this.hero.state === 'walk') this.hero.setState('taunt', 0.9); // petite raillerie
     }
     // quelques ennemis isolés entre les vagues (même répartition 60/40 que les vagues)
-    if (!this.wave && this.bossPhase === 0 && this.mode !== 'bossrush') {
+    this.miniStep(dt); // mini-boss du 1er tiers (tiers.js)
+    if (!this.wave && this.bossPhase === 0 && this.mode !== 'bossrush' && !this.miniActive()) {
       this.trickleT -= dt;
       if (this.trickleT <= 0) { this.trickleT = rand(4, 7); if (alive.length < 2) this.spawnEnemy(pickWeighted(this.world.minions)); }
     }
@@ -1005,7 +1010,7 @@ const Game = {
         this.flashA = 0.6; this.flashCol = '255,255,240'; this.slowT = 1.4;
         Sfx.victory(); Sfx.stopMusic();
         Progress.unlock('boss1'); if (!this.bossTouched && !this.hero.dead) Progress.unlock('intouchable');
-        if (this.koT > 0) setTimeout(() => { if (this.running) this.banner("JE T'AI PLANTÉ !", 'No homo.', 2.4); }, 1000); // la bannière attend la fin du K.O.
+        if (this.koT > 0) this.later(() => this.banner("JE T'AI PLANTÉ !", 'No homo.', 2.4), 1000); // la bannière attend la fin du K.O.
         else this.banner("JE T'AI PLANTÉ !", 'No homo.', 3);
         this.enemies.forEach(m => { if (!m.dead) m.die(Math.sign(m.x - this.hero.x) || 1); });
         this.dangers = []; this.storm = null;
@@ -1045,14 +1050,18 @@ const Game = {
       this.cineT = 2.4; this.bossCard = { name: b.def.name.toUpperCase(), title: b.def.title, col: b.def.light, kind: b.kind, splash: true, dur: 2.4 };
       Sfx.bossArrival(); Sfx.music('boss:' + this.world.id);
       this.banner('VAGUE ' + this.survWave, 'Le boss est de retour !', 2);
+    } else if (this.survWave >= S.miniFrom && (this.survWave - S.miniFrom) % S.miniEvery === 0 && this.world.mini) { // mini-boss (tiers.js)
+      const e = this.miniEntrance(this.world.mini, true); if (e) e.maxHp = e.hp = Math.round(e.hp * 0.85);
+      this.miniCard(this.world.mini, 2.4); Sfx.bossArrival();
+      this.banner('VAGUE ' + this.survWave, 'Un mini-boss arrive !', 1.8);
     } else this.banner('VAGUE ' + this.survWave, n + ' ennemis', 1.6);
   },
 
   finish(result) {
-    const timeBonus = result === 'win' ? Math.max(0, Math.round((240 - this.time) * 3 * this.L.score)) : 0;
+    const timeBonus = result === 'win' ? Math.max(0, Math.round((330 - this.time) * 3 * this.L.score)) : 0; // (niveau plus long depuis la v3.9 : 330 au lieu de 240)
     const hpBonus = result === 'win' ? Math.round(this.hero.hp * 4 * this.L.score) : 0;
     this.score += timeBonus + hpBonus;
-    const res = { result, score: this.score, levelScore: this.score - this.startScore, timeBonus, hpBonus, heroHp: this.hero.hp, evOk: !!this.evOk, hpFrac: this.hero.hp / this.hero.maxHp, kills: this.kills, time: this.time, worldId: this.world.id, wave: this.survWave, mode: this.mode };
+    const res = { result, score: this.score, levelScore: this.score - this.startScore, timeBonus, hpBonus, heroHp: this.hero.hp, evOk: !!this.evOk, hpFrac: this.hero.hp / this.hero.maxHp, kills: this.kills, time: this.time, worldId: this.world.id, wave: this.survWave, mode: this.mode, checkpoint: this.checkpoint };
     setTimeout(() => { this.stop(); this.onEnd && this.onEnd(res); }, result === 'win' ? 200 : 600);
   },
 
@@ -1134,7 +1143,7 @@ const Game = {
     // surimpressions nettes : bulles
     ctx.lineJoin = 'round'; ctx.miterLimit = 2;
     [this.hero, ...this.enemies].forEach(f => {
-      if (f.bubble && !f.dead) drawBubble(ctx, f.x - this.camX, f.y - f.z - f.height - 34 * f.scale, f.bubble.text, Math.min(1, f.bubble.t * 3, (f.bubble.max - f.bubble.t) * 6));
+      if (f.bubble && !f.dead) drawBubble(ctx, f.x - this.camX, f.y - f.z - f.height - 34 * f.scale, f.bubble.text, Math.min(1, f.bubble.t * 3, (f.bubble.max - f.bubble.t) * 6), this.VW - this.marginR);
     });
     ctx.restore(); // fin du zoom
     // teinte + vignettage du monde : début → milieu → arène du boss
@@ -1188,6 +1197,7 @@ const Game = {
     });
     this.dangers.forEach(dg => drawDangerGround(ctx, dg, dg.x - cx, gt)); // annonces au sol
     this.drawBossTelegraphs(ctx, cx, gt); // attaques des boss annoncées au sol (extras.js)
+    this.blackholes.forEach(b => drawBlackhole(ctx, b, b.x - cx, gt)); // trou noir du Blond (minis.js)
     this.particles.forEach(p => {
       if (p.type !== 'ring') return;
       ctx.strokeStyle = p.col || 'rgba(255,255,255,0.9)'; ctx.globalAlpha = p.life / p.max; ctx.lineWidth = 6;
@@ -1198,8 +1208,8 @@ const Game = {
     fighters.forEach(f => f.drawShadow(ctx, f.x - cx, f.y));
     const list = [];
     this.vehicles.forEach(v => list.push({ y: v.y, draw: () => {
-      ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(v.x - cx, v.y, 190, 16, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.save(); ctx.translate(v.x - cx, v.y); drawVehicle(ctx, v.type, v.t, v.state === 'drive', v.door); ctx.restore();
+      ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(v.x - cx, v.y, v.mini ? 100 : 190, 16, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.save(); ctx.translate(v.x - cx, v.y); if (v.mini) drawMiniVehicle(ctx, v); else drawVehicle(ctx, v.type, v.t, v.state === 'drive', v.door); ctx.restore();
     } }));
     fighters.forEach(f => list.push({ y: f.y + (f.dead ? 1 : 0), draw: () => f.draw(ctx, f.x - cx, f.y, gt) }));
     this.projectiles.forEach(p => list.push({ y: p.y, draw: () => { p.sx = p.x - cx; p.sy = p.y; ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(p.sx, p.y, 18, 5, 0, 0, Math.PI * 2); ctx.fill(); drawProjectile(ctx, p, gt); } }));
@@ -1309,10 +1319,7 @@ const Game = {
       const lbl = 'BOSS RUSH ' + (UI.run.idx + 1) + ' / ' + UI.run.order.length;
       ctx.strokeText(lbl, VW / 2, 50); ctx.fillText(lbl, VW / 2, 50);
     } else {
-      const pg = clamp(this.camX / (this.levelLen - VW), 0, 1);
-      ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(VW / 2 - 80, 38, 160, 6);
-      ctx.fillStyle = '#feca57'; ctx.fillRect(VW / 2 - 80, 38, 160 * pg, 6);
-      ctx.font = '14px Arial'; ctx.fillText('👑', VW / 2 + 90, 46);
+      this.drawTierBar(ctx, VW); // barre avec les 3 repères : mini-boss, épreuve, boss (tiers.js)
     }
 
     // barre du boss (+ entourage restant)
@@ -1339,9 +1346,8 @@ const Game = {
       ctx.fillStyle = '#000'; for (let i = 1; i < T; i++) ctx.fillRect(bx + i * sw - 1.5, by - 2, 3, 16); // séparations
       ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.strokeRect(bx, by, bw, 12);
     }
-    if (this.goT > 0 && this.mode !== 'survival' && Math.floor(this.goT * 4) % 2 === 0) {
-      ctx.font = '900 48px "Arial Black", Arial'; ctx.textAlign = 'right'; ctx.fillStyle = '#feca57'; ctx.lineWidth = 7; ctx.strokeStyle = '#000';
-      ctx.strokeText('GO →', VW - 30, VIEW_H / 2 - 40); ctx.fillText('GO →', VW - 30, VIEW_H / 2 - 40);
-    }
+    this.drawMiniBar(ctx, VW); // barre du mini-boss (tiers.js)
+    this.drawGo(ctx, VW);      // gros GO ! (tiers.js)
+    this.drawHint(ctx);        // aides de la première fois (tiers.js)
   },
 };

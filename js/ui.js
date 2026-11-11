@@ -30,9 +30,10 @@ const UI = {
     // Retour depuis l'intro : choix du niveau → choix du monde ; histoire → choix du personnage
     $('#b-intro-back').onclick = () => { Sfx.click(); if (this.run.mode === 'select' || this.run.mode === 'survival') this.openWorlds(); else this.openChars(); };
     $('#b-resume').onclick = () => this.resume();
-    $('#b-restart').onclick = () => { this.hideScreens(); Game.stop(); this.launch(true); };
+    $('#b-restart').onclick = () => { this.hideScreens(); Game.stop(); this.run.cp = null; this.launch(true); }; // recommence tout le monde
     $('#b-quit').onclick = () => { Game.stop(); this.toTitle(); };
-    $('#b-over-retry').onclick = () => { Sfx.click(); this.launch(true); };
+    $('#b-over-retry').onclick = () => { Sfx.click(); this.launch(true, true); }; // reprend au début du tiers (v3.9)
+    $('#b-over-restart').onclick = () => { Sfx.click(); this.run.cp = null; this.launch(true); };
     $('#b-over-menu').onclick = () => { Sfx.click(); this.toTitle(); };
     $('#b-over-share').onclick = () => { Sfx.click(); Share.share(); }; // image de score (share.js)
     $('#score-board').onchange = e => this.openScores(e.target.value);
@@ -281,32 +282,48 @@ const UI = {
     $('#intro-sub').textContent = w.sub;
     $('#intro-boss').innerHTML = `Boss : <b style="color:${boss.light}">${boss.name}</b> — ${boss.title}`;
     const cv = $('#intro-art');
+    // duel verbal (v3.9) : le héros lance une phrase, le boss lui répond (bulles + voix)
+    const hc = CHARACTERS[this.run.hero], duel = { t0: performance.now() / 1000, a: pick(hc.phrases), b: pick(boss.phrases) };
+    const dur = (txt, kind) => { const buf = VoiceFiles.get(txt, kind); return buf ? buf.duration : 0.6 + txt.length * 0.07; };
+    duel.ta = 0.7; duel.tb = duel.ta + dur(duel.a, this.run.hero) + 0.5; duel.end = duel.tb + dur(duel.b, w.boss) + 1.2;
+    clearTimeout(this.duelT1); clearTimeout(this.duelT2);
+    this.duelT1 = setTimeout(() => { if (this.current === 's-intro') Voice.speak(duel.a, this.run.hero, 2); }, duel.ta * 1000);
+    this.duelT2 = setTimeout(() => { if (this.current === 's-intro') Voice.speak(duel.b, w.boss, 2); }, duel.tb * 1000);
     this.liveCanvas(cv, (ctx, t, W, H) => {
       const s = H / VIEW_H; ctx.save(); ctx.scale(s, s);
-      const VW = W / s;
+      const VW = W / s, el = performance.now() / 1000 - duel.t0;
       drawWorldBackground(ctx, wid, VW, t * 40, t);
       ctx.save(); ctx.translate(VW * 0.3, GROUND_BOTTOM - 30); menuSprite(ctx, this.run.hero, { dir: 1, scale: 1.5, t, walk: t * 9, pose: 'idle', companion: true }); ctx.restore();
       ctx.save(); ctx.translate(VW * 0.72, GROUND_BOTTOM - 20); menuSprite(ctx, w.boss, { dir: -1, scale: 2.1, t: t + 1, pose: Math.floor(t) % 3 === 0 ? 'windup' : 'idle' }); ctx.restore();
       ctx.font = '900 70px "Arial Black", Arial'; ctx.textAlign = 'center'; ctx.lineWidth = 8; ctx.strokeStyle = '#000'; ctx.fillStyle = '#feca57';
       ctx.strokeText('VS', VW * 0.5, GROUND_TOP + 40); ctx.fillText('VS', VW * 0.5, GROUND_TOP + 40);
+      const fade = (a, b) => clamp(Math.min((el - a) * 5, (b - el) * 3), 0, 1);
+      const big = 1.7; ctx.save(); ctx.scale(big, big); // bulles en grand (l'image de l'intro est petite)
+      if (el > duel.ta && el < duel.end) drawBubble(ctx, VW * 0.3 / big, (GROUND_BOTTOM - 40 - hc.bh * 1.5) / big, duel.a, fade(duel.ta, duel.end), VW / big);
+      if (el > duel.tb && el < duel.end + 0.8) drawBubble(ctx, VW * 0.72 / big, Math.max(150, GROUND_BOTTOM - 30 - boss.bh * 2.1) / big, duel.b, fade(duel.tb, duel.end + 0.8), VW / big);
+      ctx.restore();
       ctx.restore();
     });
     this.show('s-intro');
   },
 
-  launch(retry = false) {
-    Sfx.init();
+  // retry : rejouer le même monde · fromCp : reprendre au début du tiers où l'on est tombé (v3.9)
+  launch(retry = false, fromCp = false) {
+    Sfx.init(); Voice.stop();
     const wid = this.run.order[this.run.idx];
+    const cp = retry && fromCp && this.run.cp && this.run.cp.world === wid ? this.run.cp : null;
+    if (!fromCp) this.run.cp = null;
     if (retry) { this.run.score = this.run.worldScoreStart; }
     this.run.worldScoreStart = this.run.score;
     const diff = { story: BALANCE.story.base + this.run.idx * BALANCE.story.perWorld, bossrush: 1 + this.run.idx * 0.08, survival: 1 }[this.run.mode] || 1.15;
     this.hideScreens(); this.setControls(true);
-    Game.start({ worldId: wid, heroKind: this.run.hero, mode: this.run.mode, difficulty: diff, level: this.run.level, mod: this.run.mode === 'daily' && this.run.daily ? this.run.daily.mod : null, score: this.run.score, heroHp: retry ? null : this.run.heroHp });
+    Game.start({ worldId: wid, heroKind: this.run.hero, mode: this.run.mode, difficulty: diff, level: this.run.level, mod: this.run.mode === 'daily' && this.run.daily ? this.run.daily.mod : null, score: this.run.score, heroHp: retry ? null : this.run.heroHp, checkpoint: cp });
   },
 
   pause() {
     if (!Game.running || Game.ended) return;
     Game.paused = true; Sfx.setPaused(true); // la musique continue, étouffée
+    $('#pause-goals').innerHTML = Game.goalsHtml(); // objectifs de la partie (tiers.js)
     this.show('s-pause');
   },
   resume() {
@@ -387,6 +404,10 @@ const UI = {
       }
       if (mode === 'bossrush') { Save.data.rushBest = Math.max(Save.data.rushBest || 0, res.score); Save.save(); }
       if (mode === 'daily') Daily.record(res.score);
+      // point de reprise (v3.9) : « Réessayer » repart du début du tiers où l'on est tombé
+      this.run.cp = res.checkpoint ? Object.assign({ world: res.worldId }, res.checkpoint) : null;
+      $('#b-over-retry').textContent = this.run.cp ? 'REPRENDRE AU TIERS ' + this.run.cp.tier : 'RÉESSAYER';
+      $('#b-over-restart').classList.toggle('hidden', !this.run.cp);
       $('#over-prog').innerHTML = Progress.worldEnd(res, this.run); // expérience gagnée quand même
       Share.prepare(res, this.run);
       const board = { story: 'histoire', bossrush: 'bossrush', survival: 'survie-' + res.worldId, daily: this.run.daily && this.run.daily.board }[mode];
@@ -395,6 +416,7 @@ const UI = {
       return;
     }
     // victoire
+    this.run.cp = null;
     const w = worldById(res.worldId);
     const prev = Save.data.cleared[w.id] || 0;
     Save.data.cleared[w.id] = Math.max(prev, res.levelScore);
@@ -576,5 +598,5 @@ const CONTROLS_HTML = `
     <tr><td>Lancer un objet (trouvé dans une caisse)</td><td>J ou X</td><td>✊ FRAPPE</td></tr>
     <tr><td>Pause</td><td>Échap ou P</td><td>❚❚</td></tr>
   </table>
-  <div class="ctl-tip">La frappe touche aussi en hauteur (goélands, chauves-souris). Le « ! » rouge annonce une attaque ennemie, et la zone rouge au sol montre où frappe le boss : esquive en changeant de ligne.<br>Ramasse les bonus qui brillent (casque, Rolex, os…) et bats l'ennemi en or avant qu'il s'enfuie !</div>`;
+  <div class="ctl-tip">Chaque monde a 3 tiers : un mini-boss 💀, une épreuve 🎯, puis le boss 👑. Si tu tombes, tu reprends au début du tiers.<br>La frappe touche aussi en hauteur (goélands, chauves-souris). Le « ! » rouge annonce une attaque ennemie, et la zone rouge au sol montre où frappe le boss : esquive en changeant de ligne.<br>Ramasse les bonus qui brillent (casque, Rolex, os…) et bats l'ennemi en or avant qu'il s'enfuie !</div>`;
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }

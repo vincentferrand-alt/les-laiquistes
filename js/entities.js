@@ -6,14 +6,15 @@ class Fighter {
   constructor(kind, team, x, y, opts = {}) {
     this.kind = kind; this.team = team;
     this.isChar = !!CHARACTERS[kind];
-    this.def = this.isChar ? CHARACTERS[kind] : MINIONS[kind];
+    this.isMini = !this.isChar && !!MINIBOSSES[kind]; // mini-boss (v3.9)
+    this.def = this.isChar ? CHARACTERS[kind] : this.isMini ? MINIBOSSES[kind] : MINIONS[kind];
     const c = this.def;
-    this.beh = this.isChar ? 'melee' : c.beh;
+    this.beh = this.isChar || this.isMini ? 'melee' : c.beh;
     this.x = x; this.y = y; this.z = opts.z || 0; this.vz = 0; this.kx = 0; this.thrownT = 0; this.grabbed = false;
     this.fly = this.beh === 'flyer';
     this.dir = team === 'hero' ? 1 : -1;
     this.isBoss = !!opts.boss;
-    this.mustKill = !!opts.mustKill || this.isBoss;
+    this.mustKill = !!opts.mustKill || this.isBoss || this.isMini;
     this.scale = opts.scale || (this.isBoss ? 1.4 : 1);
     this.maxHp = Math.round(opts.hp || c.hp); this.hp = this.maxHp;
     this.dmg = opts.dmg || c.dmg;
@@ -23,7 +24,7 @@ class Fighter {
     this.invul = 0; this.flash = 0; this.stun = 0;
     this.combo = 0; this.comboT = 0; this.queued = false; this.hitDone = false;
     this.attackCd = rand(0.6, 1.6);
-    this.specialCd = this.isChar ? c.specialCd * (team === 'hero' ? 0 : rand(0.4, 0.8)) : 99;
+    this.specialCd = this.isChar ? c.specialCd * (team === 'hero' ? 0 : rand(0.4, 0.8)) : this.isMini ? c.specialCd * 0.6 : 99;
     this.specialFired = false; this.dashHits = new Set();
     this.nextAction = null; this.hasToken = false; this.feint = 0; this.yOffset = rand(-60, 60);
     this.dead = false; this.remove = false; this.deadT = 0; this.rot = 0;
@@ -42,7 +43,7 @@ class Fighter {
   // prio 2 : phrase importante (début du combat, niveau de vie perdu, victoire) · voice : faire parler aussi un héros
   say(text, dur = 2.6, prio = 1, voice = false) {
     this.bubble = { text, t: dur, max: dur };
-    if ((this.isBoss && this.team === 'enemy') || voice) Voice.speak(text, this.kind, prio); // voix synthétisée
+    if (((this.isBoss || this.isMini) && this.team === 'enemy') || voice) Voice.speak(text, this.kind, prio); // voix synthétisée
   }
 
   startAttack() {
@@ -54,7 +55,7 @@ class Fighter {
   }
   startSpecial() {
     const sp = this.def.special;
-    this.setState('special', sp === 'direct' ? 0.5 : sp === 'truelle' ? 0.55 : 0.45);
+    this.setState('special', sp === 'direct' ? 0.5 : sp === 'belier' ? 0.6 : sp === 'truelle' ? 0.55 : 0.45);
     this.specialFired = false; this.dashHits.clear();
     this.specialCd = this.def.specialCd * (this.team === 'hero' ? 1 : rand(0.75, 1.05));
   }
@@ -198,7 +199,7 @@ class Fighter {
       if (sx2 !== 1 || sy2 !== 1) ctx.scale(sx2, sy2);
     }
     // traînée d'arme (couleur propre à chaque héros ; rouge pour les ennemis)
-    if (this.state === 'attack' && this.isChar && !this.dead) {
+    if (this.state === 'attack' && (this.isChar || (this.isMini && HUMANS[this.kind])) && !this.dead) {
       ctx.save(); ctx.scale(this.dir * this.scale, this.scale);
       const punch = !!(HUMANS[this.kind] && HUMANS[this.kind].punch);
       const col = this.team === 'hero' ? (TRAIL_COL[this.kind] || '255,234,120') : '255,90,90';
@@ -210,13 +211,13 @@ class Fighter {
       drawSpeedLines(ctx, this.height, this.state === 'dive', gt, this.team === 'hero' ? '255,255,255' : '255,120,120');
       ctx.restore();
     }
-    if (this.isBoss && !this.dead) {
-      ctx.fillStyle = `rgba(241,196,15,${0.12 + Math.sin(gt * 4) * 0.06})`;
+    if ((this.isBoss || this.isMini) && !this.dead) {
+      ctx.fillStyle = this.isMini ? `rgba(255,120,60,${0.1 + Math.sin(gt * 4) * 0.05})` : `rgba(241,196,15,${0.12 + Math.sin(gt * 4) * 0.06})`;
       ctx.beginPath(); ctx.ellipse(0, -this.height * 0.5, this.halfW * 1.8, this.height * 0.7, 0, 0, Math.PI * 2); ctx.fill();
     }
     const o = { dir: this.dir, scale: this.scale, t: this.t, walk: this.walk, pose: p.pose, poseT: p.pt, flash: this.flash > 0,
       variant: this.variant, label: this.label, roll: this.roll, air: this.z > 0, companion: this.team === 'hero' };
-    const paint = c => { if (this.isChar) drawCharacter(c, this.kind, o); else drawMinion(c, this.kind, o); };
+    const paint = c => { if (this.isChar) drawCharacter(c, this.kind, o); else if (this.isMini) drawMiniBoss(c, this.kind, o); else drawMinion(c, this.kind, o); };
     // rendu cartoon : gros contour + éclairage + flash blanc à l'impact (voir drawSprite dans draw.js)
     // boîte qui contient le perso ET son arme quand il frappe (au-dessus de la tête, devant lui)
     // boîte au plus juste (moins de pixels à recopier) : large devant (arme), plus étroite derrière, plus haute quand il frappe
@@ -245,7 +246,7 @@ class Fighter {
         ctx.lineWidth = 4; ctx.strokeStyle = '#000'; ctx.fillStyle = this.isBoss ? '#f1c40f' : '#ffeaa7';
         ctx.strokeText(name, sx, top); ctx.fillText(name, sx, top);
       }
-      if (!this.isBoss) {
+      if (!this.isBoss && !this.isMini) { // (le mini-boss a sa grande barre en bas de l'écran)
         const bw = 40, f = this.hp / this.maxHp;
         ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(sx - bw / 2 - 1, top + 5, bw + 2, 6);
         ctx.fillStyle = this.golden ? '#ffd32a' : f > 0.5 ? '#2ecc71' : f > 0.25 ? '#f39c12' : '#e74c3c'; ctx.fillRect(sx - bw / 2, top + 6, bw * f, 4);
@@ -266,14 +267,15 @@ class Fighter {
 }
 
 // Bulle de dialogue (dessinée en surimpression, jamais pixelisée)
-function drawBubble(ctx, x, y, text, alpha) {
+// maxX : bord droit de l'écran (la bulle ne déborde pas à droite)
+function drawBubble(ctx, x, y, text, alpha, maxX = 99999) {
   ctx.save(); ctx.globalAlpha = alpha;
   ctx.font = 'bold 17px "Trebuchet MS", Arial';
   const words = text.split(' '); const lines = []; let cur = '';
   words.forEach(w => { const tst = cur ? cur + ' ' + w : w; if (ctx.measureText(tst).width > 220 && cur) { lines.push(cur); cur = w; } else cur = tst; });
   lines.push(cur);
   const w = Math.max(...lines.map(l => ctx.measureText(l).width)) + 26, h = lines.length * 21 + 16;
-  const bx = clamp(x - w / 2, 8, 9999), by = y - h - 18;
+  const bx = clamp(x - w / 2, 8, Math.max(8, maxX - w - 8)), by = y - h - 18;
   ctx.fillStyle = '#fff'; ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.roundRect(bx, by, w, h, 14); ctx.fill(); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(x - 10, by + h - 2); ctx.lineTo(x, by + h + 16); ctx.lineTo(x + 8, by + h - 2); ctx.closePath(); ctx.fill();
