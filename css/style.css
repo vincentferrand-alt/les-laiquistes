@@ -330,7 +330,9 @@ h2, .logo, .win-title, .intro-name, .intro-step, .gameover, .b-title, .b-sub, .c
 
   /* titre : les trois gros boutons côte à côte */
   .title-main { flex-direction: row; }
-  .title-main .btn.big { min-width: 0; padding: 9px 20px; }
+  .title-main { flex-wrap: wrap; justify-content: center; max-width: 98vw; }
+  .title-main .btn.big { min-width: 0; padding: 9px 16px; font-size: 15px; white-space: nowrap; }
+  .title-main #b-continue { margin: 0 22vw; } /* « Continuer l'histoire » seul sur sa ligne, les trois autres dessous */
   .ico { min-width: 66px; padding: 4px 6px; font-size: 10px; }
   .ico i { font-size: 19px; }
 
