@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Les laïquistes — planche de style (ancien et nouveau dessin)</title>
+<style>
+  body { background: #120a24; color: #fff; font-family: 'Trebuchet MS', Arial, sans-serif; margin: 0; padding: 14px; }
+  h1 { color: #feca57; font-size: 22px; margin: 4px 0 6px; }
+  h2 { color: #feca57; font-size: 17px; margin: 22px 0 6px; }
+  p { opacity: .85; max-width: 844px; margin: 4px 0 10px; font-size: 14px; line-height: 1.4; }
+  canvas { display: block; width: 844px; max-width: 100%; height: auto; border: 2px solid #444; border-radius: 6px; margin: 0 0 10px; background: #000; }
+  button { font-size: 15px; padding: 7px 16px; border-radius: 20px; border: 2px solid #fff; background: #10ac84; color: #fff; cursor: pointer; margin-right: 8px; }
+</style>
+</head>
+<body>
+<h1>Les laïquistes — planche de style</h1>
+<p>Cette page compare l'<b>ancien</b> dessin des personnages (celui du jeu en ligne) et le <b>nouveau</b> (cartoon à gros contour,
+personnages plus grands, bras et jambes articulés, vraies mains, visages expressifs). Chaque cadre a la taille d'un écran de téléphone
+(844 × 390). Le jeu, lui, n'utilise pas encore le nouveau dessin : cette page sert seulement à choisir.</p>
+<p><button id="b-pause">⏸ Figer l'image</button><button id="b-lent">🐢 Ralenti</button></p>
+<div id="planche"></div>
+
+<script src="../js/data.js"></script>
+<script src="../js/draw.js"></script>
+<script src="../js/backgrounds.js"></script>
+<script src="../js/entities.js"></script>
+<script src="../js/persos.js"></script>
+<script>
+// ============================================================
+//  PLANCHE DE STYLE (étape 6 de la refonte) — outil, ne fait pas partie du jeu.
+//  Ancien dessin : le vrai code du jeu (classe Fighter de entities.js, drawCharacter / drawMinion de draw.js).
+//  Nouveau dessin : js/persos.js (drawPerso), qui n'est chargé que par cette page.
+// ============================================================
+const LARGEUR = 844, HAUTEUR = 390;            // taille d'un téléphone en paysage
+const ECH = HAUTEUR / VIEW_H;                   // le jeu fait 540 de haut : même mise à l'échelle que Game.resize
+const VW = LARGEUR / ECH;                       // largeur visible, en unités du jeu
+const NET = Math.max(2, Math.min(3, window.devicePixelRatio || 1)); // netteté (écrans de téléphone : 2 ou 3)
+
+const PLANCHE = { t: 0, fige: null, lent: false, cadres: [] }; // fige : nombre = temps imposé (pour les captures)
+
+// Les 12 poses demandées. cle : nom interne · avant : réglage du Fighter du jeu · apres : pose du nouveau pantin
+const POSES = [
+  { cle: 'attente',   nom: 'ATTENTE',    apres: 'idle' },
+  { cle: 'marche',    nom: 'MARCHE',     apres: 'walk' },
+  { cle: 'elan',      nom: 'ÉLAN',       apres: 'windup' },
+  { cle: 'impact',    nom: 'IMPACT',     apres: 'impact' },
+  { cle: 'final',     nom: 'COUP FINAL', apres: 'final' },
+  { cle: 'touche',    nom: 'TOUCHÉ',     apres: 'hurt' },
+  { cle: 'terre',     nom: 'À TERRE',    apres: 'down' },
+  { cle: 'saut',      nom: 'SAUT',       apres: 'jump' },
+  { cle: 'pique',     nom: 'PIQUÉ',      apres: 'dive' },
+  { cle: 'victoire',  nom: 'VICTOIRE',   apres: 'victory' },
+  { cle: 'raillerie', nom: 'RAILLERIE',  apres: 'taunt' },
+  { cle: 'porter',    nom: 'PORTER',     apres: 'carry' },
+];
+const PERSOS = [
+  { kind: 'christian', nom: 'Christian', monde: 'christian', equipe: 'hero', cam: 240 },
+  { kind: 'guilhem',   nom: 'Guilhem',   monde: 'guilhem',   equipe: 'hero', cam: 60 },
+  { kind: 'rappeur',   nom: 'Le rappeur (ennemi)', monde: 'guilhem', equipe: 'enemy', cam: 1010 },
+];
+
+// ---------- ANCIEN dessin : un vrai combattant du jeu, mis de force dans l'état voulu ----------
+const _anciens = {};
+function ancien(id, kind, equipe) { return _anciens[id] || (_anciens[id] = new Fighter(kind, equipe, 0, 0)); }
+function reglerAncien(f, cle, t, dir = 1) {
+  f.t = t; f.dir = dir; f.dead = false; f.z = 0; f.vz = 0; f.stun = 0; f.carrying = false; f.combo = 0; f.flash = 0; f.invul = 0;
+  f.hitSq = 0; f.landSq = 0; f.state = 'idle'; f.st = 0; f.stateDur = 0; f.walk = t * 11; f.bubble = null; f.winded = 0;
+  const frappe = (duree, q, combo) => { f.state = 'attack'; f.stateDur = duree; f.st = duree * q; f.combo = combo; };
+  switch (cle) {
+    case 'marche': f.state = 'walk'; break;
+    case 'elan': if (f.team === 'hero') frappe(0.28, 0.12, 0); else { f.state = 'windup'; f.stateDur = 0.5; } break;
+    case 'impact': frappe(0.28, 0.45, 0); break;
+    case 'final': frappe(0.38, 0.45, 2); break;
+    case 'touche': f.state = 'hurt'; f.stateDur = 0.28; break;
+    case 'terre': f.state = 'down'; f.stateDur = 1; f.st = 0.5; break;
+    case 'saut': f.z = 62; f.vz = 60; break;
+    case 'pique': f.state = 'dive'; f.z = 40; f.vz = -1500; break;
+    case 'victoire': f.state = 'victory'; f.z = Math.abs(Math.sin(t * 4.5)) * 34; f.vz = Math.cos(t * 4.5) > 0 ? 200 : -200; break;
+    case 'raillerie': f.state = 'taunt'; break;
+    case 'porter': f.carrying = true; break;
+  }
+}
+function dessinerAncien(ctx, id, kind, equipe, cle, x, y, t, dir = 1, echelle = null) {
+  const f = ancien(id, kind, equipe);
+  if (echelle) f.scale = echelle;
+  reglerAncien(f, cle, t, dir);
+  f.drawShadow(ctx, x, y);
+  f.draw(ctx, x, y, t);
+  if (cle === 'porter') { // l'ennemi porté, comme dans combat.js (au-dessus de la tête, sonné)
+    const e = ancien(id + '-porte', 'rappeur', 'enemy');
+    reglerAncien(e, 'touche', t, dir); e.stun = 0.2; e.z = f.z + f.height * 0.92;
+    e.draw(ctx, x + dir * 4, y + 0.5, t);
+  }
+  return f;
+}
+
+// ---------- NOUVEAU dessin ----------
+function ombre(ctx, x, y, r, haut = 0) {
+  const up = Math.max(0.45, 1 - haut / 400), rr = r * up, a = 0.42 * (0.5 + up * 0.5);
+  ctx.save(); ctx.translate(x, y); ctx.scale(1, 9 / rr * (r / 40));
+  const g = ctx.createRadialGradient(0, 0, rr * 0.15, 0, 0, rr);
+  g.addColorStop(0, `rgba(0,0,0,${a})`); g.addColorStop(0.65, `rgba(0,0,0,${a * 0.6})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, rr, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+}
+// o : { pose, poseT, combo, dir, scale, flash }
+function dessinerNouveau(ctx, kind, cle, x, y, t, o = {}) {
+  const R = RIGS[kind], dir = o.dir || 1, sc = o.scale || 1;
+  const P = POSES.find(p => p.cle === cle);
+  const oo = Object.assign({ dir, scale: sc, t, walk: t * 11, pose: P ? P.apres : cle, poseT: cle === 'terre' ? 1 : 0 }, o);
+  let z = 0;
+  if (cle === 'saut') z = 62; else if (cle === 'pique') z = 40;
+  else if (cle === 'victoire') { z = Math.abs(Math.sin(t * 4.5)) * 34; oo.air = z > 8; }
+  ombre(ctx, x, y, (R.tb + R.tf) * 1.25 * sc, z);
+  ctx.save(); ctx.translate(x, y - z * sc);
+  // traînée de l'arme et traits de vitesse : les mêmes effets que dans le jeu
+  const frappe = oo.pose === 'impact' || oo.pose === 'final' || oo.pose === 'attack';
+  if (frappe) {
+    const q = oo.pose === 'attack' ? oo.poseT : 0.45;
+    ctx.save(); ctx.scale(dir * sc, sc);
+    drawWeaponTrail(ctx, q, R.H * 0.95, R.H * 0.8, R.style === 'punch', o.rouge ? '255,90,90' : (TRAIL_COL[kind] || '255,234,120'), oo.pose === 'final' || oo.combo === 2 ? 2 : 0);
+    ctx.restore();
+  }
+  if (cle === 'pique') { ctx.save(); ctx.scale(dir * sc, sc); drawSpeedLines(ctx, R.H, true, t, '255,255,255'); ctx.restore(); }
+  persoSprite(ctx, kind, oo);
+  if (cle === 'porter') { // l'ennemi porté : à l'horizontale au bout des bras, il gigote
+    const E = RIGS.rappeur;
+    ctx.save(); ctx.translate(dir * R.H * 0.06 * sc, -(R.H + R.ua + R.fa - R.hr * 0.9 + E.tb) * sc);
+    persoSprite(ctx, 'rappeur', { dir, scale: sc, t, pose: 'held' });
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+// ---------- Cadres ----------
+function etiquette(ctx, txt, x, y, taille, fond, coul = '#fff') {
+  ctx.save(); ctx.font = `900 ${taille}px "Arial Black", Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const w = ctx.measureText(txt).width + taille * 1.2, h = taille * 1.6;
+  ctx.fillStyle = fond; ctx.strokeStyle = '#000'; ctx.lineWidth = 3; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.roundRect(x - w / 2, y - h / 2, w, h, h / 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = coul; ctx.fillText(txt, x, y + 1); ctx.restore();
+}
+function cadre(titre, texte, monde, cam, dessin, premierPlan = true) {
+  const racine = document.getElementById('planche');
+  if (titre) { const h = document.createElement('h2'); h.textContent = titre; racine.appendChild(h); }
+  if (texte) { const p = document.createElement('p'); p.innerHTML = texte; racine.appendChild(p); }
+  const cv = document.createElement('canvas'); cv.width = LARGEUR * NET; cv.height = HAUTEUR * NET;
+  racine.appendChild(cv);
+  PLANCHE.cadres.push({ cv, ctx: cv.getContext('2d'), monde, cam, dessin, premierPlan, vu: true });
+}
+function peindre(c, t) {
+  const ctx = c.ctx;
+  ctx.setTransform(NET * ECH, 0, 0, NET * ECH, 0, 0);
+  ctx.lineJoin = 'round'; ctx.miterLimit = 2;
+  drawWorldBackground(ctx, c.monde, VW, c.cam, t);
+  c.dessin(ctx, t);
+  if (c.premierPlan) drawWorldForeground(ctx, c.monde, VW, c.cam, t);
+}
+
+// 1) Scène de combat : la même, avec l'ancien puis le nouveau dessin
+function scene(nouveau) {
+  return (ctx, t) => {
+    const cyc = (t * 1.5) % 4, coup = Math.floor(cyc), q = cyc % 1;       // 3 coups puis une pause
+    const frappe = coup < 3, touche = frappe && q > 0.3 && q < 0.8;
+    const acteurs = [
+      { id: 's-r3', kind: 'rappeur', eq: 'enemy', cle: 'marche', x: 660, y: 392, dir: -1 },
+      { id: 's-g', kind: 'guilhem', eq: 'enemy', cle: 'raillerie', x: 930, y: 440, dir: -1, boss: true },
+      { id: 's-h', kind: 'christian', eq: 'hero', cle: frappe ? 'attaque' : 'attente', x: 330, y: 458, dir: 1 },
+      { id: 's-r1', kind: 'rappeur', eq: 'enemy', cle: touche ? 'touche' : 'attente', x: nouveau ? 446 : 428, y: 453, dir: -1 },
+      { id: 's-r2', kind: 'rappeur', eq: 'enemy', cle: 'terre', x: 170, y: 505, dir: 1 },
+    ].sort((a, b) => a.y - b.y);
+    acteurs.forEach(a => {
+      if (nouveau) {
+        const o = { dir: a.dir, scale: a.boss ? 1.4 : 1, rouge: a.eq === 'enemy', flash: a.cle === 'touche' && q < 0.42 };
+        if (a.cle === 'attaque') { o.pose = 'attack'; o.poseT = q; o.combo = coup; }
+        if (a.boss) { // halo doré et nom du boss, comme dans le jeu
+          const H = RIGS[a.kind].H * 1.4;
+          ctx.fillStyle = `rgba(241,196,15,${0.12 + Math.sin(t * 4) * 0.06})`; ctx.beginPath(); ctx.ellipse(a.x, a.y - H * 0.5, 62, H * 0.7, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.save(); ctx.font = '900 22px "Arial Black", Arial'; ctx.textAlign = 'center'; ctx.lineJoin = 'round'; ctx.lineWidth = 4; ctx.strokeStyle = '#000'; ctx.fillStyle = '#f1c40f';
+          ctx.strokeText('GUILHEM', a.x, a.y - H - 22); ctx.fillText('GUILHEM', a.x, a.y - H - 22); ctx.restore();
+        }
+        dessinerNouveau(ctx, a.kind, a.cle, a.x, a.y, t + a.x, o);
+      } else {
+        const f = ancien(a.id, a.kind, a.eq);
+        if (a.boss) { f.isBoss = true; f.mustKill = true; }
+        if (a.cle === 'attaque') {
+          reglerAncien(f, 'attente', t + a.x, a.dir);
+          f.state = 'attack'; f.combo = coup; f.stateDur = coup === 2 ? 0.38 : 0.28; f.st = f.stateDur * q;
+          f.drawShadow(ctx, a.x, a.y); f.draw(ctx, a.x, a.y, t);
+        } else {
+          const g = dessinerAncien(ctx, a.id, a.kind, a.eq, a.cle, a.x, a.y, t + a.x, a.dir, a.boss ? 1.4 : null);
+          if (a.cle === 'touche' && q < 0.42) { g.flash = 0.1; }
+        }
+      }
+    });
+    etiquette(ctx, nouveau ? 'APRÈS — nouveau dessin' : 'AVANT — le jeu actuel', 190, 34, 24, nouveau ? '#10ac84' : '#57606f');
+  };
+}
+cadre('1. En situation', 'La même scène de combat, avec l\'ancien dessin puis le nouveau : Christian enchaîne trois coups sur un rappeur, Guilhem (en boss) nargue au fond.', 'guilhem', 380, scene(false));
+cadre('', '', 'guilhem', 380, scene(true));
+
+// Gros plan : les trois personnages en grand (comme dans les menus et l'écran d'avant-combat)
+cadre('2. En gros plan', 'Les trois personnages en grand, comme dans les menus : ancien à gauche, nouveau à droite.', 'guilhem', 1010, (ctx, t) => {
+  PERSOS.forEach((p, i) => {
+    const cx = 165 + i * 365, sol = 500, ech = 2;
+    const f = ancien('gp-' + p.kind, p.kind, p.equipe); f.scale = ech; reglerAncien(f, 'attente', t + i);
+    f.drawShadow(ctx, cx - 95, sol); f.draw(ctx, cx - 95, sol, t);
+    dessinerNouveau(ctx, p.kind, 'attente', cx + 95, sol, t + i, { scale: ech, rouge: p.equipe === 'enemy' });
+    etiquette(ctx, p.nom.replace(' (ennemi)', '').toUpperCase(), cx, 30, 22, '#feca57', '#000');
+  });
+}, false);
+
+// 3) Les 12 poses de chaque personnage, 4 par cadre : ancien à gauche, nouveau à droite
+PERSOS.forEach((p, n) => {
+  for (let k = 0; k < 3; k++) {
+    const poses = POSES.slice(k * 4, k * 4 + 4);
+    cadre(k === 0 ? `${n + 3}. ${p.nom} — les 12 poses` : '', k === 0 ? 'Dans chaque paire : l\'ancien dessin à gauche, le nouveau à droite.' : '', p.monde, p.cam + k * 130, (ctx, t) => {
+      poses.forEach((ps, i) => {
+        const cx = 128 + i * 272, sol = 462, ecart = 60;
+        dessinerAncien(ctx, `${p.kind}-${ps.cle}`, p.kind, p.equipe, ps.cle, cx - ecart, sol, t);
+        dessinerNouveau(ctx, p.kind, ps.cle, cx + ecart, sol, t, { rouge: p.equipe === 'enemy' });
+        etiquette(ctx, ps.nom, cx, 30, 22, '#feca57', '#000');
+        etiquette(ctx, 'avant', cx - ecart, 506, 15, 'rgba(60,60,70,.9)');
+        etiquette(ctx, 'après', cx + ecart, 506, 15, '#10ac84');
+      });
+    }, false);
+  }
+});
+
+// ---------- Animation ----------
+let _avant = performance.now();
+function boucle(maintenant) {
+  const dt = Math.min(0.05, (maintenant - _avant) / 1000); _avant = maintenant;
+  if (PLANCHE.fige === null) PLANCHE.t += dt * (PLANCHE.lent ? 0.25 : 1);
+  const t = PLANCHE.fige === null ? PLANCHE.t : PLANCHE.fige;
+  PLANCHE.cadres.forEach(c => { if (c.vu) peindre(c, t); });
+  requestAnimationFrame(boucle);
+}
+// on ne redessine que les cadres visibles à l'écran (la page reste fluide sur un téléphone)
+if ('IntersectionObserver' in window) {
+  const obs = new IntersectionObserver(l => l.forEach(e => { const c = PLANCHE.cadres.find(k => k.cv === e.target); if (c) c.vu = e.isIntersecting; }), { rootMargin: '200px' });
+  PLANCHE.cadres.forEach(c => obs.observe(c.cv));
+}
+document.getElementById('b-pause').onclick = e => { PLANCHE.fige = PLANCHE.fige === null ? PLANCHE.t : null; e.target.textContent = PLANCHE.fige === null ? '⏸ Figer l\'image' : '▶ Reprendre'; };
+document.getElementById('b-lent').onclick = e => { PLANCHE.lent = !PLANCHE.lent; e.target.textContent = PLANCHE.lent ? '🐇 Vitesse normale' : '🐢 Ralenti'; };
+requestAnimationFrame(boucle);
+</script>
+</body>
+</html>
