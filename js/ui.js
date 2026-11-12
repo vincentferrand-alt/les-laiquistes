@@ -4,8 +4,9 @@
 const $ = s => document.querySelector(s);
 // Perso dans les menus : même rendu cartoon qu'en jeu (contour épais + éclairage)
 function menuSprite(ctx, kind, o) {
-  const c = CHARACTERS[kind], sc = o.scale || 1, h = c.bh * sc, r = (c.range + c.bw * 0.6 + 40) * sc;
-  drawSprite(ctx, { x: -r, y: -h - 120 * sc, w: r * 2, h: h + 140 * sc }, x => drawCharacter(x, kind, o), { outline: 3.2 * Math.sqrt(sc), shade: { top: -h } });
+  const c = CHARACTERS[kind], sc = o.scale || 1, h = c.bh * sc, rig = typeof persoRig === 'function' ? persoRig(kind) : null;
+  const r = (rig ? rig.H * 0.95 + 75 : c.range + c.bw * 0.6 + 40) * sc; // (nouveau dessin : fente et arme tendue vont plus loin)
+  drawSprite(ctx, { x: -r, y: -h - 120 * sc, w: r * 2, h: h + 148 * sc }, x => drawCharacter(x, kind, o), { outline: (rig ? P2.contour : 3.2) * Math.sqrt(sc), shade: { top: -h } });
 }
 // ============================================================
 //  HISTOIRE EN COURS (v3.14) — gardée sur l'appareil (pas en ligne), pour pouvoir la continuer plus tard.

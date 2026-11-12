@@ -176,6 +176,9 @@ class Fighter {
   draw(ctx, sx, sy, gt) {
     if (this.team === 'hero' && this.invul > 0 && !this.dead && Math.floor(gt * 14) % 2 === 0) return;
     const p = this.pose();
+    // v4.0 : les héros / boss ont un nouveau dessin articulé (persos.js), avec ses propres poses de piqué et d'atterrissage
+    const rig = this.isChar && typeof persoRig === 'function' ? persoRig(this.kind) : null;
+    if (rig && !this.dead) { if (this.state === 'dive') p.pose = 'dive'; else if (this.state === 'land') p.pose = 'final'; }
     ctx.save();
     ctx.translate(sx, sy - this.z);
     if (this.dead) {
@@ -183,12 +186,19 @@ class Fighter {
       ctx.translate(0, -this.height * 0.4); ctx.rotate(this.rot); ctx.translate(0, this.height * 0.4);
     }
     if (this.stun > 0) ctx.rotate(Math.sin(gt * 18) * 0.06);
-    if (this.state === 'dive') ctx.rotate(this.dir * 0.35); // penché vers l'avant pendant le piqué
+    if (this.state === 'dive' && !rig) ctx.rotate(this.dir * 0.35); // penché vers l'avant pendant le piqué (le nouveau dessin plonge tout seul)
     // écrasement / étirement + inclinaison : il se ramasse (armé), s'allonge vers l'avant (frappe), puis se détend
     if (!this.dead) {
       let sx2 = 1, sy2 = 1, lean = 0, lunge = 0;
       const q = this.st / (this.stateDur || 1), big = this.combo === 2 ? 1.4 : 1; // 3e coup du combo : plus ample
-      if (this.state === 'attack' || this.state === 'special') {
+      if (rig && ['attack', 'special', 'windup', 'dash'].includes(this.state)) {
+        // nouveau dessin : la pose contient déjà l'élan, la fente et l'inclinaison ; il reste un léger écrasement / étirement
+        if (this.state === 'windup') lunge = Math.sin(gt * 40) * 1.2;
+        else if (this.state === 'dash') { sx2 = 1.07; sy2 = 0.95; }
+        else if (q < 0.2) { sx2 = 1.04; sy2 = 0.96; }
+        else { const k = q < 0.5 ? 1 : Math.max(0, 1 - (q - 0.5) / 0.4); sx2 = 1 + 0.07 * big * k; sy2 = 1 - 0.05 * big * k; }
+      }
+      else if (this.state === 'attack' || this.state === 'special') {
         if (q < 0.3) { sx2 = 1.05; sy2 = 0.95; lean = -0.1; lunge = -5; }                       // anticipation : se ramasse en arrière
         else if (q < 0.6) { sx2 = 1 + 0.14 * big; sy2 = 1 - 0.08 * big; lean = 0.16 * big; lunge = 10 * big; } // frappe : étirement vers l'avant
         else { const k = (q - 0.6) / 0.4; sx2 = 1 + 0.14 * big * (1 - k); sy2 = 1 - 0.08 * big * (1 - k); lean = 0.16 * big * (1 - k); lunge = 10 * big * (1 - k); } // retour au calme
@@ -211,9 +221,9 @@ class Fighter {
     // traînée d'arme (couleur propre à chaque héros ; rouge pour les ennemis)
     if (this.state === 'attack' && (this.isChar || (this.isMini && HUMANS[this.kind])) && !this.dead) {
       ctx.save(); ctx.scale(this.dir * this.scale, this.scale);
-      const punch = !this.weapon && !!(HUMANS[this.kind] && HUMANS[this.kind].punch);
+      const punch = !this.weapon && (rig ? rig.style === 'punch' : !!(HUMANS[this.kind] && HUMANS[this.kind].punch));
       const col = this.team === 'hero' ? (TRAIL_COL[this.kind] || '255,234,120') : '255,90,90';
-      drawWeaponTrail(ctx, this.st / this.stateDur, this.def.range + this.def.bw * 0.5, this.def.bh, punch, col, this.combo);
+      drawWeaponTrail(ctx, this.st / this.stateDur, this.def.range + this.def.bw * 0.5, rig && !punch ? rig.H * 0.82 : this.def.bh, punch, col, this.combo);
       ctx.restore();
     }
     if ((this.state === 'dash' || this.state === 'dive' || (this.state === 'special' && this.def.special === 'direct')) && !this.dead) {
@@ -225,17 +235,29 @@ class Fighter {
       ctx.fillStyle = this.isMini ? `rgba(255,120,60,${0.1 + Math.sin(gt * 4) * 0.05})` : `rgba(241,196,15,${0.12 + Math.sin(gt * 4) * 0.06})`;
       ctx.beginPath(); ctx.ellipse(0, -this.height * 0.5, this.halfW * 1.8, this.height * 0.7, 0, 0, Math.PI * 2); ctx.fill();
     }
-    const o = { dir: this.dir, scale: this.scale, t: this.t, walk: this.walk, pose: p.pose, poseT: p.pt, flash: this.flash > 0,
+    const o = { dir: this.dir, scale: this.scale, t: this.t, walk: this.walk, pose: p.pose, poseT: p.pt, flash: this.flash > 0, combo: this.state === 'attack' ? this.combo : 0,
       variant: this.variant, label: this.label, roll: this.roll, air: this.z > 0, companion: this.team === 'hero', weaponItem: this.weapon ? 'w_' + this.weapon.type : null };
     const paint = c => { if (this.isChar) drawCharacter(c, this.kind, o); else if (this.isMini) drawMiniBoss(c, this.kind, o); else drawMinion(c, this.kind, o); };
     // rendu cartoon : gros contour + éclairage + flash blanc à l'impact (voir drawSprite dans draw.js)
     // boîte qui contient le perso ET son arme quand il frappe (au-dessus de la tête, devant lui)
     // boîte au plus juste (moins de pixels à recopier) : large devant (arme), plus étroite derrière, plus haute quand il frappe
-    const sc = this.scale, front = ((this.def.range || 40) + (this.def.bw || 40) * 0.6 + 40) * sc, back = ((this.def.bw || 40) * 0.6 + 70) * sc;
+    const sc = this.scale, front = ((this.def.range || 40) + (this.def.bw || 40) * 0.6 + 40) * sc;
+    // (à terre, le personnage est couché vers l'arrière : la boîte s'allonge, sinon il était coupé — on ne voyait que ses pieds)
+    const back = ((this.def.bw || 40) * 0.6 + 70) * sc + (p.pose === 'down' ? this.height * 1.1 : 0);
     const swingUp = p.pose === 'attack' || p.pose === 'windup' || p.pose === 'special' || p.pose === 'victory' || p.pose === 'down';
     const above = (swingUp ? 120 : 60) * sc;
-    const box = { x: this.dir > 0 ? -back : -front, y: -this.height - above, w: front + back, h: this.height + above + 20 * sc };
-    drawSprite(ctx, box, paint, { outline: (this.isBoss ? 4 : 3.2) * Math.sqrt(sc), shade: { top: -this.height }, flash: this.flash > 0 && !this.dead,
+    let box = { x: this.dir > 0 ? -back : -front, y: -this.height - above, w: front + back, h: this.height + above + 20 * sc };
+    if (rig) { // nouveau dessin : boîte au plus juste selon la pose (moins de pixels à recopier)
+      // calme : pas d'arme tendue · sinon : grande fente et arme devant, élan derrière · grand : très longue arme (la pelle de Senoussi)
+      // (devant / dessus : place en plus au calme, pour Aïka en laisse et pour la pelle tenue droite)
+      const calme = ['idle', 'walk', 'hurt', 'taunt'].includes(p.pose) && !this.weapon && !(rig.grand && p.pose === 'taunt');
+      const large = rig.grand || !!this.weapon;
+      const front = (calme ? rig.H * 0.55 + 60 + (rig.devant || 0) : rig.H * 0.95 + 75) * sc;
+      const back = (calme ? rig.H * 0.55 + 60 : large ? rig.H * 0.95 + 75 : p.pose === 'down' ? rig.H * 0.85 : rig.H * 0.6 + 45) * sc;
+      const above = (calme ? 50 + (rig.dessus || 0) : large ? 150 : 110) * sc;
+      box = { x: this.dir > 0 ? -back : -front, y: -rig.H * sc - above, w: front + back, h: rig.H * sc + above + 28 * sc };
+    }
+    drawSprite(ctx, box, paint, { outline: (rig ? P2.contour : this.isBoss ? 4 : 3.2) * Math.sqrt(sc), shade: { top: -this.height }, flash: this.flash > 0 && !this.dead,
       minor: this.team === 'enemy' && !this.isBoss && !this.mustKill && !this.golden, tint: this.golden ? '255,200,30' : null }); // ennemi en or : teinte dorée
     if (this.state === 'victory' && !this.dead) { // étoiles qui tournent autour de la tête
       ctx.font = '20px Arial'; ctx.textAlign = 'center';

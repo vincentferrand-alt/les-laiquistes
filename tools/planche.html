@@ -17,7 +17,7 @@
 <h1>Les laïquistes — planche de style</h1>
 <p>Cette page compare l'<b>ancien</b> dessin des personnages (celui du jeu en ligne) et le <b>nouveau</b> (cartoon à gros contour,
 personnages plus grands, bras et jambes articulés, vraies mains, visages expressifs). Chaque cadre a la taille d'un écran de téléphone
-(844 × 390). Le jeu, lui, n'utilise pas encore le nouveau dessin : cette page sert seulement à choisir.</p>
+(844 × 390). Depuis la version 4.0.0, le jeu utilise le nouveau dessin pour les 7 héros et boss ; les ennemis suivront.</p>
 <p><button id="b-pause">⏸ Figer l'image</button><button id="b-lent">🐢 Ralenti</button></p>
 <div id="planche"></div>
 
@@ -29,8 +29,8 @@ personnages plus grands, bras et jambes articulés, vraies mains, visages expres
 <script>
 // ============================================================
 //  PLANCHE DE STYLE (étape 6 de la refonte) — outil, ne fait pas partie du jeu.
-//  Ancien dessin : le vrai code du jeu (classe Fighter de entities.js, drawCharacter / drawMinion de draw.js).
-//  Nouveau dessin : js/persos.js (drawPerso), qui n'est chargé que par cette page.
+//  Ancien dessin : l'ancien code du jeu (drawHumanoid / drawMinion de draw.js), via la classe Fighter (entities.js).
+//  Nouveau dessin : js/persos.js (drawPerso), utilisé par le jeu depuis la v4.0.0 pour les 7 héros et boss.
 // ============================================================
 const LARGEUR = 844, HAUTEUR = 390;            // taille d'un téléphone en paysage
 const ECH = HAUTEUR / VIEW_H;                   // le jeu fait 540 de haut : même mise à l'échelle que Game.resize
@@ -57,6 +57,11 @@ const POSES = [
 const PERSOS = [
   { kind: 'christian', nom: 'Christian', monde: 'christian', equipe: 'hero', cam: 240 },
   { kind: 'guilhem',   nom: 'Guilhem',   monde: 'guilhem',   equipe: 'hero', cam: 60 },
+  { kind: 'fateh',     nom: 'Fateh',     monde: 'fateh',     equipe: 'hero', cam: 200 },
+  { kind: 'faouzi',    nom: 'Faouzi',    monde: 'faouzi',    equipe: 'hero', cam: 200 },
+  { kind: 'venum',     nom: 'Venum',     monde: 'venum',     equipe: 'hero', cam: 200 },
+  { kind: 'senoussi',  nom: 'Senoussi',  monde: 'senoussi',  equipe: 'hero', cam: 200 },
+  { kind: 'purf',      nom: 'The Purf',  monde: 'purf',      equipe: 'hero', cam: 200 },
   { kind: 'rappeur',   nom: 'Le rappeur (ennemi)', monde: 'guilhem', equipe: 'enemy', cam: 1010 },
 ];
 
@@ -81,15 +86,21 @@ function reglerAncien(f, cle, t, dir = 1) {
     case 'porter': f.carrying = true; break;
   }
 }
+// Depuis la v4.0 le jeu dessine les héros avec le nouveau pantin : pour montrer l'ancien, on coupe le nouveau dessin
+// (P2.ancien) le temps du tracé, et on rend au personnage son ancienne hauteur.
+function tracerAncien(f, ctx, x, y, t) {
+  const bh = f.def.bh, vieux = HUMANS[f.kind];
+  P2.ancien = true; if (f.isChar && vieux) f.def.bh = vieux.bh;
+  try { f.drawShadow(ctx, x, y); f.draw(ctx, x, y, t); } finally { P2.ancien = false; f.def.bh = bh; }
+}
 function dessinerAncien(ctx, id, kind, equipe, cle, x, y, t, dir = 1, echelle = null) {
   const f = ancien(id, kind, equipe);
   if (echelle) f.scale = echelle;
   reglerAncien(f, cle, t, dir);
-  f.drawShadow(ctx, x, y);
-  f.draw(ctx, x, y, t);
+  tracerAncien(f, ctx, x, y, t);
   if (cle === 'porter') { // l'ennemi porté, comme dans combat.js (au-dessus de la tête, sonné)
     const e = ancien(id + '-porte', 'rappeur', 'enemy');
-    reglerAncien(e, 'touche', t, dir); e.stun = 0.2; e.z = f.z + f.height * 0.92;
+    reglerAncien(e, 'touche', t, dir); e.stun = 0.2; e.z = f.z + (HUMANS[kind] ? HUMANS[kind].bh : f.def.bh) * f.scale * 0.92;
     e.draw(ctx, x + dir * 4, y + 0.5, t);
   }
   return f;
@@ -186,7 +197,7 @@ function scene(nouveau) {
         if (a.cle === 'attaque') {
           reglerAncien(f, 'attente', t + a.x, a.dir);
           f.state = 'attack'; f.combo = coup; f.stateDur = coup === 2 ? 0.38 : 0.28; f.st = f.stateDur * q;
-          f.drawShadow(ctx, a.x, a.y); f.draw(ctx, a.x, a.y, t);
+          tracerAncien(f, ctx, a.x, a.y, t);
         } else {
           const g = dessinerAncien(ctx, a.id, a.kind, a.eq, a.cle, a.x, a.y, t + a.x, a.dir, a.boss ? 1.4 : null);
           if (a.cle === 'touche' && q < 0.42) { g.flash = 0.1; }
@@ -200,15 +211,15 @@ cadre('1. En situation', 'La même scène de combat, avec l\'ancien dessin puis 
 cadre('', '', 'guilhem', 380, scene(true));
 
 // Gros plan : les trois personnages en grand (comme dans les menus et l'écran d'avant-combat)
-cadre('2. En gros plan', 'Les trois personnages en grand, comme dans les menus : ancien à gauche, nouveau à droite.', 'guilhem', 1010, (ctx, t) => {
-  PERSOS.forEach((p, i) => {
+[[0, 1, 7], [2, 3, 4], [5, 6]].forEach((groupe, g) => cadre(g === 0 ? '2. En gros plan' : '', g === 0 ? 'Les personnages en grand, comme dans les menus : ancien à gauche, nouveau à droite.' : '', ['guilhem', 'fateh', 'senoussi'][g], 1010, (ctx, t) => {
+  groupe.map(n => PERSOS[n]).forEach((p, i) => {
     const cx = 165 + i * 365, sol = 500, ech = 2;
     const f = ancien('gp-' + p.kind, p.kind, p.equipe); f.scale = ech; reglerAncien(f, 'attente', t + i);
-    f.drawShadow(ctx, cx - 95, sol); f.draw(ctx, cx - 95, sol, t);
-    dessinerNouveau(ctx, p.kind, 'attente', cx + 95, sol, t + i, { scale: ech, rouge: p.equipe === 'enemy' });
+    tracerAncien(f, ctx, cx - 95, sol, t);
+    dessinerNouveau(ctx, p.kind, 'attente', cx + 95, sol, t + i, { scale: ech, rouge: p.equipe === 'enemy', companion: p.kind === 'fateh' });
     etiquette(ctx, p.nom.replace(' (ennemi)', '').toUpperCase(), cx, 30, 22, '#feca57', '#000');
   });
-}, false);
+}, false));
 
 // 3) Les 12 poses de chaque personnage, 4 par cadre : ancien à gauche, nouveau à droite
 PERSOS.forEach((p, n) => {
@@ -216,9 +227,9 @@ PERSOS.forEach((p, n) => {
     const poses = POSES.slice(k * 4, k * 4 + 4);
     cadre(k === 0 ? `${n + 3}. ${p.nom} — les 12 poses` : '', k === 0 ? 'Dans chaque paire : l\'ancien dessin à gauche, le nouveau à droite.' : '', p.monde, p.cam + k * 130, (ctx, t) => {
       poses.forEach((ps, i) => {
-        const cx = 128 + i * 272, sol = 462, ecart = 60;
+        const cx = 112 + i * 266, sol = 462, ecart = 58;
         dessinerAncien(ctx, `${p.kind}-${ps.cle}`, p.kind, p.equipe, ps.cle, cx - ecart, sol, t);
-        dessinerNouveau(ctx, p.kind, ps.cle, cx + ecart, sol, t, { rouge: p.equipe === 'enemy' });
+        dessinerNouveau(ctx, p.kind, ps.cle, cx + ecart, sol, t, { rouge: p.equipe === 'enemy', companion: p.kind === 'fateh' });
         etiquette(ctx, ps.nom, cx, 30, 22, '#feca57', '#000');
         etiquette(ctx, 'avant', cx - ecart, 506, 15, 'rgba(60,60,70,.9)');
         etiquette(ctx, 'après', cx + ecart, 506, 15, '#10ac84');
