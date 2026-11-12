@@ -850,8 +850,8 @@ const HUMANS = {
 };
 
 // Héros / boss
-// v4.0 : les 7 laïquistes sont dessinés par le nouveau pantin articulé (persos.js) ; l'ancien dessin ci-dessous
-// ne sert plus qu'à la planche de style (tools/planche.html) et aux pages qui ne chargent pas persos.js.
+// v4.0 : les 7 laïquistes sont dessinés par le nouveau pantin articulé (persos.js), et depuis la v4.1 les ennemis à forme
+// humaine aussi (drawMinion) ; l'ancien dessin (drawHumanoid) sert encore aux mini-boss et à la planche de style.
 function drawCharacter(ctx, kind, o = {}) {
   const rig = typeof persoRig === 'function' ? persoRig(kind) : null;
   if (rig) {
@@ -887,6 +887,7 @@ function drawCharacter(ctx, kind, o = {}) {
 
 // Ennemis courants (et entourages)
 function drawMinion(ctx, type, o = {}) {
+  if (typeof persoRig === 'function' && persoRig(type)) { drawPerso(ctx, type, o); return; } // v4.1 : ennemis à forme humaine (persos.js)
   ctx.save();
   if (o.alpha !== undefined) ctx.globalAlpha *= o.alpha;
   ctx.scale((o.dir || 1) * (o.scale || 1), o.scale || 1);

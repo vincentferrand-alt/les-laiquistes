@@ -1,7 +1,8 @@
 // ============================================================
-//  PERSONNAGES v4 — nouveau dessin « pantin articulé » des 7 héros / boss (et du rappeur, pour l'étape 8)
-//  Depuis la v4.0.0 le jeu s'en sert pour les 7 laïquistes : drawCharacter et drawHead (draw.js) passent par ici.
-//  Les ennemis courants gardent l'ancien dessin (drawHumanoid, draw.js) jusqu'à l'étape 8.
+//  PERSONNAGES v4 — nouveau dessin « pantin articulé » des 7 héros / boss et des ennemis à forme humaine
+//  v4.0 : les 7 laïquistes (drawCharacter et drawHead, draw.js, passent par ici).
+//  v4.1 : ouvrier, rappeur, skateur, papy, runner, indien, zombie, Mini-Fateh et costaud (drawMinion, draw.js).
+//  Les animaux, robots, ennemis pixelisés et objets gardent leur dessin (draw.js, rage.js).
 //  La page tools/planche.html montre toutes les poses, ancien et nouveau dessin côte à côte.
 //
 //  Principe : chaque personnage est un pantin — bassin, torse, tête, deux bras et deux jambes en deux
@@ -256,6 +257,65 @@ function p2Head(ctx, R, f, t) {
   if (R.headTop) R.headTop(ctx, hr, f, t);
 }
 
+
+// ---------- Coiffures et accessoires communs (repère de la tête) ----------
+// cheveux courts, avec une patte devant l'oreille
+function p2Cheveux(ctx, hr, col, reflet = 'rgba(255,255,255,.3)') {
+  ctx.beginPath();
+  ctx.moveTo(-hr * 1.04, hr * 0.26);
+  ctx.arc(0, 0, hr * 1.07, Math.PI * 0.92, Math.PI * 1.74);
+  ctx.quadraticCurveTo(hr * 0.5, -hr * 0.5, hr * 0.05, -hr * 0.52);
+  ctx.quadraticCurveTo(-hr * 0.2, -hr * 0.44, -hr * 0.18, hr * 0.02);
+  ctx.lineTo(-hr * 0.52, -hr * 0.06);
+  ctx.quadraticCurveTo(-hr * 0.7, hr * 0.28, -hr * 1.04, hr * 0.26);
+  ctx.closePath(); ctx.fillStyle = col; ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = reflet; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, -hr * 0.05, hr * 0.84, Math.PI * 1.3, Math.PI * 1.6); ctx.stroke();
+  ctx.strokeStyle = INK; ctx.lineWidth = P2.ol;
+}
+// casquette portée à l'envers (visière vers l'arrière, ouverture de réglage devant)
+function p2Casquette(ctx, hr, col, sombre) {
+  const cy = -hr * 0.16;
+  ctx.save(); ctx.translate(-hr * 0.86, cy + hr * 0.02); ctx.rotate(0.12); rrect(ctx, -hr * 1.0, -hr * 0.12, hr * 1.1, hr * 0.25, hr * 0.12, sombre); ctx.restore();
+  ctx.beginPath(); ctx.arc(0, cy, hr * 1.08, Math.PI * 1.0, Math.PI * 2.0); ctx.closePath(); ctx.fillStyle = col; ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(hr * 0.62, cy, hr * 0.32, Math.PI, Math.PI * 2); ctx.closePath(); ctx.fillStyle = R_SKIN_DARK; ctx.fill(); ctx.lineWidth = 1.6; ctx.stroke();
+  ctx.lineWidth = 1.6; circle(ctx, 0, cy - hr * 1.08, hr * 0.13, sombre);
+  ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.beginPath(); ctx.ellipse(-hr * 0.35, cy - hr * 0.68, hr * 0.3, hr * 0.14, -0.5, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = INK; ctx.lineWidth = P2.ol;
+}
+// lunettes noires (de travers quand il encaisse)
+function p2Lunettes(ctx, hr, f) {
+  const ko = f.eye === 'shut' || f.eye === 'x' || f.eye === 'wide';
+  ctx.save(); ctx.translate(hr * 0.5, -hr * 0.06); ctx.rotate(ko ? 0.42 : 0.03);
+  ctx.strokeStyle = INK; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(-hr * 0.55, -hr * 0.12); ctx.lineTo(-hr * 0.98, -hr * 0.02); ctx.stroke(); // branche
+  ctx.beginPath(); ctx.roundRect(-hr * 0.58, -hr * 0.2, hr * 1.2, hr * 0.42, hr * 0.14); ctx.fillStyle = '#111'; ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-hr * 0.38, -hr * 0.08); ctx.lineTo(-hr * 0.12, -hr * 0.08); ctx.moveTo(hr * 0.2, -hr * 0.08); ctx.lineTo(hr * 0.36, -hr * 0.08); ctx.stroke();
+  ctx.restore();
+  ctx.strokeStyle = INK; ctx.lineWidth = P2.ol;
+}
+// casque de chantier : calotte, arête, visière, reflet
+function p2Casque(ctx, hr, col, bord) {
+  const cy = -hr * 0.4;
+  ctx.beginPath(); ctx.arc(0, cy, hr * 1.1, Math.PI * 1.0, Math.PI * 2.0); ctx.closePath(); ctx.fillStyle = col; ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, cy, hr * 1.1, Math.PI * 1.44, Math.PI * 1.56); ctx.arc(0, cy, hr * 1.24, Math.PI * 1.56, Math.PI * 1.44, true); ctx.closePath(); ctx.fillStyle = bord; ctx.fill(); ctx.stroke();
+  rrect(ctx, -hr * 1.18, cy - hr * 0.1, hr * 2.72, hr * 0.26, hr * 0.12, bord);
+  ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.beginPath(); ctx.ellipse(hr * 0.5, cy - hr * 0.66, hr * 0.13, hr * 0.3, 0.7, 0, Math.PI * 2); ctx.fill();
+}
+// moustache
+function p2Moustache(ctx, hr, col) {
+  ctx.lineWidth = P2.ol * 0.8;
+  ctx.beginPath(); ctx.moveTo(hr * 0.2, hr * 0.3); ctx.quadraticCurveTo(hr * 0.62, hr * 0.14, hr * 1.02, hr * 0.32);
+  ctx.quadraticCurveTo(hr * 1.06, hr * 0.56, hr * 0.62, hr * 0.46); ctx.quadraticCurveTo(hr * 0.24, hr * 0.6, hr * 0.2, hr * 0.3); ctx.closePath();
+  ctx.fillStyle = col; ctx.fill(); ctx.stroke(); ctx.lineWidth = P2.ol;
+}
+// chaîne en or autour du cou (dans le repère du torse)
+function p2Chaine(ctx, R, medaillon) {
+  const tl = R.tl, f = R.tf;
+  ctx.strokeStyle = INK; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(f * 0.42, -tl - 4, f * 0.62, 0.35, Math.PI - 0.35); ctx.stroke();
+  ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 2.8; ctx.beginPath(); ctx.arc(f * 0.42, -tl - 4, f * 0.62, 0.35, Math.PI - 0.35); ctx.stroke();
+  if (medaillon) { ctx.strokeStyle = INK; ctx.lineWidth = 1.6; circle(ctx, f * 0.42, -tl - 4 + f * 0.62 + 3, 6.5, '#f1c40f'); }
+}
+
 // ============================================================
 //  LES PERSONNAGES — proportions, couleurs, détails
 //  th / sh : cuisse / tibia · tl : torse · tb / tf : demi-largeur du torse derrière / devant (épaules) · hb / hf : idem aux hanches
@@ -359,22 +419,7 @@ const RIGS = {
     },
     neckBack(ctx, R) { ctx.lineWidth = P2.ol; ell(ctx, -R.tb * 0.5, -R.tl - 2, R.tb * 0.62, 9, '#2d3436', true, -0.25); }, // capuche dans le dos
     headBack(ctx, hr) { ctx.lineWidth = P2.ol * 0.8; circle(ctx, -hr * 0.66, hr * 0.42, hr * 0.26, '#2b2118'); }, // cheveux courts sur la nuque
-    headTop(ctx, hr, f) {
-      const cy = -hr * 0.16;
-      ctx.save(); ctx.translate(-hr * 0.86, cy + hr * 0.02); ctx.rotate(0.12); rrect(ctx, -hr * 1.0, -hr * 0.12, hr * 1.1, hr * 0.25, hr * 0.12, '#b71c1c'); ctx.restore(); // visière, vers l'arrière
-      ctx.beginPath(); ctx.arc(0, cy, hr * 1.08, Math.PI * 1.0, Math.PI * 2.0); ctx.closePath(); ctx.fillStyle = '#d63031'; ctx.fill(); ctx.stroke();
-      ctx.beginPath(); ctx.arc(hr * 0.62, cy, hr * 0.32, Math.PI, Math.PI * 2); ctx.closePath(); ctx.fillStyle = R_SKIN_DARK; ctx.fill(); ctx.lineWidth = 1.6; ctx.stroke(); // ouverture de réglage (devant, puisqu'elle est à l'envers)
-      ctx.lineWidth = 1.6; circle(ctx, 0, cy - hr * 1.08, hr * 0.13, '#b71c1c');
-      ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.beginPath(); ctx.ellipse(-hr * 0.35, cy - hr * 0.68, hr * 0.3, hr * 0.14, -0.5, 0, Math.PI * 2); ctx.fill();
-      // lunettes noires (de travers quand il encaisse)
-      const ko = f.eye === 'shut' || f.eye === 'x' || f.eye === 'wide';
-      ctx.save(); ctx.translate(hr * 0.5, -hr * 0.06); ctx.rotate(ko ? 0.42 : 0.03);
-      ctx.strokeStyle = INK; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(-hr * 0.55, -hr * 0.12); ctx.lineTo(-hr * 0.98, -hr * 0.02); ctx.stroke(); // branche
-      ctx.beginPath(); ctx.roundRect(-hr * 0.58, -hr * 0.2, hr * 1.2, hr * 0.42, hr * 0.14); ctx.fillStyle = '#111'; ctx.fill(); ctx.stroke();
-      ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-hr * 0.38, -hr * 0.08); ctx.lineTo(-hr * 0.12, -hr * 0.08); ctx.moveTo(hr * 0.2, -hr * 0.08); ctx.lineTo(hr * 0.36, -hr * 0.08); ctx.stroke();
-      ctx.restore();
-    },
+    headTop(ctx, hr, f) { p2Casquette(ctx, hr, '#d63031', '#b71c1c'); p2Lunettes(ctx, hr, f); },
   },
 
   fateh: { // le maître-chien : sportif, sweat violet à capuche, cheveux bruns, barbe de trois jours (Aïka est dessinée par drawCharacter)
@@ -518,7 +563,118 @@ const RIGS = {
       }
     },
   },
+  // ---------------- ennemis à forme humaine (v4.1) ----------------
+  ouvrier: { // petit ouvrier du chantier miniature : gilet orange à bandes, casque blanc, moustache, un outil à la main
+    H: 93, th: 12, sh: 12, ankle: 5, legW: 12, foot: 19, footH: 7, tl: 23, tb: 15, tf: 17, hb: 13.5, hf: 14.5, belly: 2,
+    ua: 13, fa: 12, armW: 10, hand: 7, hr: 18, headUp: 0.66, nose: 1.1, eyes: [0.18, 0.68, 0.06], browHide: true, browUp: -0.14,
+    shirt: '#e67e22', sleeve: '#e67e22', fore: SKIN, legs: '#2c3e50', shoes: '#5d4037', sole: '#2b2b2b', browCol: '#5d4037',
+    style: 'swing', item: o => ['tournevis', 'marteau', 'pelle'][(o.variant || 0) % 3], taunt: 'point',
+    idle: { aF: [0.35, 1.0], aB: [-0.4, 0.8], it: 2.0 }, mouth: 'flat', brow: 'angry',
+    torso(ctx, R) { ctx.fillStyle = '#f5f6fa'; ctx.fillRect(-40, -R.tl * 0.78, 80, 4.5); ctx.fillRect(-40, -R.tl * 0.42, 80, 4.5); },
+    headTop(ctx, hr) { p2Moustache(ctx, hr, '#5d4037'); p2Casque(ctx, hr, '#fdfdfd', '#cfd6da'); },
+  },
+  skateur: { // sur sa planche : tee-shirt vert, bermuda bleu, casquette bleue à l'envers, batte
+    H: 128, th: 20, sh: 20, ankle: 5, legW: 13, foot: 23, footH: 7.5, tl: 33, tb: 17, tf: 19, hb: 15, hf: 16, belly: 0,
+    ua: 20, fa: 18, armW: 11, hand: 7.6, hr: 20.5, headUp: 0.72, nose: 1, eyes: [0.2, 0.68, 0.02],
+    shirt: '#00b894', sleeve: '#00b894', fore: SKIN, legs: '#0984e3', shoes: '#fdfdfd', sole: '#b2bec3', browCol: '#3e2511',
+    style: 'swing', item: 'batte', taunt: 'beckon', lift: 10, glisse: true,
+    idle: { aF: [0.55, 1.35], aB: [-0.5, 0.6], it: 2.8 }, mouth: 'smirk', brow: 'angry',
+    under(ctx) { // la planche à roulettes
+      ctx.strokeStyle = INK; ctx.lineWidth = 2.2;
+      rrect(ctx, -38, -11, 76, 7.5, 3.5, '#e17055');
+      circle(ctx, -24, -2.5, 5.5, '#f1c40f'); circle(ctx, 24, -2.5, 5.5, '#f1c40f');
+    },
+    torso(ctx, R) { ctx.fillStyle = '#55efc4'; ctx.fillRect(-40, -R.tl * 0.62, 80, 6); },
+    headTop(ctx, hr) { p2Casquette(ctx, hr, '#0984e3', '#0768b5'); },
+  },
+  papy: { // voûté, gilet beige, crâne dégarni, touffes blanches, lunettes, moustache grise, canne
+    H: 110, th: 19, sh: 18, ankle: 5, legW: 12, foot: 22, footH: 7, tl: 31, tb: 17, tf: 19, hb: 15, hf: 17, belly: 5,
+    ua: 19, fa: 17, armW: 10.5, hand: 7.4, hr: 20.5, headUp: 0.7, nose: 1.25, eyes: [0.16, 0.7, 0.06], browCol: '#dfe6e9', browUp: 0.1,
+    shirt: '#c8b89a', sleeve: '#c8b89a', fore: '#c8b89a', legs: '#6d4c41', shoes: '#3e2723', sole: '#1b1b1b',
+    style: 'swing', item: 'canne', itemK: 1, taunt: 'point', stoop: 0.16,
+    idle: { aF: [0.5, 0.75], aB: [-0.5, 0.9], it: 0.15 }, mouth: 'flat', brow: 'angry',
+    torso(ctx, R) { // gilet boutonné
+      const tl = R.tl, f = R.tf;
+      ctx.strokeStyle = '#8d7a58'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(f * 0.5, -tl); ctx.lineTo(f * 0.46, 6); ctx.stroke();
+      ctx.strokeStyle = INK; ctx.lineWidth = 1.2; for (let i = 0; i < 3; i++) circle(ctx, f * 0.26, -tl * 0.72 + i * tl * 0.24, 2.2, '#6d4c41');
+    },
+    headBack(ctx, hr) { ctx.lineWidth = P2.ol * 0.8; circle(ctx, -hr * 0.88, hr * 0.05, hr * 0.3, '#f5f6fa'); circle(ctx, -hr * 0.74, hr * 0.46, hr * 0.26, '#f5f6fa'); },
+    headTop(ctx, hr) { ctx.lineWidth = P2.ol * 0.8; circle(ctx, -hr * 0.66, -hr * 0.52, hr * 0.26, '#f5f6fa'); p2Moustache(ctx, hr, '#dfe6e9'); },
+  },
+  runner: { // coureur mince : débardeur bleu « 42 », short, bandeau rose, baskets roses
+    H: 117, th: 23, sh: 22, ankle: 5, legW: 10.5, foot: 22, footH: 7, tl: 31, tb: 14, tf: 16, hb: 12, hf: 13, belly: 0,
+    ua: 20, fa: 19, armW: 9, hand: 7, hr: 19.5, headUp: 0.74, nose: 1, eyes: [0.2, 0.68, 0],
+    shirt: '#0984e3', sleeve: SKIN, fore: SKIN, legs: SKIN, shoes: '#ff7675', sole: '#fdfdfd', browCol: '#3e2511',
+    style: 'punch', taunt: 'beckon',
+    idle: { aF: [0.5, 1.6], aB: [0.1, 1.5] }, mouth: 'grit', brow: 'angry', bounce: true,
+    torso(ctx, R) {
+      ctx.fillStyle = '#1e272e'; ctx.fillRect(-40, -R.tl * 0.2, 80, 30); // short
+      ctx.save(); ctx.translate(R.tf * 0.3, -R.tl * 0.5); ctx.scale(R._dir || 1, 1);
+      ctx.fillStyle = '#fff'; ctx.font = '900 12px Arial'; ctx.textAlign = 'center'; ctx.fillText('42', 0, 0); ctx.restore();
+    },
+    headTop(ctx, hr) { // cheveux bruns, bandeau rose
+      p2Cheveux(ctx, hr, '#6d4c41');
+      ctx.strokeStyle = INK; ctx.lineWidth = hr * 0.24 + 3; ctx.beginPath(); ctx.arc(0, 0, hr * 1.0, Math.PI * 1.08, Math.PI * 1.86); ctx.stroke();
+      ctx.strokeStyle = '#e84393'; ctx.lineWidth = hr * 0.24; ctx.beginPath(); ctx.arc(0, 0, hr * 1.0, Math.PI * 1.08, Math.PI * 1.86); ctx.stroke();
+      ctx.strokeStyle = INK; ctx.lineWidth = P2.ol;
+    },
+  },
+  indien: { // tunique blanche, écharpe orange, cheveux noirs, point rouge sur le front, moustache, grand bâton
+    H: 120, th: 22, sh: 22, ankle: 5, legW: 13, foot: 23, footH: 7.5, tl: 35, tb: 18, tf: 20, hb: 17, hf: 18, belly: 2,
+    ua: 20, fa: 19, armW: 11.5, hand: 7.8, hr: 20.5, headUp: 0.72, nose: 1.1, eyes: [0.2, 0.68, 0.02], skin: '#c68642',
+    shirt: '#f5f6fa', sleeve: '#f5f6fa', fore: '#f5f6fa', legs: '#dfe6e9', shoes: '#8d6e63', sole: '#4e342e', browCol: '#111',
+    style: 'swing', item: 'baton', taunt: 'point',
+    idle: { aF: [0.45, 1.1], aB: [-0.35, 0.6], it: 2.95 }, mouth: 'flat', brow: 'angry',
+    torso(ctx, R) { // écharpe orange en travers
+      const tl = R.tl;
+      ctx.strokeStyle = INK; ctx.lineWidth = 9.5; ctx.beginPath(); ctx.moveTo(-R.tb, -tl * 0.95); ctx.lineTo(R.tf * 1.1, -tl * 0.2); ctx.stroke();
+      ctx.strokeStyle = '#ff9f43'; ctx.lineWidth = 6.5; ctx.beginPath(); ctx.moveTo(-R.tb, -tl * 0.95); ctx.lineTo(R.tf * 1.1, -tl * 0.2); ctx.stroke();
+    },
+    headTop(ctx, hr) { p2Cheveux(ctx, hr, '#15151a', 'rgba(150,170,220,.45)'); circle(ctx, hr * 0.44, -hr * 0.4, hr * 0.1, '#e74c3c', false); p2Moustache(ctx, hr, '#15151a'); },
+  },
+  zombie: { // peau verte, bras tendus devant lui, yeux ronds, habits déchirés, flaque verdâtre à ses pieds
+    H: 124, th: 23, sh: 22, ankle: 5, legW: 13.5, foot: 24, footH: 7.5, tl: 37, tb: 19, tf: 21, hb: 17, hf: 18, belly: 1,
+    ua: 21, fa: 20, armW: 11.5, hand: 8, hr: 21, headUp: 0.7, nose: 1, eyes: [0.18, 0.68, -0.04], skin: '#7bed9f',
+    shirt: '#4b6584', sleeve: '#4b6584', fore: '#7bed9f', legs: '#3d4f5c', shoes: '#2d3436', sole: '#111', browCol: '#1e5631',
+    style: 'punch', taunt: 'hips', stoop: 0.12, brasFixes: true,
+    idle: { aF: [1.5, 0.05], aB: [1.32, 0.12], hF: 'open', hB: 'open' }, eye: 'wide', mouth: 'o', brow: 'sad',
+    behind(ctx, R, o) { // flaque verdâtre
+      // (une flaque à ses pieds : un grand halo autour de lui prenait le gros contour noir et le cachait)
+      ctx.fillStyle = `rgba(46,213,115,${0.5 + Math.sin((o.t || 0) * 5) * 0.15})`;
+      ctx.beginPath(); ctx.ellipse(0, -1, R.H * 0.34, 7, 0, 0, Math.PI * 2); ctx.fill();
+    },
+    torso(ctx, R) { // bas de chemise en lambeaux
+      const tl = R.tl;
+      poly(ctx, [[-40, -tl * 0.12], [-R.hb * 0.5, -tl * 0.26], [0, -tl * 0.1], [R.hf * 0.5, -tl * 0.24], [40, -tl * 0.1], [40, 14], [-40, 14]], '#3d4f5c', false);
+      ctx.fillStyle = 'rgba(46,213,115,.5)'; ctx.fillRect(-R.tb * 0.5, -tl * 0.7, 8, 6);
+    },
+    headTop(ctx, hr) { // quelques mèches sombres, une plaie
+      ctx.lineWidth = P2.ol * 0.8;
+      [[-0.55, -0.82, 0.3], [0.05, -1.0, 0.26], [-0.9, -0.3, 0.26]].forEach(([x, y, r]) => circle(ctx, hr * x, hr * y, hr * r, '#2d3436'));
+      ctx.fillStyle = 'rgba(30,110,60,.55)'; ctx.beginPath(); ctx.ellipse(-hr * 0.1, -hr * 0.5, hr * 0.2, hr * 0.12, 0.3, 0, Math.PI * 2); ctx.fill();
+    },
+  },
+  costaud: { // le gros costaud : débardeur noir, bras nus énormes, crâne rasé, lunettes noires, chaîne en or
+    H: 153, th: 30, sh: 29, ankle: 5, legW: 19, foot: 28, footH: 9, tl: 48, tb: 30, tf: 33, hb: 23, hf: 25, belly: 3,
+    ua: 26, fa: 24, armW: 18, hand: 11, hr: 24, headUp: 0.68, nose: 1.15, shades: true, skin: '#e0ac69',
+    shirt: '#2d3436', sleeve: '#e0ac69', fore: '#e0ac69', legs: '#1e272e', shoes: '#111', sole: '#636e72', browCol: '#111',
+    style: 'punch', taunt: 'gloves',
+    idle: { aF: [0.7, 1.7], aB: [0.4, 1.8] }, mouth: 'flat', brow: 'angry',
+    torso(ctx, R) { // échancrure du débardeur, chaîne en or
+      const tl = R.tl, f = R.tf;
+      ctx.strokeStyle = INK; ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.moveTo(-f * 0.25, -tl - 6); ctx.quadraticCurveTo(f * 0.42, -tl * 0.6, f * 1.15, -tl - 6); ctx.closePath(); ctx.fillStyle = '#e0ac69'; ctx.fill(); ctx.stroke();
+      p2Chaine(ctx, R, false);
+    },
+    headTop(ctx, hr, f) { // crâne rasé qui brille
+      ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.ellipse(hr * 0.1, -hr * 0.66, hr * 0.34, hr * 0.14, 0.2, 0, Math.PI * 2); ctx.fill();
+      p2Lunettes(ctx, hr, f);
+    },
+  },
 };
+RIGS.papy.glasses = RIGS.christian.glasses;
+// Mini-Fateh (entourage de Fateh) : le même pantin que Fateh, en plus petit
+RIGS.enfant = Object.assign({}, RIGS.fateh, { H: 98, mini: 0.74, devant: 0 });
 const R_SKIN_DARK = '#e8c98a';
 // Gros ventre à l'air sous un haut trop court (Senoussi, The Purf) : bande de peau, nombril, ceinture du pantalon
 function p2Bedaine(ctx, R, ombre) {
@@ -545,20 +701,23 @@ function p2Base() {
 }
 function p2Key(R, name, o) {
   const t = o.t || 0, punch = R.style === 'punch' && !o.weaponItem, I = R.idle, P = p2Base(); // (arme ramassée : il la manie comme une arme)
-  const guard = () => { P.aF = I.aF.slice(); P.aB = I.aB.slice(); P.it = I.it || 1.6; P.itBack = !!I.itBack; P.hB = I.hB || 'fist'; };
+  const guard = () => { P.aF = I.aF.slice(); P.aB = I.aB.slice(); P.it = I.it || 1.6; P.itBack = !!I.itBack; P.hB = I.hB || 'fist'; P.hF = I.hF || 'fist'; };
   const mood = () => { P.eye = R.eye || 'open'; P.brow = R.brow || 'calm'; P.mouth = R.mouth || 'smile'; };
   const fierce = m => { P.eye = 'angry'; P.brow = 'angry'; P.mouth = m; };
   switch (name) {
     case 'idle': // attente : en garde, souple, il respire
-      guard(); mood(); P.lean = 0.05; P.hy = 0.03 + Math.sin(t * (R.bounce ? 9 : 4)) * (R.bounce ? 0.022 : 0.012); P.fF = [0.2, 0]; P.fB = [-0.22, 0]; // (le boxeur sautille)
+      guard(); mood(); P.lean = 0.05 + (R.stoop || 0); P.hy = 0.03 + Math.sin(t * (R.bounce ? 9 : 4)) * (R.bounce ? 0.022 : 0.012); P.fF = [0.2, 0]; P.fB = [-0.22, 0]; // (le boxeur sautille)
       P.aF[1] += Math.sin(t * 4 + 1) * 0.05; P.aB[1] += Math.sin(t * 4) * 0.05; // les bras respirent
       if ((t % 3.3) < 0.12) P.eye = 'blink';
       break;
     case 'walk': { // marche : jambes et bras opposés, le corps monte et descend
       const w = o.walk || 0, s = Math.sin(w), c = Math.cos(w);
-      guard(); mood(); P.lean = 0.15; P.hy = 0.02 + 0.07 * Math.abs(s);
+      guard(); mood(); P.lean = 0.15 + (R.stoop || 0); P.hy = 0.02 + 0.07 * Math.abs(s);
       P.fF = [0.56 * s, Math.max(0, c) * 0.22]; P.fB = [-0.56 * s, Math.max(0, -c) * 0.22]; P.ftF = c > 0 ? -0.3 * c : 0.35 * Math.max(0, -s); P.ftB = c < 0 ? 0.3 * c : 0.35 * Math.max(0, s);
-      if (punch) { P.aF = [-0.6 * s, 0.85]; P.aB = [0.6 * s + 0.1, 0.8]; P.hB = 'fist'; }
+      if (R.glisse) { // sur une planche : les pieds restent posés, il se penche et pousse un peu
+        P.fF = [0.3, 0]; P.fB = [-0.34, 0]; P.ftF = P.ftB = 0; P.hy = 0.12 + 0.03 * s; P.lean = 0.2; P.aB = [-0.7 + 0.2 * s, 0.5];
+      } else if (R.brasFixes) { P.aF[0] += 0.06 * s; P.aB[0] -= 0.06 * s; } // (zombie : les bras restent tendus)
+      else if (punch) { P.aF = [-0.6 * s, 0.85]; P.aB = [0.6 * s + 0.1, 0.8]; P.hB = 'fist'; }
       else { P.aF[0] -= 0.25 * s; P.aB = [0.7 * s, 0.7 + 0.2 * s]; }
       break;
     }
@@ -659,7 +818,9 @@ const RIGS_POSES = ['idle', 'walk', 'windup', 'impact', 'windupF', 'final', 'hur
 //  DESSIN D'UN PERSONNAGE — même usage que drawCharacter(ctx, kind, o)
 // ============================================================
 function drawPerso(ctx, kind, o = {}) {
-  const R = RIGS[kind], P = p2Pose(R, o), t = o.t || 0, skin = R.skin || SKIN;
+  const R = RIGS[kind];
+  if (R.mini) o = Object.assign({}, o, { scale: (o.scale || 1) * R.mini }); // même pantin, en plus petit
+  const P = p2Pose(R, o), t = o.t || 0, skin = R.skin || SKIN;
   const L = R.th + R.sh;
   R._dir = o.dir || 1;
   ctx.save();
@@ -667,9 +828,11 @@ function drawPerso(ctx, kind, o = {}) {
   ctx.scale((o.dir || 1) * (o.scale || 1), o.scale || 1);
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   if (P.lie) { // couché sur le dos : tout le pantin bascule en arrière autour des pieds
-    if (P.lieMid) ctx.translate(R.H * 0.5, R.hr * 0.5); else ctx.translate(R.H * 0.46 * P.lie, -R.hr * 0.92 * P.lie);
+    const Hd = R.H / (R.mini || 1); // (hauteur dans le repère du dessin)
+    if (P.lieMid) ctx.translate(Hd * 0.5, R.hr * 0.5); else ctx.translate(Hd * 0.46 * P.lie, -R.hr * 0.92 * P.lie);
     ctx.rotate(-Math.PI / 2 * P.lie);
   }
+  if (R.under && !P.lie) { R.under(ctx, R, o); ctx.translate(0, -R.lift); } // debout sur sa planche
   if (P.oy) ctx.translate(0, P.oy);
   const hip = { x: P.hx * L, y: -(L * 0.985 + R.ankle) + P.hy * L };
   if (P.rot) { ctx.translate(hip.x, hip.y); ctx.rotate(P.rot); ctx.translate(-hip.x, -hip.y); }
@@ -690,13 +853,14 @@ function drawPerso(ctx, kind, o = {}) {
   // --- bras ---
   const arm = (sx, a) => { const s = T(sx, -R.tl * 0.86), e = add(s, dir(a[0], R.ua)), w = add(e, dir(a[0] + a[1], R.fa)); return { s, e, w, a: a[0] + a[1] }; };
   const AF = arm(-R.tb * 0.12, P.aF), AB = arm(R.tf * 0.42, P.aB);
-  const item = !P.noItem && (o.weaponItem || R.item);
-  const fItem = item && (P2_ITEMS[item] || ITEMS[item]); // (armes ramassées, « w_… » : dessinées par rage.js)
-  const drawItem = () => { if (!fItem) return; ctx.save(); ctx.translate(AF.w.x, AF.w.y); ctx.rotate(-P.it); ctx.translate(0, R.hand * 0.35); ctx.strokeStyle = INK; ctx.lineWidth = 2; fItem(ctx, t); ctx.restore(); };
+  const item = !P.noItem && (o.weaponItem || (typeof R.item === 'function' ? R.item(o) : R.item));
+  const fItem = item && (P2_ITEMS[item] || ITEMS[item]); // (armes ramassées « w_… » : rage.js · petits outils des ennemis : draw.js)
+  const kItem = item && !P2_ITEMS[item] && !String(item).startsWith('w_') ? (R.itemK || 1.3) : 1; // (outils de l'ancien dessin : un peu agrandis)
+  const drawItem = () => { if (!fItem) return; ctx.save(); ctx.translate(AF.w.x, AF.w.y); ctx.rotate(-P.it); ctx.translate(0, R.hand * 0.35); ctx.scale(kItem, kItem); ctx.strokeStyle = INK; ctx.lineWidth = 2; fItem(ctx, t); ctx.restore(); };
   const hand = (A, type, col, fond) => { ctx.save(); ctx.translate(A.w.x, A.w.y); ctx.rotate(-A.a); p2Hand(ctx, type, R.hand, col, t, R.glove ? (fond ? p2Dark(R.glove, 0.8) : R.glove) : null); ctx.restore(); };
   const shoe = (Lg, dark) => { ctx.save(); ctx.translate(Lg.foot.x, Lg.foot.y); ctx.rotate(Lg.fa); p2Shoe(ctx, R, R.shoes, dark); ctx.restore(); };
 
-  if (R.behind) R.behind(ctx, R, o);
+  if (R.behind && !P.lie) R.behind(ctx, R, o); // (pas quand il est couché : la flaque du zombie basculerait avec lui)
   // 1) bras et jambe du fond (plus sombres)
   p2Limb(ctx, AB.s, AB.e, AB.w, R.armW, R.armW * 0.92, p2Dark(R.sleeve), R.fore === skin ? p2Dark(skin, 0.86) : p2Dark(R.fore));
   hand(AB, P.hB, p2Dark(skin, 0.86), true);

@@ -177,10 +177,12 @@ class Fighter {
     if (this.team === 'hero' && this.invul > 0 && !this.dead && Math.floor(gt * 14) % 2 === 0) return;
     const p = this.pose();
     // v4.0 : les héros / boss ont un nouveau dessin articulé (persos.js), avec ses propres poses de piqué et d'atterrissage
-    const rig = this.isChar && typeof persoRig === 'function' ? persoRig(this.kind) : null;
-    if (rig && !this.dead) { if (this.state === 'dive') p.pose = 'dive'; else if (this.state === 'land') p.pose = 'final'; }
+    // v4.1 : les ennemis à forme humaine aussi ; un ennemi porté par le héros est à l'horizontale, au bout de ses bras
+    const rig = !this.isMini && typeof persoRig === 'function' ? persoRig(this.kind) : null;
+    const porte = !!rig && this.grabbed && !this.dead;
+    if (rig && !this.dead) { if (this.state === 'dive') p.pose = 'dive'; else if (this.state === 'land') p.pose = 'final'; else if (porte) p.pose = 'held'; }
     ctx.save();
-    ctx.translate(sx, sy - this.z);
+    ctx.translate(sx, sy - this.z - (porte ? 34 * this.scale : 0));
     if (this.dead) {
       ctx.globalAlpha = clamp(1.6 - this.deadT, 0, 1);
       ctx.translate(0, -this.height * 0.4); ctx.rotate(this.rot); ctx.translate(0, this.height * 0.4);

@@ -1,3 +1,28 @@
+# Les laïquistes — v4.1.0 : les ennemis à forme humaine redessinés
+
+Huitième étape de la refonte, première partie (8a). Les autres ennemis (animaux, robots, monde pixelisé, ennemis spéciaux) viendront en 8b, les mini-boss et l'écran titre en 8c.
+
+## Ce qui change
+- **Neuf ennemis ont le nouveau dessin** des héros (plus grands d'environ 23 %, bras et jambes articulés, vraies mains, visages expressifs) : l'ouvrier, le rappeur, le skateur, le papy, le runner, l'Indien, le zombie, Mini-Fateh et le costaud.
+- Ce qui les identifie est conservé : gilet orange, casque blanc et outil de l'ouvrier · casquette rouge à l'envers, lunettes noires, chaîne en or et batte du rappeur · planche à roulettes et casquette bleue du skateur · canne, lunettes et moustache grise du papy · débardeur « 42 » et bandeau rose du runner · tunique blanche, écharpe orange et grand bâton de l'Indien · peau verte et bras tendus du zombie · débardeur noir, crâne rasé et chaîne en or du costaud.
+- **Un ennemi attrapé est porté à l'horizontale**, au bout des bras du héros, et il gigote (avant, il restait debout sur sa tête).
+- Le petit portrait de l'ennemi visé (sous le panneau du héros) montre maintenant sa tête.
+- Le zombie n'a plus de halo vert autour de lui mais une flaque verte à ses pieds (le halo prenait le gros contour noir et cachait le personnage).
+
+## Ce qui ne change pas
+- Les règles : vie, vitesse, dégâts, portée et largeur de frappe de ces ennemis sont les mêmes qu'en 4.0.
+- Les animaux, robots, ennemis du monde pixelisé, ennemis spéciaux, entourages (sauf Mini-Fateh) et mini-boss gardent leur dessin pour l'instant.
+
+## À savoir
+- Affichage : mesuré sans carte graphique sur quatre débuts de Survie, une image demande environ 6 % de temps en plus qu'en 4.0.
+
+## Pour les curieux
+- `js/persos.js` : neuf nouveaux pantins dans `RIGS`, coiffures et accessoires communs (`p2Cheveux`, `p2Casquette`, `p2Lunettes`, `p2Casque`, `p2Moustache`, `p2Chaine`).
+- `drawMinion` (`js/draw.js`) passe par le nouveau dessin quand il existe ; `Fighter.draw` (`js/entities.js`) gère la pose « porté ».
+- `bh` (hauteur) dans `js/data.js` : ouvrier 93, rappeur 127, skateur 128, papy 110, runner 117, Indien 120, zombie 124, Mini-Fateh 98, costaud 153 (avant : 62, 98, 96, 86, 96, 96, 98, 64, 124).
+
+---
+
 # Les laïquistes — v4.0.0 : les 7 héros et boss redessinés
 
 Septième étape de la refonte (7/9). Le style a été choisi sur la planche de l'étape 6 (`tools/planche.html`).
