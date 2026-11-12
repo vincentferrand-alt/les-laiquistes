@@ -17,7 +17,7 @@
 <h1>Les laïquistes — planche de style</h1>
 <p>Cette page compare l'<b>ancien</b> dessin des personnages (celui du jeu en ligne) et le <b>nouveau</b> (cartoon à gros contour,
 personnages plus grands, bras et jambes articulés, vraies mains, visages expressifs). Chaque cadre a la taille d'un écran de téléphone
-(844 × 390). Depuis la version 4.0.0, le jeu utilise le nouveau dessin pour les 7 héros et boss ; les ennemis suivront.</p>
+(844 × 390). Le jeu utilise le nouveau dessin pour les 7 héros et boss (version 4.0) et pour les ennemis à forme humaine (version 4.1).</p>
 <p><button id="b-pause">⏸ Figer l'image</button><button id="b-lent">🐢 Ralenti</button></p>
 <div id="planche"></div>
 
@@ -63,6 +63,13 @@ const PERSOS = [
   { kind: 'senoussi',  nom: 'Senoussi',  monde: 'senoussi',  equipe: 'hero', cam: 200 },
   { kind: 'purf',      nom: 'The Purf',  monde: 'purf',      equipe: 'hero', cam: 200 },
   { kind: 'rappeur',   nom: 'Le rappeur (ennemi)', monde: 'guilhem', equipe: 'enemy', cam: 1010 },
+  { kind: 'ouvrier',   nom: 'L\'ouvrier (ennemi)',  monde: 'christian', equipe: 'enemy', cam: 240 },
+  { kind: 'skateur',   nom: 'Le skateur (ennemi)', monde: 'guilhem',   equipe: 'enemy', cam: 1010 },
+  { kind: 'papy',      nom: 'Le papy (ennemi)',    monde: 'fateh',     equipe: 'enemy', cam: 200 },
+  { kind: 'runner',    nom: 'Le runner (ennemi)',  monde: 'fateh',     equipe: 'enemy', cam: 200 },
+  { kind: 'indien',    nom: 'L\'Indien (ennemi)',   monde: 'senoussi',  equipe: 'enemy', cam: 200 },
+  { kind: 'zombie',    nom: 'Le zombie (ennemi)',  monde: 'purf',      equipe: 'enemy', cam: 200 },
+  { kind: 'costaud',   nom: 'Le costaud (ennemi)', monde: 'venum',     equipe: 'enemy', cam: 200 },
 ];
 
 // ---------- ANCIEN dessin : un vrai combattant du jeu, mis de force dans l'état voulu ----------
@@ -90,7 +97,7 @@ function reglerAncien(f, cle, t, dir = 1) {
 // (P2.ancien) le temps du tracé, et on rend au personnage son ancienne hauteur.
 function tracerAncien(f, ctx, x, y, t) {
   const bh = f.def.bh, vieux = HUMANS[f.kind];
-  P2.ancien = true; if (f.isChar && vieux) f.def.bh = vieux.bh;
+  P2.ancien = true; if (vieux) f.def.bh = vieux.bh;
   try { f.drawShadow(ctx, x, y); f.draw(ctx, x, y, t); } finally { P2.ancien = false; f.def.bh = bh; }
 }
 function dessinerAncien(ctx, id, kind, equipe, cle, x, y, t, dir = 1, echelle = null) {
@@ -211,13 +218,13 @@ cadre('1. En situation', 'La même scène de combat, avec l\'ancien dessin puis 
 cadre('', '', 'guilhem', 380, scene(true));
 
 // Gros plan : les trois personnages en grand (comme dans les menus et l'écran d'avant-combat)
-[[0, 1, 7], [2, 3, 4], [5, 6]].forEach((groupe, g) => cadre(g === 0 ? '2. En gros plan' : '', g === 0 ? 'Les personnages en grand, comme dans les menus : ancien à gauche, nouveau à droite.' : '', ['guilhem', 'fateh', 'senoussi'][g], 1010, (ctx, t) => {
+[[0, 1, 7], [2, 3, 4], [5, 6, 14], [8, 9, 10], [11, 12, 13]].forEach((groupe, g) => cadre(g === 0 ? '2. En gros plan' : '', g === 0 ? 'Les personnages en grand, comme dans les menus : ancien à gauche, nouveau à droite.' : '', ['guilhem', 'fateh', 'senoussi', 'guilhem', 'fateh'][g], 1010, (ctx, t) => {
   groupe.map(n => PERSOS[n]).forEach((p, i) => {
     const cx = 165 + i * 365, sol = 500, ech = 2;
     const f = ancien('gp-' + p.kind, p.kind, p.equipe); f.scale = ech; reglerAncien(f, 'attente', t + i);
     tracerAncien(f, ctx, cx - 95, sol, t);
     dessinerNouveau(ctx, p.kind, 'attente', cx + 95, sol, t + i, { scale: ech, rouge: p.equipe === 'enemy', companion: p.kind === 'fateh' });
-    etiquette(ctx, p.nom.replace(' (ennemi)', '').toUpperCase(), cx, 30, 22, '#feca57', '#000');
+    etiquette(ctx, p.nom.replace(' (ennemi)', '').replace(/^(Le |L')/, '').toUpperCase(), cx, 30, 22, '#feca57', '#000');
   });
 }, false));
 
