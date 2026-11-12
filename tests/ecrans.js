@@ -14,6 +14,7 @@ const DOSSIER = process.argv[2];
 // Chaque écran : son nom et comment l'ouvrir (exécuté dans la page)
 const ECRANS = {
   titre: () => { UI.toTitle(); },
+  'titre-histoire-en-cours': () => { StorySave.set({ hero: 'christian', order: ['guilhem', 'fateh', 'faouzi', 'venum', 'senoussi', 'purf'], level: 1 }, 2, 12000, 90); UI.toTitle(); },
   'autres-modes': () => { UI.toTitle(); UI.show('s-modes'); },
   personnages: () => { UI.run.mode = 'story'; UI.openChars(); },
   mondes: () => { UI.run.mode = 'select'; UI.run.hero = 'christian'; UI.openWorlds(); },

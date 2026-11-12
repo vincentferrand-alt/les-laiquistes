@@ -353,7 +353,7 @@ js/ui.js              menus, modes, réglages
 sw.js, manifest.webmanifest, icons/   appli installable (PWA) et mises à jour
 tools/make-og.html    fabrique l'image de partage et les icônes
 tools/make-voices.py  fabrique les voix des personnages (voices/)
-tests/                tests automatiques (lancés par GitHub à chaque demande de fusion) : fumee.js, martelage.js, ecrans.js, outils.js ; equilibrage.js affiche la vie et les dégâts de chaque adversaire par niveau de difficulté
+tests/                tests automatiques (lancés par GitHub à chaque demande de fusion) : fumee.js, martelage.js, ecrans.js, histoire.js, outils.js ; equilibrage.js affiche la vie et les dégâts de chaque adversaire par niveau de difficulté
 ```
 
 Pour tester en local : `python3 -m http.server` dans ce dossier puis http://localhost:8000 (ou ouvre simplement `index.html` ; tout marche sauf l'installation et la connexion Google).

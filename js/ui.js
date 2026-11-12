@@ -7,6 +7,27 @@ function menuSprite(ctx, kind, o) {
   const c = CHARACTERS[kind], sc = o.scale || 1, h = c.bh * sc, r = (c.range + c.bw * 0.6 + 40) * sc;
   drawSprite(ctx, { x: -r, y: -h - 120 * sc, w: r * 2, h: h + 140 * sc }, x => drawCharacter(x, kind, o), { outline: 3.2 * Math.sqrt(sc), shade: { top: -h } });
 }
+// ============================================================
+//  HISTOIRE EN COURS (v3.14) — gardée sur l'appareil (pas en ligne), pour pouvoir la continuer plus tard.
+//  Enregistrée au début de chaque monde : héros, ordre des mondes, numéro du monde, score, vie, niveau de difficulté.
+//  Effacée quand l'histoire est terminée ; remplacée quand une nouvelle histoire commence.
+// ============================================================
+const StorySave = {
+  key: 'laiquistes_histoire_v1',
+  get() {
+    try {
+      const s = JSON.parse(localStorage.getItem(this.key));
+      // on vérifie que la sauvegarde est encore valable (héros débloqué, mondes existants)
+      if (!s || !CHARACTERS[s.hero] || !Save.isUnlocked(s.hero) || !Array.isArray(s.order) || !s.order.length || !s.order.every(id => worldById(id)) || !(s.idx >= 0 && s.idx < s.order.length)) return null;
+      return s;
+    } catch (e) { return null; }
+  },
+  set(run, idx, score, heroHp) {
+    try { localStorage.setItem(this.key, JSON.stringify({ hero: run.hero, order: run.order, idx, score: score || 0, heroHp: heroHp || null, level: run.level || 1 })); } catch (e) {}
+  },
+  clear() { try { localStorage.removeItem(this.key); } catch (e) {} },
+};
+
 const UI = {
   current: null, live: new Map(), selHero: null,
   run: { mode: 'story', hero: null, order: [], idx: 0, score: 0, heroHp: null, worldScoreStart: 0 },
@@ -15,6 +36,7 @@ const UI = {
   init() {
     document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => { Sfx.init(); Sfx.click(); this.show(b.dataset.go); }));
     $('#b-story').onclick = () => { Sfx.init(); Sfx.click(); this.run.mode = 'story'; this.openChars(); };
+    $('#b-continue').onclick = () => { Sfx.init(); Sfx.click(); this.continueStory(); };
     $('#b-levels').onclick = () => { Sfx.init(); Sfx.click(); this.run.mode = 'select'; this.openChars(); };
     $('#b-rush').onclick = () => { Sfx.init(); Sfx.click(); this.run.mode = 'bossrush'; this.openChars(); };
     $('#b-surv').onclick = () => { Sfx.init(); Sfx.click(); this.run.mode = 'survival'; this.openChars(); };
@@ -72,7 +94,7 @@ const UI = {
     $('#version-settings').textContent = 'Les laïquistes v' + (window.GAME_VERSION || '?');
     $('#b-link-google').onclick = () => { Sfx.click(); Cloud.linkGoogle(); };
     this.refreshAccount();
-    this.buildTitleArt();
+    this.buildTitleArt(); this.refreshTitle();
     this.show('s-title');
     const loop = () => { this.animate(); requestAnimationFrame(loop); };
     requestAnimationFrame(loop);
@@ -87,7 +109,22 @@ const UI = {
     if (MENU_SCREENS.includes(id) && !(Game.running && Game.paused)) Sfx.music('menu');
   },
   hideScreens() { this.show(null); },
-  toTitle() { Game.stop(); this.setControls(false); this.buildTitleArt(); this.show('s-title'); },
+  toTitle() { Game.stop(); this.setControls(false); this.buildTitleArt(); this.refreshTitle(); this.show('s-title'); },
+  // Titre : s'il y a une histoire en cours, on propose de la continuer (et « Mode histoire » devient « Nouvelle histoire »)
+  refreshTitle() {
+    const s = StorySave.get(), c = $('#b-continue'), n = $('#b-story');
+    c.classList.toggle('hidden', !s);
+    if (s) c.textContent = `CONTINUER L'HISTOIRE (monde ${s.idx + 1}/${s.order.length})`;
+    n.textContent = s ? 'NOUVELLE HISTOIRE' : 'MODE HISTOIRE';
+    n.classList.toggle('primary', !s);
+  },
+  // Reprend l'histoire enregistrée, au début du monde où l'on s'était arrêté
+  continueStory() {
+    const s = StorySave.get(); if (!s) { this.refreshTitle(); return; }
+    Object.assign(this.run, { mode: 'story', hero: s.hero, order: s.order, idx: s.idx, score: s.score, heroHp: s.heroHp, level: s.level, cp: null, daily: null });
+    this.selHero = s.hero;
+    this.openIntro();
+  },
 
   setControls(on) {
     $('#controls').classList.toggle('hidden', !on);
@@ -318,6 +355,7 @@ const UI = {
     if (!fromCp) this.run.cp = null;
     if (retry) { this.run.score = this.run.worldScoreStart; }
     this.run.worldScoreStart = this.run.score;
+    if (this.run.mode === 'story') StorySave.set(this.run, this.run.idx, this.run.score, this.run.heroHp); // histoire en cours : enregistrée au début de chaque monde
     const diff = { story: BALANCE.story.base + this.run.idx * BALANCE.story.perWorld, bossrush: 1 + this.run.idx * 0.08, survival: 1 }[this.run.mode] || 1.15;
     this.hideScreens(); this.setControls(true);
     Game.start({ worldId: wid, heroKind: this.run.hero, mode: this.run.mode, difficulty: diff, level: this.run.level, mod: this.run.mode === 'daily' && this.run.daily ? this.run.daily.mod : null, score: this.run.score, heroHp: retry ? null : this.run.heroHp, checkpoint: cp });
@@ -427,6 +465,7 @@ const UI = {
     const storyDone = this.run.mode === 'story' && this.run.idx >= this.run.order.length - 1;
     const rush = this.run.mode === 'bossrush', rushDone = rush && this.run.idx >= this.run.order.length - 1;
     const unlocks = storyDone ? Save.storyCompleted(this.run.hero, this.run.level) : [];
+    if (storyDone) StorySave.clear(); // histoire terminée : plus rien à continuer
     if (rushDone) Save.data.rushBest = Math.max(Save.data.rushBest || 0, res.score);
     Save.save();
     // progression : étoiles, expérience, trophées
@@ -480,13 +519,14 @@ const UI = {
       add('Menu', () => this.toTitle());
     } else if (this.run.mode === 'story' && !storyDone) {
       this.prepareNameEntry('#win-save', false);
+      const max = CHARACTERS[this.run.hero].hp, nextHp = Math.min(max, res.heroHp + max * 0.5); // la moitié de la vie est rendue entre deux mondes
+      StorySave.set(this.run, this.run.idx + 1, res.score, nextHp); // monde gagné : l'histoire reprendra au suivant, même si on quitte ici
       add('MONDE SUIVANT →', () => {
         this.run.idx++;
-        const max = CHARACTERS[this.run.hero].hp;
-        this.run.heroHp = Math.min(max, res.heroHp + max * 0.5);
+        this.run.heroHp = nextHp;
         this.openIntro();
       }, 'primary');
-      add('Abandonner', () => this.toTitle());
+      add('Menu (histoire gardée)', () => this.toTitle());
     } else {
       this.prepareNameEntry('#win-save', true, storyDone ? 'histoire' : daily ? this.run.daily.board : w.id);
       if (!storyDone) { add('Rejouer', () => { this.run.score = 0; this.launch(true); }, 'primary'); if (!daily) add('Autre monde', () => this.openWorlds()); }

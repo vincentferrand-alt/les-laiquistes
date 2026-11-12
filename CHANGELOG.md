@@ -1,3 +1,20 @@
+# Les laïquistes — v3.14.0 : continuer l'histoire
+
+Quatrième étape de la refonte (4/9), première partie. Rien ne disparaît. (Les nouveaux seuils des médailles viendront dans une version suivante, à partir de temps réels.)
+
+## Continuer l'histoire
+- **L'histoire en cours est enregistrée** au début de chaque monde, et dès qu'un monde est gagné : héros, ordre des mondes, numéro du monde, score, vie, niveau de difficulté.
+- Le titre propose alors **« CONTINUER L'HISTOIRE (monde 3/6) »**, et « MODE HISTOIRE » devient **« NOUVELLE HISTOIRE »**.
+- On reprend au **début du monde** où l'on s'était arrêté, avec le score et la vie qu'on avait en y entrant (pas au milieu d'un monde).
+- Une défaite ou un retour au menu garde l'histoire. Elle est effacée quand on la termine, et remplacée quand une nouvelle histoire commence (au lancement de son premier monde).
+- Sur l'écran de victoire d'un monde, le bouton « Abandonner » s'appelle maintenant « Menu (histoire gardée) ».
+- La sauvegarde est **sur l'appareil seulement** : elle ne suit pas d'un téléphone à l'autre et ne touche pas à Firebase.
+
+## Tests automatiques
+- Nouveau test `tests/histoire.js` : commence une histoire, gagne un monde, ferme et rouvre le jeu, continue, perd, puis termine.
+
+---
+
 # Les laïquistes — v3.13.0 : élagage
 
 Troisième étape de la refonte (3/9). Cette version retire ou simplifie quatre choses.

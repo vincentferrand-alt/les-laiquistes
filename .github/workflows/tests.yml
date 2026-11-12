@@ -2,7 +2,8 @@
 # Un Chrome sans fenêtre ouvre le jeu et un robot y joue. Une coche verte = tout va bien ; une croix rouge = ne pas fusionner.
 #  - tests/fumee.js     : chaque monde, chaque boss et une Survie démarrent et tournent sans erreur JavaScript ;
 #  - tests/martelage.js : en martelant FRAPPE sans bouger, au moins 8 coups sur 9 touchent, pour les 7 héros ;
-#  - tests/ecrans.js    : tous les menus tiennent sur un téléphone (844×390 et 740×360), sans défilement.
+#  - tests/ecrans.js    : tous les menus tiennent sur un téléphone (844×390 et 740×360), sans défilement ;
+#  - tests/histoire.js  : une histoire commencée peut être continuée après avoir fermé le jeu.
 name: Tests automatiques
 on:
   pull_request:
@@ -27,3 +28,5 @@ jobs:
         run: node tests/martelage.js
       - name: Les menus tiennent sur un téléphone
         run: node tests/ecrans.js
+      - name: Continuer l'histoire
+        run: node tests/histoire.js
