@@ -1,7 +1,7 @@
 // ============================================================
 //  JEU — niveau à défilement horizontal, vagues, boss, HUD
 // ============================================================
-const BOSS_SPECIAL = { christian: 'truelle', guilhem: 'rolex', fateh: 'imperatif', faouzi: 'cartouches', venum: 'direct', senoussi: 'agneaux', purf: 'fumee' };
+// attaques des boss : voir js/boss.js (BOSS_SIG = attaque signature, BOSS_SECOND = seconde attaque)
 const PX = 3; // taille d'un "pixel" dans le monde rétro de Faouzi
 const SAFE = { right: 0.95, left: 1 }; // part de la largeur des commandes tactiles interdite aux personnages (v3.12) [avant : 0,85 à droite, 0 à gauche]
 
@@ -93,7 +93,7 @@ const Game = {
     // vagues : 2 au 1er tiers (avant le mini-boss), 1 au 2e (avant l'épreuve), 1 au 3e (avant le boss) — voir LAYOUT (tiers.js)
     this.waves = LAYOUT.waves.map((x, i) => ({ x, n: LAYOUT.sizes[i] + (i === LAYOUT.waves.length - 1 ? extra : Math.floor(extra / 2)), started: false, done: false }));
     this.wave = null; this.spawnQueue = []; this.spawnT = 0; this.trickleT = 3;
-    this.bossPhase = 0; this.boss = null; this.bossMinionT = 7; this.bossIntroT = 0; this.endT = 0; this.ended = false;
+    this.bossPhase = 0; this.boss = null; this.reinfQ = 0; this.bossIntroT = 0; this.endT = 0; this.ended = false;
     this.goT = 0; this.tokenT = 0;
     this.survWave = 0; this.survBoss = null; this.survT = 1.5;
     if (this.mode === 'bossrush') { // Boss Rush : on arrive directement dans l'arène du boss
@@ -238,7 +238,7 @@ const Game = {
     h.x += h.dir * step; h.stepLeft -= step;
   },
 
-  specialOf(f) { return f.team === 'hero' || f.isMini ? f.def.special : BOSS_SPECIAL[f.kind]; },
+  specialOf(f) { return f.team === 'hero' || f.isMini ? f.def.special : BOSS_SECOND[f.kind]; }, // (boss : sa seconde attaque, boss.js)
 
   updateAction(f, dt) {
     if (f.state === 'attack') {
@@ -289,7 +289,8 @@ const Game = {
         else if (a === 'dash') { f.setState('dash', 1.4); f.dashHits.clear(); }
         else if (a === 'swoop') { f.setState('dash', 1.1); f.dashHits.clear(); }
         else if (a === 'hop') { f.setState('idle'); f.vz = 560; f.kx = Math.sign(this.hero.x - f.x) * 240; f.hopping = true; }
-        else if (a === 'p2') this.bossPhase2Attack(f);
+        else if (a === 'sig') this.bossSignature(f);  // attaque signature du boss (boss.js)
+        else if (a === 'second') this.bossSecond(f); // seconde attaque du boss (boss.js)
         else if (a === 'boom') this.futBoom(f); // fût radioactif (rage.js)
         else f.startAttack();
       }
@@ -658,9 +659,7 @@ const Game = {
     if (e.grabbed) { e.tickTimers(dt); return; } // porté par le héros (combat.js)
     e.tickTimers(dt);
     if (e.isBoss && !e.dead) {
-      if (!e.phase2 && e.hp <= e.maxHp * this.L.phase2At && e.entering <= 0) this.enterPhase2(e);
-      if (e.entering <= 0) this.updateBossTier(e);
-      if (e.p2Cd > 0) e.p2Cd -= dt;
+      if (e.entering <= 0) { this.updateBossTier(e); this.bossTick(e, dt); } // niveaux de la barre · délais et essoufflement (boss.js)
     }
     if (!e.dead) {
       if (e.golden) this.goldTick(e, dt); // ennemi en or : il finit par s'enfuir (extras.js)
@@ -772,20 +771,8 @@ const Game = {
 
     if (e.beh === 'roller') return;
 
-    // attaque de phase 2 (nouvelle attaque à partir de 50 % de vie)
-    if (e.isBoss && e.phase2 && e.p2Cd <= 0 && onScreen) {
-      e.p2Cd = rand(...BALANCE.boss.phase2Every) * (e.tierCd || 1);
-      e.startWindup('p2', BALANCE.boss.windupPhase2 * this.L.windup);
-      Sfx.warn(Sfx.panX(e.x));
-      return;
-    }
-    // spécial du boss
-    if (e.isBoss && e.specialCd <= 0 && onScreen) {
-      const sp = BOSS_SPECIAL[e.kind];
-      const near = dxAbs < 260 && Math.abs(dy) < 60;
-      const lined = Math.abs(dy) < 40;
-      if ((sp === 'truelle' || sp === 'rolex' || sp === 'fumee') ? near : sp === 'agneaux' ? true : lined) { e.startWindup('special', BALANCE.boss.windupSpecial * this.L.windup); return; }
-    }
+    // boss : attaque signature ou seconde attaque (boss.js)
+    if (e.isBoss && onScreen && this.bossBrain(e, dxAbs, dy)) return;
     // attaque spéciale du mini-boss (tiers.js)
     if (e.isMini && e.specialCd <= 0 && onScreen && this.miniWantsSpecial(e, dxAbs, dy)) { e.startWindup('special', BALANCE.mini.windupSpecial * this.L.windup); return; }
     if (e.beh === 'flyer') {
@@ -833,6 +820,7 @@ const Game = {
   // ---------- arrivée du boss ----------
   startBoss() {
     this.bossTouched = false;
+    this.dangers = this.dangers.filter(d => d.team === 'boss'); this.storm = null; // les dangers du décor s'arrêtent net (v3.15)
     const w = this.world, c = CHARACTERS[w.boss];
     this.bossPhase = 1; this.lockMax = this.levelLen - this.VW; this.bossIntroT = 2.6;
     // cinématique : bandes noires, léger zoom, carte avec le nom du boss
@@ -871,7 +859,8 @@ const Game = {
   makeBoss(x, y, hpMul = 1) {
     const w = this.world, c = CHARACTERS[w.boss], B = BALANCE.boss, st = Tuning.boss(this, hpMul); // vie et dégâts : data.js
     const b = new Fighter(w.boss, 'enemy', x, y, { boss: true, scale: w.small ? 1.0 : 1.4, hp: st.hp, dmg: st.dmg, speed: c.speed * 0.95 });
-    b.dir = -1; b.specialCd = c.specialCd * B.firstSpecial; b.attackCd = 1.2; b.p2Cd = 0;
+    b.dir = -1; b.attackCd = 1.2; b.tier = 0; b.stage = 1;
+    b.sigCd = B.sig.first; b.secCd = 0; b.winded = 0; // première signature, seconde attaque, essoufflement (boss.js)
     this.enemies.push(b); this.boss = b;
     return b;
   },
@@ -898,70 +887,18 @@ const Game = {
     const n = lost - e.tier; e.tier = lost;
     e.speed *= Math.pow(1 + B.tierSpeedUp, n); e.dmg *= Math.pow(1 + B.tierDmgUp, n);
     e.tierCd = Math.pow(B.tierCdMul, e.tier);
-    e.invul = Math.max(e.invul, B.tierInvul);
-    if (e.state === 'idle' || e.state === 'walk' || e.state === 'hurt') { e.setState('taunt', 0.7); e.attackCd = Math.max(e.attackCd, 0.8); }
+    // il nargue, brièvement invulnérable — sauf s'il est essoufflé : on ne vole pas au joueur son moment pour frapper
+    if (!(e.stun > 0)) {
+      e.invul = Math.max(e.invul, B.tierInvul);
+      if (e.state === 'idle' || e.state === 'walk' || e.state === 'hurt') { e.setState('taunt', 0.7); e.attackCd = Math.max(e.attackCd, 0.8); }
+    }
     this.bossLine(e);
+    { const st = this.bossStage(e); if (st > (e.stage || 1)) { e.stage = st; this.bossStageUp(e, st); } } // changement de comportement (boss.js)
     if (e.tier === 2 && !e.powerDropped) { e.powerDropped = true; this.dropPower((e.x + this.hero.x) / 2, this.hero.y); } // un bonus pour la suite du combat (extras.js)
     this.shake = Math.max(this.shake, 0.3);
     if (!this.text) return;
     this.text(e.x, e.y, e.height + 70, 'NIVEAU ' + (e.tier + 1) + '/' + T, '#feca57', 24, 1.2);
     Haptics.vibrate(40);
-  },
-
-  // Passage en phase 2 : rugissement, petit répit, puis nouvelle attaque
-  enterPhase2(e) {
-    e.phase2 = true; e.p2Cd = 1.6; e.invul = 1.0; e.speed *= 1.08;
-    e.setState('taunt', 0.9); e.bubble = null; e.sayT = 4;
-    this.shake = 0.45; this.flashA = 0.35; this.flashCol = '255,80,60';
-    this.text(e.x, e.y, e.height + 40, 'PHASE 2 !', '#ff4757', 30, 1.4);
-    Sfx.bossIntro(); Haptics.vibrate(80);
-    Music.setIntensity(2);
-  },
-
-  // Attaque de phase 2, différente pour chaque boss
-  bossPhase2Attack(e) {
-    const h = this.hero, P = BALANCE.boss.phase2Dmg * this.bossDmgK(), B = this.bounds();
-    const say = i => e.say(e.def.phrases[i % e.def.phrases.length]);
-    switch (e.kind) {
-      case 'christian': // pluie de briques sur des zones marquées
-        say(2);
-        [0, -1, 1, 0].forEach((k, i) => this.addDanger({ type: 'brick', team: 'boss', crane: true, x: clamp(h.x + k * rand(90, 130), B.L + 40, B.R - 40), y: clamp(h.y + rand(-30, 30), GROUND_TOP + 15, GROUND_BOTTOM), warn: 0.95 + i * 0.3, act: 0.14, rx: 56, ry: 23, dmg: P * 1.2, kd: true, sound: i === 0 }));
-        e.setState('special', 0.5); e.specialFired = true;
-        break;
-      case 'guilhem': // liasses de billets en éventail
-        say(1);
-        [-46, 0, 46].forEach(dy => this.projectiles.push({ kind: 'billet', team: 'enemy', owner: e, x: e.x + e.dir * 30, y: clamp(e.y + dy, GROUND_TOP + 15, GROUND_BOTTOM), vx: e.dir * 430, dmg: P * 0.8, life: 2, hit: new Set() }));
-        Sfx.special('rolex', Sfx.panX(e.x)); e.setState('attack', 0.3); e.hitDone = true;
-        break;
-      case 'fateh': // Aïka lâchée sur la ligne du héros
-        say(2);
-        this.projectiles.push({ kind: 'dog', team: 'enemy', owner: e, x: e.x + e.dir * 40, y: e.y, vx: e.dir * 520, dmg: P, life: 1.8, pierce: true, knockdown: true, hit: new Set() });
-        Sfx.special('chien', Sfx.panX(e.x)); e.setState('attack', 0.3); e.hitDone = true;
-        break;
-      case 'faouzi': { // cartouche géante : la cible est marquée au sol, puis elle explose
-        say(1);
-        const tx = clamp(h.x, B.L + 60, B.R - 60), ty = h.y;
-        this.addDanger({ type: 'bomb', team: 'boss', x: tx, y: ty, x0: e.x, y0: e.y, warn: 1.2, act: 0.15, rx: 95, ry: 36, dmg: P, kd: true });
-        e.setState('attack', 0.3); e.hitDone = true;
-        break;
-      }
-      case 'venum': // frappes de drones sur trois cibles
-        say(0);
-        [-1, 0, 1].forEach((k, i) => this.addDanger({ type: 'strike', team: 'boss', x: clamp(h.x + k * 120, B.L + 40, B.R - 40), y: clamp(h.y + k * 18, GROUND_TOP + 15, GROUND_BOTTOM), warn: 1.1 + i * 0.15, act: 0.25, rx: 40, ry: 18, dmg: P, kd: true, sound: i === 0 }));
-        e.setState('special', 0.5); e.specialFired = true;
-        break;
-      case 'senoussi': // coup de pelle sismique : une fissure court au sol vers le héros (saute ou change de ligne)
-        say(1);
-        this.projectiles.push({ kind: 'quake', team: 'enemy', owner: e, x: e.x + e.dir * 50, y: e.y, vx: e.dir * 380, dmg: P, life: 2.6, pierce: true, ground: true, knockdown: true, hit: new Set() });
-        this.shake = 0.3; this.dust(e.x + e.dir * 50, e.y, 10); Sfx.bigHit(Sfx.panX(e.x));
-        e.setState('attack', 0.35); e.hitDone = true;
-        break;
-      case 'purf': // « Rendez-moi mon argent !!!! » : charge qui laisse des flaques toxiques
-        say(0);
-        e.dir = Math.sign(h.x - e.x) || e.dir; e.dashSp = 'argent'; e.lastPuddle = 0;
-        e.setState('special', 0.75); e.specialFired = false; e.dashHits.clear();
-        break;
-    }
   },
 
   updateVehicles(dt) {
@@ -978,7 +915,7 @@ const Game = {
         b.entering = 1.0; b.vz = 420; b.kx = -220;
         if (w.entourage) w.entourage.forEach((k, i) => { const e = this.spawnEnemy(k, { x: v.x + 40 + i * 30, y: clamp(v.y + 70 + i * 50, GROUND_TOP + 15, GROUND_BOTTOM), mustKill: true }); e.entering = 1.0; e.vz = 380; e.kx = -260; });
         this.bossLine(b);
-        b.specialCd = c.specialCd * BALANCE.boss.firstSpecial;
+        b.sigCd = BALANCE.boss.sig.first;
       }
     });
   },
@@ -994,10 +931,10 @@ const Game = {
 
   updateLevel(dt, rdt) {
     const alive = this.enemies.filter(e => !e.dead && !e.golden); // (l'ennemi en or ne bloque pas les vagues)
-    // dangers du monde (annoncés, évitables), plus rares pendant le boss
-    if (this.bossPhase !== 1 && this.bossPhase !== 3 && !this.hero.dead && !this.ev) { // (pendant un événement, c'est lui qui gère les dangers)
+    // dangers du monde (annoncés, évitables) — v3.15 : plus aucun pendant un combat de boss, pour qu'on lise ses attaques
+    if (this.bossPhase === 0 && !this.survBoss && !this.hero.dead && !this.ev) { // (pendant un événement, c'est lui qui gère les dangers)
       this.hazardT -= dt;
-      if (this.hazardT <= 0) { this.hazardT = rand(...BALANCE.hazards.every) * (this.pw.hazardEvery || 1) * this.L.hazardEvery * (this.mod.hazard || 1) * (this.bossPhase === 2 || this.survBoss ? 1.6 : 1); this.spawnWorldHazard(); }
+      if (this.hazardT <= 0) { this.hazardT = rand(...BALANCE.hazards.every) * (this.pw.hazardEvery || 1) * this.L.hazardEvery * (this.mod.hazard || 1); this.spawnWorldHazard(); }
     }
     if (this.mode === 'survival') { this.updateSurvival(dt, alive); return; }
     if (this.evUpdate(dt)) return; // événement de milieu de monde en cours (events.js)
@@ -1038,11 +975,6 @@ const Game = {
       }
     }
     if (this.bossPhase === 2) {
-      this.bossMinionT -= dt;
-      if (this.bossMinionT <= 0) {
-        this.bossMinionT = rand(...BALANCE.boss.reinforceEvery);
-        if (alive.filter(e => !e.mustKill).length < Math.max(1, BALANCE.boss.reinforceMax + this.L.maxAlive)) this.spawnEnemy(this.pickMinion(null));
-      }
       const left = this.enemies.filter(e => e.mustKill && !e.dead);
       if (left.length === 0) {
         this.bossPhase = 3; this.endT = this.koT > 0 ? 4 : 3.2; // (après un K.O. au ralenti, on laisse le temps de le voir)

@@ -3,7 +3,8 @@
 #  - tests/fumee.js     : chaque monde, chaque boss et une Survie démarrent et tournent sans erreur JavaScript ;
 #  - tests/martelage.js : en martelant FRAPPE sans bouger, au moins 8 coups sur 9 touchent, pour les 7 héros ;
 #  - tests/ecrans.js    : tous les menus tiennent sur un téléphone (844×390 et 740×360), sans défilement ;
-#  - tests/histoire.js  : une histoire commencée peut être continuée après avoir fermé le jeu.
+#  - tests/histoire.js  : une histoire commencée peut être continuée après avoir fermé le jeu ;
+#  - tests/boss.js      : chaque boss annonce sa signature, s'essouffle ensuite et passe par ses 3 comportements.
 name: Tests automatiques
 on:
   pull_request:
@@ -30,3 +31,5 @@ jobs:
         run: node tests/ecrans.js
       - name: Continuer l'histoire
         run: node tests/histoire.js
+      - name: Les boss suivent leurs règles
+        run: node tests/boss.js

@@ -26,7 +26,7 @@ function releverDansLaPage() {
     note('mini-boss', Game.makeMini(w.mini, 500, 400));
     const b = Game.makeBoss(500, 400, mode === 'survival' ? BALANCE.survival.bossHpMul : 1); note('boss', b);
     o.divers = { specialBoss24: r1(Game.specialDmg(b, 24)), specialEnnemi18: r1(Game.specialDmg(Game.enemies[0], 18)), degatsBossK: r1(Game.bossDmgK()), vieHeros: Game.hero.maxHp, degatsHeros: r1(Game.hero.dmg),
-      ennemisParVague: Game.waves.map(x => x.n).join('/'), score: Game.L.score, nourriture: Game.L.food, dangers: r1(BALANCE.hazards.dmg * Game.L.hazardDmg), delaiEnnemi: r1(BALANCE.enemies.cdMul * Game.L.enemyCd / Math.sqrt(Game.diff)), delaiBoss: Game.L.bossCd, preparation: Game.L.windup, phase2: Game.L.phase2At, maxEnMemeTemps: BALANCE.enemies.maxAlive + Game.L.maxAlive };
+      ennemisParVague: Game.waves.map(x => x.n).join('/'), score: Game.L.score, nourriture: Game.L.food, dangers: r1(BALANCE.hazards.dmg * Game.L.hazardDmg), delaiEnnemi: r1(BALANCE.enemies.cdMul * Game.L.enemyCd / Math.sqrt(Game.diff)), delaiBoss: Game.L.bossCd, preparation: Game.L.windup, maxEnMemeTemps: BALANCE.enemies.maxAlive + Game.L.maxAlive };
     Game.stop();
   }
   return out;

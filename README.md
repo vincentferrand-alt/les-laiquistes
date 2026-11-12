@@ -131,17 +131,17 @@ Bouton **📅 DÉFI DU JOUR** : le même défi pour tout le monde, tiré au sort
 ## Boss, dangers et difficulté
 
 - La **barre de vie d'un boss compte 5 niveaux**. Il dit une de ses phrases au début du combat puis à chaque niveau perdu, et devient un peu plus rapide et plus dur à chaque fois. Une fois le boss vaincu, le héros dit une de ses phrases.
-- Chaque boss a ses coups, son spécial et, **à 60 % de vie (fin du 2e niveau), une phase 2** (rugissement, puis une nouvelle attaque) :
+- Depuis la v3.15, chaque boss a **3 comportements** (niveaux 1-2, 3-4, 5 de sa barre), une **attaque signature annoncée au sol au moins 0,9 s**, puis un **moment où il est essoufflé** (1,5 à 2 s) : c'est là qu'il faut frapper. Pendant le combat il n'y a plus de dangers du décor, et les renforts n'arrivent qu'aux deux changements de comportement.
 
-| Boss | Attaque de phase 2 |
-|---|---|
-| Christian | Pluie de briques sur des zones marquées au sol |
-| Guilhem | Liasses de billets lancées en éventail |
-| Fateh | Lâche Aïka sur ta ligne (« Aïka, j'ai de la confiture ! ») |
-| Faouzi | Cartouche géante : la cible est marquée, puis elle explose |
-| Venum | Frappes de drones sur trois cibles |
-| Senoussi | Coup de pelle sismique : une fissure court au sol (saute ou change de ligne) |
-| The Purf | « Rendez-moi mon argent !!!! » : charge qui laisse des flaques toxiques |
+| Boss | Attaque signature | Seconde attaque (à partir du niveau 3) |
+|---|---|---|
+| Christian | Pluie de briques sur 4 zones marquées | Coup de truelle (onde de choc) |
+| Guilhem | Éclat de Rolex : grand cercle autour de lui | Liasses de billets en éventail |
+| Fateh | « J'ai un impératif » : charge sur un couloir marqué | Aïka lâchée sur ta ligne |
+| Faouzi | Cartouche géante : cible marquée, puis explosion | Salve de trois cartouches |
+| Venum | Direct foudroyant : charge sur un couloir marqué | Frappes de drones sur trois cibles |
+| Senoussi | Coup de pelle sismique : fissure sur une ligne (saute ou change de ligne) | Appel des agneaux |
+| The Purf | « Rendez-moi mon argent !!!! » : charge qui laisse des flaques toxiques | Nuage toxique |
 
 - Les boss sont **beaucoup moins durs** qu'avant : moins de PV, moins de dégâts, préparations plus longues (le « ! » reste affiché plus longtemps), spéciaux plus espacés, moins de renforts. Après t'avoir renversé, le boss prend le temps de te narguer, ce qui te laisse un répit.
 - **Tous ces réglages sont regroupés dans le bloc `BALANCE`, en haut de `js/data.js`**, avec les anciennes valeurs en commentaire.
@@ -340,6 +340,7 @@ js/events.js          événements de milieu de monde (briques d'or, battle de r
 js/progress.js        étoiles, trophées, niveaux des héros, défi du jour
 js/tiers.js           niveau en 3 tiers, mini-boss, point de reprise, GO, aides, objectifs (pause)
 js/minis.js           dessins des mini-boss, de leurs armes, projectiles et véhicules
+js/boss.js            boss : attaque signature annoncée, essoufflement, 3 comportements (v3.15)
 js/rage.js            ennemis spéciaux, costaud, ennemis du décor, armes à manier, appel à un pote, ennemi visé
 js/extras.js          bonus temporaires, ennemi en or, attaques des boss annoncées, chrono et médailles, onomatopées, entrée et K.O. des boss
 js/share.js           image de score à partager
@@ -353,7 +354,7 @@ js/ui.js              menus, modes, réglages
 sw.js, manifest.webmanifest, icons/   appli installable (PWA) et mises à jour
 tools/make-og.html    fabrique l'image de partage et les icônes
 tools/make-voices.py  fabrique les voix des personnages (voices/)
-tests/                tests automatiques (lancés par GitHub à chaque demande de fusion) : fumee.js, martelage.js, ecrans.js, histoire.js, outils.js ; equilibrage.js affiche la vie et les dégâts de chaque adversaire par niveau de difficulté
+tests/                tests automatiques (lancés par GitHub à chaque demande de fusion) : fumee.js, martelage.js, ecrans.js, histoire.js, boss.js, outils.js ; equilibrage.js affiche la vie et les dégâts de chaque adversaire par niveau de difficulté
 ```
 
 Pour tester en local : `python3 -m http.server` dans ce dossier puis http://localhost:8000 (ou ouvre simplement `index.html` ; tout marche sauf l'installation et la connexion Google).

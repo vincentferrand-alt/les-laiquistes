@@ -289,13 +289,22 @@ const Extras = {
         if (sp === 'belier' || sp === 'dring') lane(sx, sp === 'belier' ? 380 : 560, e.y, sp === 'belier' ? 40 * sc : 22);
         else if (sp !== 'trounoir') [-40, 0, 40].forEach(dy => lane(sx + d * 30, 560, e.y + dy, 13));
       }
-      else if (a === 'special') {
-        switch (BOSS_SPECIAL[e.kind]) {
+      else if (a === 'sig') { // attaque signature du boss (boss.js) — briques et cartouche géante dessinent leurs propres cibles
+        switch (BOSS_SIG[e.kind]) {
+          case 'rolex': ell(sx, e.y, ROLEX_ZONE.rx, ROLEX_ZONE.ry, '255,215,40'); break;
+          case 'imperatif': lane(sx, 0.45 * 640 + 50, e.y, 32 * sc); break; // (longueur = durée de la charge × sa vitesse)
+          case 'direct': lane(sx, 0.5 * 640 + 50, e.y, 32 * sc); break;
+          case 'argent': lane(sx, 0.75 * 640 + 50, e.y, 32 * sc); break;
+          case 'seisme': lane(sx + d * 50, 950, e.y, 22); break; // (rouge comme les autres : l'orange ne se voyait pas sur le sable)
+        }
+      }
+      else if (a === 'second') { // seconde attaque du boss — les drones dessinent leurs propres cibles
+        switch (BOSS_SECOND[e.kind]) {
           case 'truelle': ell(sx + d * 60 * sc, e.y, 175 * sc, 62 * sc); break;
-          case 'rolex': ell(sx, e.y, 460, 95, '255,215,40'); break;
           case 'fumee': ell(sx + d * 30, e.y, BALANCE.boss.cloudRadius, BALANCE.boss.cloudRadius * 0.45, '163,230,53'); break;
-          case 'direct': case 'imperatif': lane(sx, 340, e.y, 32 * sc); break;
           case 'cartouches': [-36, 0, 36].forEach(dy => lane(sx + d * 30, 600, e.y + dy, 13)); break;
+          case 'billets': [-46, 0, 46].forEach(dy => lane(sx + d * 30, 600, e.y + dy, 13, '120,220,120')); break;
+          case 'aika': lane(sx + d * 40, 700, e.y, 20); break;
         }
       }
       ctx.restore();
