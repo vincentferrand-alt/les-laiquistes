@@ -542,9 +542,15 @@ const FOREGROUNDS = {
     });
   },
 };
+// v3.12 : le premier plan ne cache plus les combats. Il reste net en haut de l'écran (lampadaires, branches, palmes)
+// et devient translucide là où l'on se bat, sans rien redessiner : on le trace en trois bandes de plus en plus transparentes.
+const FG_FADE = [[-60, 150, 1], [150, 200, 0.6], [200, VIEW_H + 60, 0.22]]; // [haut, bas, opacité]
 function drawWorldForeground(ctx, worldId, VW, camX, t) {
   const f = FOREGROUNDS[worldId]; if (!f) return;
-  ctx.save(); ctx.lineJoin = 'round'; f(ctx, VW, camX, t); ctx.restore();
+  FG_FADE.forEach(([y0, y1, a]) => {
+    ctx.save(); ctx.beginPath(); ctx.rect(-10, y0, VW + 20, y1 - y0); ctx.clip();
+    ctx.globalAlpha = a; ctx.lineJoin = 'round'; f(ctx, VW, camX, t); ctx.restore();
+  });
 }
 
 // ============================================================

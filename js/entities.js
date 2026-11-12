@@ -253,7 +253,7 @@ class Fighter {
       if (this.isBoss || this.mustKill) {
         const name = this.def.name.toUpperCase();
         ctx.font = `900 ${this.isBoss ? 22 : 14}px "Arial Black", Arial`; ctx.textAlign = 'center';
-        ctx.lineWidth = 4; ctx.strokeStyle = '#000'; ctx.fillStyle = this.isBoss ? '#f1c40f' : '#ffeaa7';
+        ctx.lineJoin = 'round'; ctx.lineWidth = 4; ctx.strokeStyle = '#000'; ctx.fillStyle = this.isBoss ? '#f1c40f' : '#ffeaa7';
         ctx.strokeText(name, sx, top); ctx.fillText(name, sx, top);
       }
       if (!this.isBoss && !this.isMini) { // (le mini-boss a sa grande barre en bas de l'écran)

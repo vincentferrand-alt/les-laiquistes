@@ -214,7 +214,7 @@ const Rage = {
     // arme en main
     const w = this.hero.weapon;
     if (w) {
-      const y = this.boost ? 136 : 90;
+      const y = 90;
       ctx.save(); ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.roundRect(10, y, 210, 26, 10); ctx.fill(); ctx.stroke();
       ctx.font = '900 12px "Arial Black", Arial'; ctx.textAlign = 'left'; ctx.fillStyle = '#7bed9f';
