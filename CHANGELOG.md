@@ -1,3 +1,25 @@
+# Les laïquistes — v3.11.0 : des coups qui touchent
+
+Première étape de la refonte (1/9). Rien ne disparaît.
+
+## Les coups
+- **Le héros avance d'un petit pas** (25 px) à chaque coup de l'enchaînement. Il s'arrête juste avant de marcher sur l'ennemi et ne sort pas de l'écran.
+- **Un coup simple repousse beaucoup moins l'ennemi** : environ 13 px au lieu de 36. Le 3e coup garde sa grosse projection.
+- **Légère aide à la visée** : un peu plus de tolérance en profondeur pour les coups du héros, et il se recale un peu (16 px au plus) vers l'ennemi le plus proche devant lui pendant son élan.
+- **Un ennemi à terre peut être frappé** (avant, il était intouchable pendant 1 seconde). Il reste couché le même temps, et un gros coup le fait rebondir. Il n'a plus son court instant d'invulnérabilité en se relevant.
+- **Le héros renversé se relève plus vite** : 0,6 s au sol au lieu de 1 s (il reste protégé tant qu'il est à terre, et 1 s après).
+- Mesure (« je martèle FRAPPE sans bouger contre un rappeur qui s'approche », sur 9 coups) : avant, 1 à 3 coups touchaient (jusqu'à 7 avec Senoussi) ; maintenant 9 sur 9 pour les 7 héros.
+- Tous ces réglages sont regroupés dans le tableau `FEEL` au début de `js/data.js`.
+- ⚠ Le jeu devient plus facile. C'est voulu à cette étape : la difficulté sera réglée après essai.
+
+## Tests automatiques
+- Nouveau dossier `tests/` (ne fait pas partie du jeu) et action GitHub « Tests automatiques », lancée à chaque demande de fusion :
+  - `tests/fumee.js` : un robot joue le début de chaque monde, chaque boss (Boss Rush) et une Survie, sur écran de PC et de téléphone ; échec à la moindre erreur JavaScript.
+  - `tests/martelage.js` : refait la mesure ci-dessus ; échec si un héros touche moins de 8 coups sur 9.
+- Les tests tournent sans Internet : ils n'écrivent rien dans Firebase ni dans les classements.
+
+---
+
 # Les laïquistes — v3.10.0 : un peu de Streets of Rage
 
 - **Un ennemi spécial par monde**, qui arrive au 3e tiers et pendant le boss : Marteau-piqueur qui fait trembler le sol (Christian), Ballon de basket qui rebondit (Guilhem), Basket de course qui fonce (Fateh), Glitch qui se téléporte derrière toi (Faouzi), Tableur qui lance des « #DIV/0! » (Venum), Chèvres qui chargent (Senoussi), Fût radioactif qui explose — aussi sur les autres ennemis (The Purf).

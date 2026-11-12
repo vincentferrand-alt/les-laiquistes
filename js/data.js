@@ -85,6 +85,25 @@ const BALANCE = {
   mini: { hpMul: 1, dmgMul: 0.9, tiers: 3, windupSpecial: 0.8, specialDmg: 0.5, heal: 25, score: 500 },
 };
 
+// ============================================================
+//  FEEL — le « ressenti » des coups (v3.11). Tout ce qui fait qu'un coup touche ou part dans le vide.
+//  Les distances sont en pixels du jeu, les durées en secondes. (Valeurs de la v3.10 en commentaire.)
+// ============================================================
+const FEEL = {
+  step: 25,          // petit pas en avant du héros à chaque coup de l'enchaînement            [avant : 0]
+  gap: 6,            // … mais il s'arrête juste avant de marcher sur l'ennemi visé (écart mini)
+  pushSimple: 55,    // élan de recul d'un ennemi sous un coup simple (≈ 13 px parcourus)        [avant : 150, soit ≈ 36 px]
+  pushFlyer: 110,    // idem pour les ennemis volants (≈ 26 px)                                  [avant : 200]
+  heroDepth: 8,      // tolérance en profondeur ajoutée aux coups du héros (aide à la visée)     [avant : 0]
+  aimX: 60,          // le héros se recale vers un ennemi situé jusqu'à n px au-delà de sa portée
+  aimDepth: 70,      // … et jusqu'à n px plus haut ou plus bas que lui
+  aimY: 16,          // recalage maximal en profondeur pendant l'élan d'un coup
+  downEnemy: 1.0,    // temps au sol d'un ennemi renversé. Nouveau : on peut le frapper pendant qu'il est à terre.
+  downHero: 0.6,     // temps au sol du héros renversé                                           [avant : 1,0]
+  getUpInvulEnemy: 0, // invulnérabilité d'un ennemi qui se relève                                [avant : 0,3]
+  pushDown: 30,      // élan d'un ennemi frappé au sol par un coup simple
+};
+
 const VIEW_H = 540;          // hauteur logique du jeu
 const GROUND_TOP = 330;      // haut de la zone de déplacement (profondeur)
 const GROUND_BOTTOM = 520;   // bas de la zone de déplacement

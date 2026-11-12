@@ -69,7 +69,9 @@ class Fighter {
   }
 
   takeHit(src, dmg, o = {}) {
-    if (this.dead || this.invul > 0 || this.shield > 0 || this.state === 'down' || this.entering > 0) return false; // (shield : casque de chantier)
+    // v3.11 : un ENNEMI à terre peut être frappé (avant, il était intouchable 1 s). Le héros à terre, lui, reste protégé.
+    const down = this.state === 'down';
+    if (this.dead || this.invul > 0 || this.shield > 0 || (down && this.team === 'hero') || this.entering > 0) return false; // (shield : casque de chantier)
     this.hp -= dmg; this.flash = 0.12;
     const fromDir = src ? Math.sign(this.x - src.x) || 1 : -this.dir;
     if (this.hp <= 0) { this.hp = 0; this.die(fromDir); return true; }
@@ -77,10 +79,15 @@ class Fighter {
     if (o.stun) this.stun = Math.max(this.stun, o.stun);
     const armored = (this.isBoss && ['attack', 'special', 'windup'].includes(this.state)) || (this.heavy && !o.knockdown);
     if (o.noStagger || armored) return true;
-    if (this.fly) { this.setState('hurt', 0.3); this.kx = fromDir * 200; this.dashT = 0; return true; }
-    if (o.knockdown && !this.isBoss) { this.setState('down', 1.0); this.vz = 380; this.kx = fromDir * 260; }
+    if (this.fly) { this.setState('hurt', 0.3); this.kx = fromDir * (o.knockdown ? 200 : FEEL.pushFlyer); this.dashT = 0; return true; }
+    if (down) { // déjà à terre : il encaisse et reste couché (un gros coup le fait rebondir), sans rallonger son temps au sol
+      if (o.knockdown) { this.vz = 260; this.kx = fromDir * 200; } else this.kx = fromDir * FEEL.pushDown;
+      return true;
+    }
+    if (o.knockdown && !this.isBoss) { this.setState('down', this.team === 'hero' ? FEEL.downHero : FEEL.downEnemy); this.vz = 380; this.kx = fromDir * 260; }
     else if (o.knockdown && this.isBoss) { this.setState('hurt', 0.35); this.kx = fromDir * 200; }
-    else { this.setState('hurt', this.isBoss ? 0.12 : 0.28); this.kx = fromDir * (this.isBoss ? 60 : 150); }
+    // coup simple : l'ennemi recule peu (le coup suivant du héros reste à portée) ; le héros touché recule comme avant
+    else { this.setState('hurt', this.isBoss ? 0.12 : 0.28); this.kx = fromDir * (this.isBoss ? 60 : this.team === 'hero' ? 150 : FEEL.pushSimple); }
     if (this.team === 'hero') this.invul = 0.7;
     this.dashT = 0;
     this.dir = -fromDir;
@@ -132,7 +139,7 @@ class Fighter {
     if (this.state === 'hurt' && this.st >= this.stateDur) this.setState('idle');
     if (this.state === 'down' && this.st >= this.stateDur && this.z <= 0) {
       this.setState('idle');
-      this.invul = this.team === 'hero' ? 1.0 : 0.3;
+      this.invul = this.team === 'hero' ? 1.0 : FEEL.getUpInvulEnemy;
     }
   }
 
