@@ -262,6 +262,10 @@ class Fighter {
         ctx.strokeText('!', sx, top - 14); ctx.fillText('!', sx, top - 14);
       }
     }
+    if (this.winded > 0 && !this.dead) { // boss essoufflé après son attaque signature (boss.js) : c'est le moment de frapper
+      ctx.font = '26px Arial'; ctx.textAlign = 'center';
+      ctx.fillText('💦', sx + Math.sin(gt * 7) * 6, top + 4 + Math.abs(Math.sin(gt * 5)) * 6);
+    }
     if (this.stun > 0 && !this.dead) {
       for (let i = 0; i < 3; i++) {
         const a = gt * 5 + i * 2.09;

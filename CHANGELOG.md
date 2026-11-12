@@ -1,3 +1,41 @@
+# Les laïquistes — v3.15.0 : des boss plus lisibles
+
+Cinquième étape de la refonte (5/9).
+
+## Ce qui change dans un combat de boss
+- **Trois comportements nets**, selon le niveau de la barre de vie :
+  1. niveaux 1 et 2 : coups simples et attaque signature de temps en temps (toutes les 8 à 10 s) ;
+  2. niveaux 3 et 4 : la signature revient plus souvent (6 à 7,5 s) et le boss ajoute sa seconde attaque — annonce « IL S'ÉNERVE ! » ;
+  3. niveau 5 : il enchaîne plus vite (4,5 à 5,5 s) — annonce « IL EST À BOUT ! ».
+- **Une attaque signature par boss, annoncée au sol au moins 0,9 s** (1,2 s en Tranquille, 1 s en Costaud, 0,9 s en Laïque ultime) :
+
+| Boss | Attaque signature | Seconde attaque (comportements 2 et 3) |
+|---|---|---|
+| Christian | pluie de briques de la grue, 4 zones marquées | coup de truelle (onde de choc) |
+| Guilhem | éclat de Rolex : grand cercle doré autour de lui | liasses de billets en éventail |
+| Fateh | « J'ai un impératif » : charge sur un couloir marqué | Aïka lâchée sur sa ligne |
+| Faouzi | cartouche géante : cible au sol, puis explosion | salve de trois cartouches |
+| Venum | direct foudroyant : charge sur un couloir marqué | frappes de drones sur trois cibles |
+| Senoussi | coup de pelle sismique : fissure sur une ligne marquée | appel des agneaux |
+| The Purf | « Rendez-moi mon argent ! » : charge qui laisse des flaques | nuage toxique |
+
+- **Un moment de faiblesse après chaque signature** : le boss est « ESSOUFFLÉ ! » (💦) pendant 1,5 s — 2 s après une charge, qui l'emmène plus loin. Il ne fait rien et encaisse tous les coups. S'il perd un niveau à ce moment-là, il n'a pas sa courte invulnérabilité.
+- **Plus de dangers du décor pendant le combat** (briques, voiture, laser, tempête de sable… s'arrêtent à l'arrivée du boss, y compris quand il revient en Survie).
+- **Des renforts seulement aux deux changements de comportement** : 1 ennemi en Tranquille, 2 en Costaud, 3 en Laïque ultime à chaque fois. Avant : un ennemi toutes les 11 à 15 s pendant tout le combat.
+
+## Ce qui disparaît
+- La « PHASE 2 » (déclenchée à 60 % de vie, 80 % en Laïque ultime) est remplacée par les trois comportements. Ses attaques sont devenues les signatures ou les secondes attaques ci-dessus : aucune attaque n'a été supprimée.
+- L'éclat de Rolex du boss Guilhem ne touche plus toute la largeur de l'écran : seulement le cercle annoncé.
+
+## Ce qui ne change pas
+- La barre en 5 niveaux, une phrase avec voix à chaque niveau perdu, les arrivées, les entourages, le bandeau, le K.O. au ralenti, la vie et les dégâts des boss, les mini-boss.
+
+## Technique
+- Nouveau fichier `js/boss.js` (ajouté à `index.html` et à `sw.js`). Réglages : `BALANCE.boss.sig` dans `js/data.js`.
+- Nouveau test `tests/boss.js` : un robot combat les 7 boss et vérifie l'annonce d'au moins 0,9 s, l'essoufflement après chaque signature, les 3 comportements, les renforts et l'absence de dangers du décor.
+
+---
+
 # Les laïquistes — v3.14.0 : continuer l'histoire
 
 Quatrième étape de la refonte (4/9), première partie. Rien ne disparaît. (Les nouveaux seuils des médailles viendront dans une version suivante, à partir de temps réels.)

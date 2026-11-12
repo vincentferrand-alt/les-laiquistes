@@ -15,19 +15,23 @@ const BALANCE = {
     dmgMul: 0.62,           // dégâts au corps à corps                          [v3.0 : 0,55]
     specialDmgMul: 0.6,     // dégâts des spéciaux                              [avant : 0,55 × diff × 1,15]
     windupAttack: 0.5,        // préparation d'un coup, en s (le « ! » reste plus longtemps) [avant : 0,32]
-    windupSpecial: 0.85,    // préparation du spécial                           [avant : 0,55]
+    windupSpecial: 0.85,    // préparation de la seconde attaque                [avant : 0,55]
     windupShoot: 0.6,       // préparation d'un tir                             [avant : 0,45]
-    windupPhase2: 1.0,      // préparation de l'attaque de phase 2
     attackCd: [1.4, 2.4],   // délai entre deux coups, en s                     [avant : 1,3–2,4]
     shootCd: [2.0, 3.1],    // délai entre deux tirs                            [avant : 1,3–2,1]
     comboChance: 0.22,      // chance d'enchaîner un 2e coup                    [avant : 0,35]
-    specialCdMul: 1.7,      // spéciaux plus espacés (× le délai du perso)      [avant : 0,75–1,05]
-    firstSpecial: 0.9,      // premier spécial après (× le délai du perso)      [avant : 0,4–0,8]
-    phase2At: 0.6,          // la phase 2 commence à 60 % de vie (fin du 2e niveau de la barre)
-    phase2Every: [7, 10],   // délai entre deux attaques de phase 2
-    phase2Dmg: 9,           // dégâts des attaques de phase 2
-    reinforceEvery: [11, 15], // renforts pendant le combat, en s               [avant : 8–11 / diff]
-    reinforceMax: 3,        // ennemis courants max en même temps pendant le boss [avant : 4]
+    phase2Dmg: 9,           // dégâts de base des attaques signature (briques, cartouche géante, fissure, charge de The Purf…)
+    // v3.15 — attaque signature, essoufflement, comportements (voir js/boss.js)
+    sig: {
+      first: 4,             // première attaque signature après n s de combat
+      every: { 1: [8, 10], 2: [6, 7.5], 3: [4.5, 5.5] }, // délai entre deux signatures, selon le comportement (1, 2 ou 3)
+      warn: 1.0,            // durée de l'annonce au sol (× le réglage « windup » du niveau de difficulté)…
+      minWarn: 0.9,         // … mais jamais moins que ça
+      winded: 1.5,          // durée de l'essoufflement après la signature : le boss ne fait rien et encaisse tout
+      windedCharge: 2.0,    // … après une charge (Fateh, Venum, The Purf), qui l'emmène loin du héros
+      secondCdMul: 1.7,     // délai entre deux secondes attaques (× le délai du spécial du perso)
+      reinforce: 2,         // ennemis qui arrivent à chaque changement de comportement (+ le réglage « maxAlive » du niveau)
+    },
     lambs: 3,               // agneaux invoqués par Senoussi                    [avant : 4]
     cloudRadius: 115,       // nuage toxique de The Purf : rayon                [avant : 180]
     cloudLife: 3,           // … durée en s                                     [avant : 4]
@@ -93,7 +97,6 @@ const LEVEL_TABLE = {
   bossCd:         [1.15,         1,         0.85],   // délai entre leurs attaques
   windup:         [1.2,          1,         0.85],   // durée de préparation des attaques (le « ! ») — vaut aussi pour les épreuves
   combo:          [0,            0,         0.15],   // chance en plus que le boss enchaîne un 2e coup
-  phase2At:       [0.6,          0.6,       0.8 ],   // le boss passe en phase 2 quand il lui reste cette part de vie
   // --- dangers du décor, nourriture, score ---
   hazardEvery:    [1.3,          1,         0.8 ],   // délai entre deux dangers
   hazardDmg:      [0.7,          1,         1.25],   // dégâts des dangers
