@@ -155,7 +155,7 @@ const UI = {
       const card = document.createElement('button');
       card.className = 'char-card' + (unlocked ? '' : ' locked') + (k === this.selHero ? ' sel' : '');
       card.style.setProperty('--c', c.light);
-      card.innerHTML = `${unlocked ? `<div class="cc-lv">Niv. ${Progress.level(k).lv}</div>` : ''}<canvas width="140" height="150"></canvas><div class="cc-name">${unlocked ? c.name : '???'}</div>${unlocked ? `<div class="cc-title">${c.title}</div>` : `<div class="cc-title">🔒 ${c.unlockText}</div>`}`;
+      card.innerHTML = `${unlocked ? `<div class="cc-lv">Grade ${Progress.level(k).lv}</div>` : ''}<canvas width="140" height="150"></canvas><div class="cc-name">${unlocked ? c.name : '???'}</div>${unlocked ? `<div class="cc-title">${c.title}</div>` : `<div class="cc-title">🔒 ${c.unlockText}</div>`}`;
       const cv = card.querySelector('canvas');
       this.liveCanvas(cv, (ctx, t, W, H) => {
         const sel = this.selHero === k;
@@ -216,7 +216,7 @@ const UI = {
     $('#char-detail').innerHTML = `
       <div class="cd-name" style="color:${c.light}">${c.name}</div>
       <div class="cd-title">${c.title}</div>
-      ${(() => { const L = Progress.level(this.selHero), b = Progress.bonus(this.selHero); return `<div class="cd-lv">Niveau <b>${L.lv}</b>${L.need ? ` <span class="xpbar"><i style="width:${Math.round(L.cur / L.need * 100)}%"></i></span> ${L.cur}/${L.need} XP` : ' (max)'}${L.lv > 1 ? ` · vie +${Math.round((b.hp - 1) * 100)} %, force +${Math.round((b.dmg - 1) * 100)} %` : ''}</div>`; })()}
+      ${(() => { const L = Progress.level(this.selHero); return `<div class="cd-lv">Grade <b>${L.lv}</b>${L.need ? ` <span class="xpbar"><i style="width:${Math.round(L.cur / L.need * 100)}%"></i></span> ${L.cur}/${L.need} XP` : ' (max)'}</div>`; })()}
       <div class="cd-weapon"><b>⚔ ${c.weapon}</b> — ${c.weaponDesc}</div>
       ${bar('Vie', c.hp, 150)}${bar('Vitesse', c.speed, 300)}${bar('Force', c.dmg, 14)}${bar('Allonge', c.range, 100)}
       <div class="cd-special"><b>★ ${c.specialName}</b><br>${c.specialDesc}</div>`;
@@ -573,7 +573,7 @@ const UI = {
     const d = Daily.get(), w = worldById(d.world), hero = CHARACTERS[d.hero];
     this.dailyCur = d;
     $('#daily-date').textContent = 'Défi du ' + d.label + ' — le même pour tout le monde';
-    $('#daily-card').innerHTML = `<div>Monde : <b>${CHARACTERS[w.boss].name}</b> — ${w.sub}</div><div>Héros imposé : <b>${hero.name}</b> (niveau ${Progress.level(d.hero).lv})</div>`
+    $('#daily-card').innerHTML = `<div>Monde : <b>${CHARACTERS[w.boss].name}</b> — ${w.sub}</div><div>Héros imposé : <b>${hero.name}</b> (grade ${Progress.level(d.hero).lv})</div>`
       + `<div class="mod">Règle du jour : <b>${d.mod.name}</b> — ${d.mod.desc}</div><div>Difficulté : <b>★★ ${BALANCE.levels[d.level].name}</b></div>`
       + `<div>Ton record du jour : <b>${Daily.best() || '—'}</b></div>`;
     this.liveCanvas($('#daily-art'), (ctx, t, W, H) => {
@@ -628,7 +628,7 @@ const CONTROLS_HTML = `
     <tr><td>Coup plongeant (onde de choc)</td><td>Espace puis J / X en redescendant</td><td>SAUT puis FRAPPE en redescendant</td></tr>
     <tr><td>Attaque spéciale</td><td>K ou C</td><td>★ SPÉCIAL</td></tr>
     <tr><td>Attraper puis lancer un ennemi</td><td>Rester appuyé sur J / X, puis lâcher</td><td>Rester appuyé sur FRAPPE, puis lâcher</td></tr>
-    <tr><td>Lancer un objet (trouvé dans une caisse)</td><td>J ou X</td><td>✊ FRAPPE</td></tr>
+    <tr><td>Arme (trouvée dans une caisse)</td><td colspan="2">Marche dessus pour la ramasser : 8 coups plus forts et plus longs</td></tr>
     <tr><td>Appeler un pote (1 fois par monde)</td><td>L ou V</td><td>📣 POTE</td></tr>
     <tr><td>Pause</td><td>Échap ou P</td><td>❚❚</td></tr>
   </table>

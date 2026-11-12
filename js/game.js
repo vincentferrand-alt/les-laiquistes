@@ -77,18 +77,19 @@ const Game = {
     this.hits = 0; this.hitT = 0; this.kills = 0;
     this.enemies = []; this.projectiles = []; this.hazards = []; this.pickups = []; this.particles = []; this.texts = []; this.vehicles = [];
     this.dangers = [];   // dangers annoncés (monde + attaques de phase 2 des boss)
-    this.combatStart(); this.evReset(); // caisses, objets, attraper/lancer (combat.js) · événements de milieu de monde (events.js)
+    this.combatStart(); this.evReset(); // caisses, attraper/lancer (combat.js) · événements de milieu de monde (events.js)
     this.ambient = [];   // particules d'ambiance (cendres, sable, billets…)
     this.hazardT = BALANCE.hazards.first; this.pw = (BALANCE.perWorld && BALANCE.perWorld[this.world.id]) || {}; this.storm = null;
     this.cine = 0; this.cineT = 0; this.bossCard = null; // cinématique d'arrivée du boss
     this.minionScale = this.world.small ? 0.72 : 1;
     this.hero = new Fighter(o.heroKind, 'hero', 160, (GROUND_TOP + GROUND_BOTTOM) / 2);
     this.extrasStart(); // bonus, ennemi en or, chrono (extras.js)
-    // niveau du héros (progress.js) : +3 % de vie et +2 % de force par niveau ; défi « Fragile » : moitié de vie
-    { const bn = Progress.bonus(o.heroKind), h = this.hero; h.maxHp = Math.round(h.maxHp * bn.hp * (this.mod.heroHp || 1)); h.hp = h.maxHp; h.dmg *= bn.dmg; }
+    // v3.13 : le grade du héros (progress.js) ne donne plus de vie ni de force, pour que les classements soient équitables.
+    // Défi « Fragile » : moitié de vie.
+    { const h = this.hero; h.maxHp = Math.round(h.maxHp * (this.mod.heroHp || 1)); h.hp = h.maxHp; }
     if (o.heroHp) this.hero.hp = clamp(o.heroHp, 1, this.hero.maxHp);
     this.pw = (BALANCE.perWorld && BALANCE.perWorld[this.world.id]) || {}; // réglages propres au monde
-    const extra = Math.max(0, Math.floor((this.diff - 1) * 6) + (this.pw.extraPerWave || 0) + this.L.extraPerWave);
+    const extra = Tuning.extraPerWave(this);
     // vagues : 2 au 1er tiers (avant le mini-boss), 1 au 2e (avant l'épreuve), 1 au 3e (avant le boss) — voir LAYOUT (tiers.js)
     this.waves = LAYOUT.waves.map((x, i) => ({ x, n: LAYOUT.sizes[i] + (i === LAYOUT.waves.length - 1 ? extra : Math.floor(extra / 2)), started: false, done: false }));
     this.wave = null; this.spawnQueue = []; this.spawnT = 0; this.trickleT = 3;
@@ -191,9 +192,8 @@ const Game = {
         if (Input.consume('special') && h.specialCd <= 0) { h.startSpecial(); Haptics.vibrate(50); if (this.hintOk('special')) this.hintDone('special'); }
         else if (this.carry) Input.consume('attack'); // il porte un ennemi : lâcher FRAPPE le lance (combat.js)
         else if (Input.consume('attack')) {
-          if (this.heldItem) this.throwItem(); // objet en main : on le lance
           // en l'air ET en train de redescendre : coup plongeant
-          else if (h.z > 25 && h.vz < 0) h.startDive(); else { h.startAttack(); this.heroSwing(h); }
+          if (h.z > 25 && h.vz < 0) h.startDive(); else { h.startAttack(); this.heroSwing(h); }
         }
       } else {
         if (h.state === 'attack' && h.st > 0.1 && Input.consume('attack')) h.queued = true;
@@ -316,13 +316,9 @@ const Game = {
 
   // points gagnés × multiplicateur du niveau de difficulté (×1 / ×1,5 / ×2)
   addScore(n) { this.score += Math.round(n * this.L.score * (this.mod.score || 1) * (this.boostIs('rolex') ? 2 : 1)); }, // Rolex en or : points ×2
-  specialDmg(f, base) {
-    if (f.team === 'hero') return base;
-    return f.isBoss ? base * BALANCE.boss.specialDmgMul * this.bossDmgK() : base * 0.55 * this.diff * 0.8 * this.L.enemyDmg;
-  },
-  // difficulté atténuée appliquée aux boss (voir BALANCE.boss.diffScale)
-  bossDiff() { return 1 + (this.diff - 1) * BALANCE.boss.diffScale; },
-  bossDmgK() { return this.bossDiff() * this.L.bossDmg; }, // dégâts des boss, niveau de difficulté compris
+  // (tous les calculs de difficulté sont dans Tuning, data.js)
+  specialDmg(f, base) { return Tuning.specialDmg(this, f, base); },
+  bossDmgK() { return Tuning.bossDmgK(this); },
 
   // zone de frappe : devant, large, et haute (touche aussi les goélands)
   inMeleeZone(f, o, extra = 0) {
@@ -454,7 +450,7 @@ const Game = {
         if (p.ground && o.z > 30) continue; // la fissure au sol s'évite en sautant
         if (Math.abs(o.y - p.y) < 30 * Math.max(1, o.scale) && Math.abs(o.x - p.x) < o.halfW + 22 && o.z < 160) {
           p.hit.add(o);
-          this.applyHit(p.owner, o, p.dmg, { knockdown: p.knockdown, item: p.itemHit });
+          this.applyHit(p.owner, o, p.dmg, { knockdown: p.knockdown });
           if (!p.pierce) { p.life = 0; break; }
         }
       }
@@ -646,7 +642,7 @@ const Game = {
     const h = this.hero;
     this.pickups.forEach(p => {
       p.t += dt; p.life -= dt;
-      if (!p.item && !p.power && !p.weapon && !h.dead && Math.abs(p.x - h.x) < 34 && Math.abs(p.y - h.y) < 24) {
+      if (!p.power && !p.weapon && !h.dead && Math.abs(p.x - h.x) < 34 && Math.abs(p.y - h.y) < 24) {
         p.life = 0; h.hp = Math.min(h.maxHp, h.hp + 25); Sfx.pickup();
         this.text(h.x, h.y, h.height + 20, '+25 MIAM', '#2ecc71', 22);
       }
@@ -798,7 +794,7 @@ const Game = {
     }
     if (e.beh === 'ranged' || (e.isBoss && (e.kind === 'faouzi' || e.kind === 'purf') && dxAbs > 160)) {
       if (aligned && e.attackCd <= 0 && onScreen && dxAbs < 520) {
-        e.attackCd = e.isBoss ? rand(...BALANCE.boss.shootCd) * (e.tierCd || 1) * this.L.bossCd : rand(1.8, 3.0) / Math.sqrt(this.diff) * BALANCE.enemies.cdMul * this.L.enemyCd;
+        e.attackCd = e.isBoss ? Tuning.bossCd(this, e, BALANCE.boss.shootCd) : Tuning.enemyCd(this, [1.8, 3.0]);
         e.startWindup('shoot', (e.isBoss ? BALANCE.boss.windupShoot : 0.45) * this.L.windup);
       }
       if (e.beh === 'ranged') return;
@@ -811,7 +807,7 @@ const Game = {
     if (!e.hasToken && !e.isBoss) return;
     if (!e.isBoss && Math.random() < 0.25 * dt) { e.feint = rand(0.3, 0.7); return; }
     if (aligned && e.attackCd <= 0 && dxAbs < e.halfW + e.reach + h.halfW * 0.5) {
-      e.attackCd = e.isBoss ? rand(...BALANCE.boss.attackCd) * (e.tierCd || 1) * this.L.bossCd : rand(1.3, 2.4) / Math.sqrt(this.diff) * BALANCE.enemies.cdMul * this.L.enemyCd;
+      e.attackCd = e.isBoss ? Tuning.bossCd(this, e, BALANCE.boss.attackCd) : Tuning.enemyCd(this, [1.3, 2.4]);
       e.combo = e.isBoss && Math.random() < BALANCE.boss.comboChance + this.L.combo ? 1 : -1; e.comboT = e.isBoss ? 1 : 0;
       e.startWindup('attack', (e.isBoss ? BALANCE.boss.windupAttack : 0.42) * this.L.windup);
     }
@@ -822,10 +818,9 @@ const Game = {
     const B = this.edges();
     const x = o.x !== undefined ? o.x : fromRight ? B.R + 40 : B.L - 40; // juste derrière le bord de l'écran : il entre tout de suite
     const y = o.y !== undefined ? o.y : rand(GROUND_TOP + 20, GROUND_BOTTOM - 10);
-    const m = MINIONS[kind];
+    const m = MINIONS[kind], st = Tuning.enemy(this, kind, o); // vie et dégâts : data.js
     const e = new Fighter(kind, 'enemy', x, y, {
-      hp: m.hp * this.diff * (o.hpMul || 1) * (o.mustKill ? BALANCE.boss.entourageHpMul : BALANCE.enemies.hpMul * (this.pw.minionHp || 1)) * this.L.enemyHp,
-      dmg: m.dmg * (0.85 + this.diff * 0.15) * (o.mustKill ? 1 : BALANCE.enemies.dmgMul * (this.pw.minionDmg || 1)) * this.L.enemyDmg,
+      hp: st.hp, dmg: st.dmg,
       speed: m.speed * rand(0.9, 1.05), scale: (o.scale || 1) * (o.mustKill ? 1 : this.minionScale), mustKill: o.mustKill,
     });
     if (e.fly) e.z = e.cruiseZ;
@@ -874,10 +869,8 @@ const Game = {
 
   // Crée le boss du monde avec les réglages de BALANCE (PV, dégâts, premiers délais)
   makeBoss(x, y, hpMul = 1) {
-    const w = this.world, c = CHARACTERS[w.boss], B = BALANCE.boss, d = this.bossDiff();
-    const pb = (B.perBoss && B.perBoss[w.boss]) || {};
-    const b = new Fighter(w.boss, 'enemy', x, y, { boss: true, scale: w.small ? 1.0 : 1.4,
-      hp: c.hp * (w.entourage ? B.hpMulEntourage : B.hpMul) * d * hpMul * (pb.hp || 1) * this.L.bossHp, dmg: c.dmg * B.dmgMul * d * (pb.dmg || 1) * this.L.bossDmg, speed: c.speed * 0.95 });
+    const w = this.world, c = CHARACTERS[w.boss], B = BALANCE.boss, st = Tuning.boss(this, hpMul); // vie et dégâts : data.js
+    const b = new Fighter(w.boss, 'enemy', x, y, { boss: true, scale: w.small ? 1.0 : 1.4, hp: st.hp, dmg: st.dmg, speed: c.speed * 0.95 });
     b.dir = -1; b.specialCd = c.specialCd * B.firstSpecial; b.attackCd = 1.2; b.p2Cd = 0;
     this.enemies.push(b); this.boss = b;
     return b;
@@ -1266,13 +1259,11 @@ const Game = {
       ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(p.x - cx, p.y, 14, 5, 0, 0, Math.PI * 2); ctx.fill();
       if (p.power) { drawPowerPickup(ctx, p.power, p.x - cx, p.y, p.t); return; } // bonus temporaire (extras.js)
       if (p.weapon) { drawWeaponPickup(ctx, p.weapon, p.x - cx, p.y, p.t); return; } // arme à manier (rage.js)
-      if (p.item) { ctx.save(); ctx.translate(p.x - cx, p.y - 18 - Math.abs(Math.sin(p.t * 4)) * 8); drawThrowItem(ctx, p.item, 0); ctx.restore(); }
       else drawFood(ctx, p.type, p.x - cx, p.y, p.t);
     } }));
     this.combatDraw(list, ctx, cx, gt); this.evDraw(list, ctx, cx, gt); this.extrasDraw(list, ctx, cx, gt); this.rageDraw(list, ctx, cx, gt);
     this.dangers.forEach(dg => list.push({ y: dg.y + 2, draw: () => drawDangerObj(ctx, dg, dg.x - cx, gt, VW) }));
     list.sort((a, b) => a.y - b.y).forEach(o => o.draw());
-    this.combatOverlay(ctx, cx, gt);
     drawWorldForeground(ctx, this.world.id, VW, cx, gt); // premier plan, devant les personnages
 
     this.particles.forEach(p => {

@@ -4,8 +4,8 @@
 //     d'une vague, ennemis éjectés par le coup final.
 //  B. Attraper / lancer : rester appuyé sur FRAPPE près d'un ennemi l'attrape (au-dessus de la tête) ;
 //     lâcher le bouton le lance devant : il renverse tous ceux qu'il croise.
-//  C. Caisses à casser (3 par monde) : elles lâchent de la nourriture ou un OBJET À LANCER propre au monde
-//     (brique, vinyle, boule de pétanque, cartouche, batterie, jarre, bidon). Le prochain FRAPPE le lance.
+//  C. Caisses à casser : elles lâchent un bonus (extras.js), une arme à manier (rage.js) ou de la nourriture.
+//     (v3.13 : les objets à lancer — brique, vinyle, boule… — ont été fusionnés avec les armes.)
 //  D. Les dangers récompensent : un ennemi éliminé par un danger du décor (ou par un ennemi lancé) rapporte
 //     un bonus, avec « DOUBLÉ ! », « TRIPLÉ ! »…
 //  Tout s'ajoute à l'objet Game (game.js) : Object.assign(Game, Combat).
@@ -17,18 +17,15 @@ const COMBAT = {
   grabHold: 0.32,        // durée d'appui sur FRAPPE pour attraper (s)
   carryMax: 3.5,         // on lâche tout seul au bout de… (s)
   throwSpeed: 640, throwDmgMul: 2.2, landDmgMul: 1.4,
-  crates: [760, 1700, 3000, 4500], crateHp: 3, itemChance: 0.6, // (une caisse par étape du niveau en 3 tiers)
-  itemSpeed: 780, itemDmgMul: 2.4,
+  crates: [760, 1700, 3000, 4500], crateHp: 3, // (une caisse par étape du niveau en 3 tiers)
   hazardBonus: 150, strikeBonus: 120,
 };
-// Objets à lancer et caisses, par monde
-const WORLD_ITEM = { christian: 'brique', guilhem: 'vinyle', fateh: 'boule', faouzi: 'cartouche', venum: 'batterie', senoussi: 'jarre', purf: 'bidon' };
-const ITEM_NAME = { brique: 'BRIQUE', vinyle: 'VINYLE', boule: 'BOULE', cartouche: 'CARTOUCHE', batterie: 'BATTERIE', jarre: 'JARRE', bidon: 'BIDON' };
+// Caisses, par monde
 const CRATE_TYPE = { christian: 'palette', guilhem: 'enceinte', fateh: 'cagette', faouzi: 'bloc', venum: 'conteneur', senoussi: 'amphore', purf: 'baril' };
 
 const Combat = {
   combatStart() {
-    this.props = []; this.heldItem = null; this.carry = null; this.holdT = 0;
+    this.props = []; this.carry = null; this.holdT = 0;
     this.comboFxT = 0; this.comboPop = 0; this.lastMilestone = 0; this.multiT = 0; this.multiN = 0;
     if (['story', 'select', 'daily'].includes(this.mode)) {
       const xs = this.mod.crates ? COMBAT.crates.concat(COMBAT.crates.map(x => x + 330)) : COMBAT.crates; // défi « Déménagement » : deux fois plus
@@ -58,8 +55,8 @@ const Combat = {
     if (e.isBoss) return;
     const hero = src && src.team === 'hero';
     if (hero && opts && opts.knockdown) { e.kx *= 1.7; e.vz = 760; e.rotV *= 1.6; } // le coup final l'envoie valser
-    // bonus : danger du décor, ennemi lancé, objet lancé
-    const how = src && src.team === 'world' ? 'danger' : (opts && (opts.thrown || opts.item)) ? 'lancer' : null;
+    // bonus : danger du décor, ennemi lancé
+    const how = src && src.team === 'world' ? 'danger' : (opts && opts.thrown) ? 'lancer' : null;
     if (how) {
       const base = how === 'danger' ? COMBAT.hazardBonus : COMBAT.strikeBonus;
       if (this.t - this.multiT < 1.2) this.multiN++; else this.multiN = 1;
@@ -79,7 +76,7 @@ const Combat = {
     }
   },
 
-  // ---------- B / C. Mise à jour : attraper, porter, lancer, objets, caisses ----------
+  // ---------- B / C. Mise à jour : attraper, porter, lancer, caisses ----------
   updateCombat(dt) {
     const h = this.hero;
     if (this.comboFxT > 0) this.comboFxT -= dt;
@@ -87,7 +84,7 @@ const Combat = {
     this.props.forEach(p => { if (p.shakeT > 0) p.shakeT -= dt; });
     if (h.dead) { this.dropCarry(); return; }
     // appui long sur FRAPPE : attraper
-    if (Input.held.attack && !this.heldItem && !(this.ev && this.ev.lockHero)) this.holdT += dt; else this.holdT = 0;
+    if (Input.held.attack && !(this.ev && this.ev.lockHero)) this.holdT += dt; else this.holdT = 0;
     if (!this.carry && this.holdT > COMBAT.grabHold && (h.canAct() || h.state === 'attack')) {
       const t = this.enemies.find(e => !e.dead && !e.isBoss && !e.isMini && !e.heavy && !e.fly && e.entering <= 0 && !e.grabbed && e.thrownT <= 0 && this.inMeleeZone(h, e, 45)); // (marge : le premier coup l'a un peu repoussé)
       if (t) this.grab(t);
@@ -101,13 +98,6 @@ const Combat = {
       e.stun = 0.2;
       if (!Input.held.attack || this.carry.t > COMBAT.carryMax) this.throwCarry();
     }
-    // ramasser un objet à lancer
-    this.pickups.forEach(p => {
-      if (p.item && !this.heldItem && !this.carry && p.life > 0 && Math.abs(p.x - h.x) < 34 && Math.abs(p.y - h.y) < 26 && h.z < 40) {
-        p.life = 0; this.heldItem = p.item; Sfx.pickup();
-        this.text(h.x, h.y, h.height + 30, ITEM_NAME[p.item] + ' ! (FRAPPE pour lancer)', '#feca57', 18, 1.6);
-      }
-    });
   },
 
   grab(e) {
@@ -152,14 +142,6 @@ const Combat = {
       else e.setState('down', 1.0);
     }
   },
-  // FRAPPE en tenant un objet : on le lance
-  throwItem() {
-    const h = this.hero, it = this.heldItem; this.heldItem = null;
-    h.setState('attack', 0.28); h.hitDone = true;
-    this.projectiles.push({ kind: 'item', item: it, team: 'hero', owner: h, x: h.x + h.dir * 30, y: h.y, vx: h.dir * COMBAT.itemSpeed, dmg: h.dmg * COMBAT.itemDmgMul,
-      knockdown: true, pierce: it === 'boule' || it === 'vinyle' || it === 'batterie', life: 1.1, hit: new Set(), itemHit: true });
-    Sfx.swing(Sfx.panX(h.x));
-  },
 
   // ---------- caisses ----------
   meleeProps(f) {
@@ -176,8 +158,7 @@ const Combat = {
       for (let i = 0; i < 12; i++) this.particles.push({ type: 'pix', x: p.x + rand(-25, 25), y: p.y, z: rand(5, 55), vx: rand(-260, 260), vy: rand(-40, 40), vz: rand(200, 560), col: PROP_COL[p.type] || '#a0522d', life: 1, max: 1 });
       Progress.count('crates');
       if (Math.random() < EXTRA.powerCrate) this.dropPower(p.x, p.y); // bonus temporaire du monde (extras.js)
-      else if (Math.random() < RAGE.weaponCrate) this.dropWeapon(p.x, p.y); // arme à manier (rage.js)
-      else if (this.mod.crates || Math.random() < COMBAT.itemChance) this.pickups.push({ item: WORLD_ITEM[this.world.id] || 'brique', x: p.x, y: p.y, t: 0, life: 20 });
+      else if (this.mod.crates || Math.random() < RAGE.weaponCrate) this.dropWeapon(p.x, p.y); // arme à manier (rage.js) — défi « Déménagement » : jamais de nourriture
       else this.pickups.push({ type: this.world.food, x: p.x, y: p.y, t: 0, life: 14 });
       Sfx.bigHit(Sfx.panX(p.x), null, 0);
     }
@@ -191,14 +172,6 @@ const Combat = {
       drawSprite(ctx, { x: -45, y: -95, w: 90, h: 100 }, c => drawCrate(c, p.type, p.hp / COMBAT.crateHp, gt), { outline: 3, shade: { top: -60 } });
       ctx.restore();
     } }); });
-  },
-  // objet tenu : au-dessus de la main du héros
-  combatOverlay(ctx, cx, gt) {
-    const h = this.hero;
-    if (this.heldItem && !h.dead) {
-      ctx.save(); ctx.translate(h.x - cx + h.dir * 26, h.y - h.z - h.height * 0.95 + Math.sin(gt * 6) * 3);
-      drawThrowItem(ctx, this.heldItem, gt * 0.3, h.dir); ctx.restore();
-    }
   },
   // HUD : compteur de combo central + palier atteint
   combatHUD(ctx, VW) {
@@ -227,7 +200,7 @@ const Combat = {
 };
 Object.assign(Game, Combat);
 
-// ---------- dessins : caisses et objets à lancer ----------
+// ---------- dessins : caisses ----------
 const PROP_COL = { palette: '#c8955a', enceinte: '#2d3436', cagette: '#e1b072', bloc: '#f39c12', conteneur: '#7f8fa6', amphore: '#c0703a', baril: '#8e5a2b' };
 function drawCrate(ctx, type, f, t) {
   ctx.strokeStyle = INK; ctx.lineWidth = 3;
@@ -264,17 +237,4 @@ function drawCrate(ctx, type, f, t) {
   // fissures quand elle s'abîme
   if (crack) { ctx.strokeStyle = 'rgba(0,0,0,.75)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-8, -50); ctx.lineTo(0, -36); ctx.lineTo(-6, -26); ctx.lineTo(4, -14); ctx.stroke(); }
   if (crack2) { ctx.beginPath(); ctx.moveTo(18, -46); ctx.lineTo(10, -34); ctx.lineTo(16, -22); ctx.stroke(); }
-}
-function drawThrowItem(ctx, type, t, dir = 1) {
-  ctx.save(); ctx.strokeStyle = INK; ctx.lineWidth = 2.5; ctx.rotate(t * 12 * dir);
-  switch (type) {
-    case 'vinyle': circle(ctx, 0, 0, 16, '#111'); circle(ctx, 0, 0, 6, '#e84393'); circle(ctx, 0, 0, 1.5, '#fff', false); ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.beginPath(); ctx.arc(0, 0, 11, 0.3, 1.4); ctx.stroke(); break;
-    case 'boule': { const g = ctx.createRadialGradient(-4, -4, 1, 0, 0, 12); g.addColorStop(0, '#fff'); g.addColorStop(0.4, '#bdc3c7'); g.addColorStop(1, '#636e72'); circle(ctx, 0, 0, 12, g); ctx.beginPath(); ctx.moveTo(-10, -4); ctx.lineTo(10, -4); ctx.moveTo(-10, 4); ctx.lineTo(10, 4); ctx.stroke(); break; }
-    case 'cartouche': rrect(ctx, -12, -15, 24, 30, 3, '#7f8c8d'); rrect(ctx, -8, -10, 16, 13, 2, '#e84393'); break;
-    case 'batterie': rrect(ctx, -10, -16, 20, 32, 3, '#2d3436'); ctx.fillStyle = '#00d2ff'; ctx.fillRect(-6, -2, 12, 14); rrect(ctx, -4, -20, 8, 5, 1, '#95a5a6'); break;
-    case 'jarre': ctx.beginPath(); ctx.moveTo(-5, -15); ctx.lineTo(5, -15); ctx.quadraticCurveTo(17, -2, 9, 12); ctx.lineTo(-9, 12); ctx.quadraticCurveTo(-17, -2, -5, -15); ctx.closePath(); ctx.fillStyle = '#c0703a'; ctx.fill(); ctx.stroke(); break;
-    case 'bidon': rrect(ctx, -11, -15, 22, 30, 4, '#f1c40f'); ctx.fillStyle = '#111'; ctx.font = '900 14px Arial'; ctx.textAlign = 'center'; ctx.fillText('☣', 0, 6); break;
-    default: rrect(ctx, -16, -8, 32, 16, 2, '#c0392b'); ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.moveTo(-6, -8); ctx.lineTo(-6, 8); ctx.moveTo(6, -8); ctx.lineTo(6, 8); ctx.stroke(); // brique
-  }
-  ctx.restore();
 }

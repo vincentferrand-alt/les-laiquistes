@@ -32,7 +32,7 @@ Beat'em up à défilement horizontal (inspiré de Castle Crashers), jouable dans
 | Coup plongeant (onde de choc, renverse) | Espace puis J / X **en redescendant** | SAUT puis FRAPPE **en redescendant** |
 | Spécial | K ou C | ★ SPÉCIAL |
 | Attraper puis lancer un ennemi | Rester appuyé sur J / X, puis lâcher | Rester appuyé sur FRAPPE, puis lâcher |
-| Lancer un objet (trouvé dans une caisse) | J ou X | ✊ FRAPPE |
+| Arme (trouvée dans une caisse) | Marche dessus : 8 coups plus forts | idem |
 | Pause | Échap ou P | ❚❚ |
 
 Sur tablette, le joystick et les boutons sont **plus gros automatiquement** (taille proportionnelle à l'écran, jusqu'à × 1,6 sur iPad). ⚙ Réglages → **Commandes tactiles** : Normales / Grandes / Très grandes.
@@ -59,7 +59,7 @@ Les histoires terminées sont comptées par héros dans la sauvegarde (`storyWin
 
 - **Combos** : gros compteur à droite, avec une jauge qui montre le temps avant que la série retombe. Paliers à ×10 (« PAS MAL ! »), ×25 (« LAÏQUE ! »), ×50 (« INARRÊTABLE ! ») et ×100 (« LÉGENDAIRE ! ») : bonus de points, petit ralenti, arpège. Le coup final envoie valser l'ennemi ; le dernier ennemi d'une vague tombe au ralenti (« K.O. ! »).
 - **Attraper / lancer** : reste appuyé sur FRAPPE près d'un ennemi (pas les boss ni les volants) : il passe au-dessus de ta tête. Lâche le bouton : il part devant et renverse tous ceux qu'il croise, puis s'écrase. Si tu es touché, tu le lâches.
-- **Caisses** (3 par monde : palette, enceinte, cagette, bloc « ? », conteneur, amphore, baril) : 3 coups pour les casser. Elles lâchent de la nourriture ou un **objet à lancer** propre au monde (brique, vinyle, boule de pétanque, cartouche, batterie, jarre, bidon) : le prochain FRAPPE le lance (gros dégâts ; vinyle, boule et batterie traversent).
+- **Caisses** (3 par monde : palette, enceinte, cagette, bloc « ? », conteneur, amphore, baril) : 3 coups pour les casser. Elles lâchent un **bonus**, une **arme à manier** ou de la nourriture (depuis la v3.13, les objets à lancer sont fusionnés avec les armes).
 - **Dangers et lancers récompensés** : un ennemi éliminé par un danger du décor (« BIEN ENVOYÉ ! ») ou par un lancer (« STRIKE ! ») rapporte un bonus, plus gros pour un « DOUBLÉ ! », « TRIPLÉ ! », « CARNAGE ! ».
 - Réglages : `COMBAT` en haut de `js/combat.js`.
 
@@ -82,7 +82,7 @@ Le temps imparti dépend du niveau de difficulté. Réglages : `EVENTS` en haut 
 ## Progression (v3.7)
 
 - **Étoiles** (3 par monde, 21 en tout), affichées sur les cartes des mondes : ★ boss vaincu, ★ épreuve de milieu de monde réussie, ★ fini avec plus de la moitié de sa vie. On garde le meilleur résultat.
-- **Niveaux des héros** (1 à 10) : expérience à chaque partie (10 par ennemi, 150 par boss, 100 par épreuve réussie, même en cas de défaite pour les ennemis). Chaque niveau : +3 % de vie et +2 % de force. Niveau et barre d'XP sur l'écran du choix du perso.
+- **Niveaux des héros** (1 à 10) : expérience à chaque partie (10 par ennemi, 150 par boss, 100 par épreuve réussie, même en cas de défaite pour les ennemis). Depuis la v3.13 le niveau est un **grade** honorifique : il ne donne plus de vie ni de force (classements équitables). Niveau et barre d'XP sur l'écran du choix du perso.
 - **24 trophées** (écran 🏅 TROPHÉES) : premier boss, histoire en Costaud / Laïque ultime, combos ×25 / ×50 / ×100, strike, carreau, roi du flow, intouchable, 21 étoiles, héros niveau 10, pétomane, ruée vers l'or, médaille d'or… Annoncés par un message quand on les gagne.
 - Réglages : `XP` et `TROPHIES` en haut de `js/progress.js`.
 
@@ -90,7 +90,7 @@ Le temps imparti dépend du niveau de difficulté. Réglages : `EVENTS` en haut 
 
 - **Ennemi spécial par monde** (3e tiers et renforts du boss) : Marteau-piqueur, Ballon de basket, Basket de course, Glitch, Tableur, Chèvre, Fût radioactif. **Costaud** : impossible à attraper, ne recule que s'il est renversé.
 - **Ennemis qui sortent du décor** (tombent d'en haut, sortent d'une bouche d'égout).
-- **Armes à manier** (une par monde, 8 coups), **appel à un pote** (📣 POTE, touche L ou V, une fois par monde), **barre de l'ennemi visé**, **décompte des points** en fin de niveau.
+- **Armes à manier** (une par monde, 8 coups), **appel à un pote** (📣 POTE, touche L ou V, une fois par monde), **barre de l'ennemi visé** (sous le panneau du héros ; c'est la seule barre de vie des ennemis courants depuis la v3.13), **décompte des points** en fin de niveau.
 - Réglages : `RAGE` en haut de `js/rage.js` (ennemis spéciaux dans `MINIONS`, `js/data.js`).
 
 ## Niveaux en 3 tiers et mini-boss (v3.9)
@@ -335,7 +335,7 @@ js/draw.js            dessin des persos, ennemis, véhicules, dangers, objets
 js/backgrounds.js     décors des 7 mondes (parallaxe), premier plan, particules, teintes
 js/entities.js        combattants (héros et ennemis)
 js/game.js            niveau, vagues, IA, boss et phases, dangers, modes, HUD
-js/combat.js          combos, attraper/lancer, caisses et objets à lancer, bonus des dangers
+js/combat.js          combos, attraper/lancer, caisses, bonus des dangers
 js/events.js          événements de milieu de monde (briques d'or, battle de rap, pétanque…)
 js/progress.js        étoiles, trophées, niveaux des héros, défi du jour
 js/tiers.js           niveau en 3 tiers, mini-boss, point de reprise, GO, aides, objectifs (pause)
@@ -353,7 +353,7 @@ js/ui.js              menus, modes, réglages
 sw.js, manifest.webmanifest, icons/   appli installable (PWA) et mises à jour
 tools/make-og.html    fabrique l'image de partage et les icônes
 tools/make-voices.py  fabrique les voix des personnages (voices/)
-tests/                tests automatiques (lancés par GitHub à chaque demande de fusion) : fumee.js, martelage.js, ecrans.js, outils.js
+tests/                tests automatiques (lancés par GitHub à chaque demande de fusion) : fumee.js, martelage.js, ecrans.js, outils.js ; equilibrage.js affiche la vie et les dégâts de chaque adversaire par niveau de difficulté
 ```
 
 Pour tester en local : `python3 -m http.server` dans ce dossier puis http://localhost:8000 (ou ouvre simplement `index.html` ; tout marche sauf l'installation et la connexion Google).

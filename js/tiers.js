@@ -113,14 +113,12 @@ const Tiers = {
     this.saveCheckpoint(2);
     this.later(() => { if (!this.ev && !this.wave) this.goShow(); }, 1600);
   },
-  // Crée le mini-boss (PV et dégâts : BALANCE.mini × difficulté × niveau)
+  // Crée le mini-boss (PV et dégâts : Tuning.mini, data.js)
   makeMini(kind, x, y, hpMul = 1) {
-    const def = MINIBOSSES[kind], M = BALANCE.mini;
+    const def = MINIBOSSES[kind], st = Tuning.mini(this, kind, hpMul); // vie et dégâts : data.js
     const sc = kind === 'moutong' ? (this.world.small ? 0.8 : 1) : (this.world.small ? 0.9 : 1.15);
     const e = new Fighter(kind, 'enemy', x, y, { scale: sc,
-      hp: def.hp * M.hpMul * this.diff * this.L.bossHp * hpMul,
-      dmg: def.dmg * M.dmgMul * (0.85 + this.diff * 0.15) * this.L.bossDmg,
-      speed: def.speed });
+      hp: st.hp, dmg: st.dmg, speed: def.speed });
     e.dir = -1; e.attackCd = 1.0; e.tier = 0;
     this.enemies.push(e); this.miniE = e;
     return e;
@@ -276,7 +274,7 @@ const Tiers = {
     const h = this.hero; let hint = null;
     if (!h.dead && !(this.ev && this.ev.lockHero) && this.cine < 0.3 && !this.ended) {
       if (this.carry && this.hintOk('throw')) hint = { k: 'throw', who: h, text: 'Lâche FRAPPE pour le lancer !', icon: '🫳' };
-      else if (!this.carry && !this.heldItem && this.hintOk('grab') && (h.canAct() || h.state === 'attack')) {
+      else if (!this.carry && this.hintOk('grab') && (h.canAct() || h.state === 'attack')) {
         const t = this.enemies.find(e => !e.dead && !e.isBoss && !e.isMini && !e.fly && !e.heavy && e.entering <= 0 && e.thrownT <= 0 && this.inMeleeZone(h, e, 45));
         if (t) hint = { k: 'grab', who: t, text: "Maintiens FRAPPE pour l'attraper", icon: '✊', pulse: 'attack' };
       }

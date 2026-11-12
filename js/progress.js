@@ -2,7 +2,8 @@
 //  LES LAÏQUISTES — Progression (v3.7)
 //  · Étoiles par monde (0 à 3) : ★ boss vaincu · ★ épreuve de milieu de monde réussie · ★ fini avec plus de la moitié de sa vie
 //  · Trophées (24) : affichés dans l'écran 🏅 Trophées, annoncés par un message quand on les gagne
-//  · Niveaux des héros (1 à 10) : de l'expérience à chaque partie ; chaque niveau donne +3 % de vie et +2 % de force
+//  · Grades des héros (1 à 10) : de l'expérience à chaque partie. Le grade est honorifique : depuis la v3.13 il ne donne
+//    plus de vie ni de force (classements et défi du jour équitables).
 //  · Défi du jour : le même pour tout le monde (monde + héros + règle spéciale tirés au sort d'après la date),
 //    avec son propre classement partagé ('defi-AAAAMMJJ')
 //  Sauvegarde : Save.data.stars / trophies / xp (envoyés en ligne) et Save.data.stats (compteurs, sur l'appareil).
@@ -28,14 +29,14 @@ const TROPHIES = [
   { id: 'rush', icon: '💀', name: 'Boss Rush', desc: 'Terminer le Boss Rush' },
   { id: 'etoiles', icon: '⭐', name: 'Collectionneur', desc: 'Obtenir les 21 étoiles' },
   { id: 'heros', icon: '👥', name: "Toute l'équipe", desc: 'Gagner un monde avec chacun des 7 héros' },
-  { id: 'niveau10', icon: '🎖️', name: 'Vétéran', desc: 'Monter un héros au niveau 10' },
+  { id: 'niveau10', icon: '🎖️', name: 'Vétéran', desc: 'Monter un héros au grade 10' },
   { id: 'petomane', icon: '💨', name: 'Pétomane', desc: 'Provoquer 50 pets ou rots (au total)' },
   { id: 'defi', icon: '📅', name: 'Défi relevé', desc: 'Gagner un défi du jour' },
   // v3.8
   { id: 'or', icon: '💰', name: "Ruée vers l'or", desc: 'Battre 5 ennemis en or (au total)' },
   { id: 'flash', icon: '⏱️', name: 'Éclair', desc: "Gagner une médaille d'or de vitesse" },
 ];
-const XP = { kill: 10, boss: 150, event: 100, maxLevel: 10, perLevel: 250, hpPerLevel: 0.03, dmgPerLevel: 0.02 };
+const XP = { kill: 10, boss: 150, event: 100, maxLevel: 10, perLevel: 250 };
 
 const Progress = {
   data() {
@@ -78,14 +79,13 @@ const Progress = {
   stars(worldId) { return this.data().stars[worldId] || 0; },
   totalStars() { return WORLDS.reduce((n, w) => n + this.stars(w.id), 0); },
 
-  // ---------- niveaux des héros ----------
+  // ---------- grades des héros ----------
   // xp nécessaire pour passer du niveau l au niveau l+1 : perLevel × l
   level(hero) {
     let xp = this.data().xp[hero] || 0, lv = 1;
     while (lv < XP.maxLevel && xp >= XP.perLevel * lv) { xp -= XP.perLevel * lv; lv++; }
     return { lv, cur: xp, need: lv >= XP.maxLevel ? 0 : XP.perLevel * lv };
   },
-  bonus(hero) { const lv = this.level(hero).lv - 1; return { hp: 1 + lv * XP.hpPerLevel, dmg: 1 + lv * XP.dmgPerLevel }; },
   addXp(hero, n) {
     const before = this.level(hero).lv;
     const d = this.data(); d.xp[hero] = (d.xp[hero] || 0) + Math.round(n); Save.save();
@@ -114,8 +114,8 @@ const Progress = {
     }
     const up = this.addXp(hero, xp);
     const L = this.level(hero), name = CHARACTERS[hero].name;
-    out.push(`<div class="win-xp">+${xp} XP pour ${name} — niveau ${L.lv}${L.need ? ` <span class="xpbar"><i style="width:${Math.round(L.cur / L.need * 100)}%"></i></span>` : ' (max)'}</div>`);
-    if (up > 0) out.push(`<div class="win-lvl">⬆ ${name} passe niveau ${L.lv} ! Vie +${Math.round((L.lv - 1) * XP.hpPerLevel * 100)} %, force +${Math.round((L.lv - 1) * XP.dmgPerLevel * 100)} % (par rapport au niveau 1)</div>`);
+    out.push(`<div class="win-xp">+${xp} XP pour ${name} — grade ${L.lv}${L.need ? ` <span class="xpbar"><i style="width:${Math.round(L.cur / L.need * 100)}%"></i></span>` : ' (max)'}</div>`);
+    if (up > 0) out.push(`<div class="win-lvl">⬆ ${name} passe au grade ${L.lv} !</div>`);
     Save.save();
     this.checkGlobal();
     return out.join('');
@@ -131,7 +131,7 @@ const DAILY_MODS = [
   { id: 'fragile', name: 'FRAGILE', desc: 'La moitié de ta vie — score ×2', heroHp: 0.5, score: 2 },
   { id: 'deluge', name: 'DÉLUGE', desc: 'Dangers deux fois plus fréquents — score ×1,5', hazard: 0.5, score: 1.5 },
   { id: 'combo', name: 'COMBO FOU', desc: 'Chaque coup rapporte 3 fois plus', hitScore: 3 },
-  { id: 'caisses', name: 'DÉMÉNAGEMENT', desc: 'Deux fois plus de caisses, toujours un objet à lancer', crates: 2 },
+  { id: 'caisses', name: 'DÉMÉNAGEMENT', desc: 'Deux fois plus de caisses, toujours une arme ou un bonus', crates: 2 },
 ];
 const Daily = {
   // date locale du jour : « 20261110 » et « mardi 10 novembre »
