@@ -1,10 +1,10 @@
 // Service worker : met le jeu en cache pour qu'il marche hors-ligne et s'installe comme une appli.
 // ⚠ Change VERSION à chaque mise en ligne (et GAME_VERSION dans js/config.js) :
 // les joueurs verront alors le bandeau « Nouvelle version disponible — Mettre à jour ».
-const VERSION = 'laiquistes-v3.15.0';
+const VERSION = 'laiquistes-v4.0.0';
 const FILES = [
   './', 'index.html', 'css/style.css', 'manifest.webmanifest',
-  'js/config.js', 'js/data.js', 'js/audio.js', 'js/draw.js', 'js/backgrounds.js', 'js/entities.js',
+  'js/config.js', 'js/data.js', 'js/audio.js', 'js/draw.js', 'js/persos.js', 'js/backgrounds.js', 'js/entities.js',
   'js/input.js', 'js/cloud.js', 'js/scores.js', 'js/game.js', 'js/combat.js', 'js/tiers.js', 'js/events.js', 'js/extras.js', 'js/minis.js', 'js/rage.js', 'js/boss.js', 'js/share.js', 'js/progress.js', 'js/ui.js', 'js/main.js',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png',
   // bruitages enregistrés

@@ -332,6 +332,7 @@ css/style.css         style des menus et des boutons tactiles
 js/config.js          configuration Firebase + numéro de version affiché
 js/data.js            BALANCE (difficulté), persos, phrases, ennemis, mondes, sauvegarde locale
 js/draw.js            dessin des persos, ennemis, véhicules, dangers, objets
+js/persos.js          nouveau dessin articulé des 7 héros / boss : pantin, poses, détails (v4.0)
 js/backgrounds.js     décors des 7 mondes (parallaxe), premier plan, particules, teintes
 js/entities.js        combattants (héros et ennemis)
 js/game.js            niveau, vagues, IA, boss et phases, dangers, modes, HUD

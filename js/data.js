@@ -177,10 +177,12 @@ const GROUND_BOTTOM = 520;   // bas de la zone de déplacement
 const GRAVITY = 1600;
 
 // ---------- Les 7 laïquistes (héros jouables ET boss) ----------
+// bh : hauteur dessinée. v4.0 : c'est la hauteur H du nouveau dessin (RIGS, persos.js), environ 23 % de plus qu'avant
+// (avant : 72, 112, 108, 92, 96, 96, 96). bw (largeur de frappe) et range (portée) n'ont pas changé.
 const CHARACTERS = {
   christian: {
     id: 'christian', name: 'Christian', title: 'Le Maçon',
-    color: '#2c3e50', light: '#95a5a6', bw: 60, bh: 72,
+    color: '#2c3e50', light: '#95a5a6', bw: 60, bh: 119,
     hp: 130, speed: 215, dmg: 12, range: 70,
     weapon: 'Truelle', weaponDesc: 'Courte mais lourde, casque de chantier vissé sur la tête',
     special: 'truelle', specialName: 'Coup de truelle', specialDesc: 'Onde de choc au sol qui renverse tout le monde',
@@ -191,7 +193,7 @@ const CHARACTERS = {
   },
   guilhem: {
     id: 'guilhem', name: 'Guilhem', title: 'Le Bling',
-    color: '#1e272e', light: '#485460', bw: 36, bh: 112,
+    color: '#1e272e', light: '#485460', bw: 36, bh: 137,
     hp: 95, speed: 300, dmg: 10, range: 74,
     weapon: 'Montre en or', weaponDesc: 'Une Rolex dorée en guise de poing, grande allonge',
     special: 'rolex', specialName: 'Éclat de Rolex', specialDesc: 'Aveugle et paralyse les ennemis proches',
@@ -202,7 +204,7 @@ const CHARACTERS = {
   },
   fateh: {
     id: 'fateh', name: 'Fateh', title: 'Le Maître-chien',
-    color: '#8e44ad', light: '#9b59b6', bw: 42, bh: 108,
+    color: '#8e44ad', light: '#9b59b6', bw: 42, bh: 132,
     hp: 105, speed: 260, dmg: 10, range: 70,
     weapon: 'Ses poings + Aïka', weaponDesc: 'Aïka, sa chienne, mord à chaque coup',
     special: 'chien', specialName: 'Lâcher d\'Aïka', specialDesc: 'Aïka fonce et mord tout sur sa ligne',
@@ -213,7 +215,7 @@ const CHARACTERS = {
   },
   faouzi: {
     id: 'faouzi', name: 'Faouzi', title: 'Le Geek',
-    color: '#a68a5b', light: '#d1b98a', bw: 38, bh: 92, // plus mince (était 48)
+    color: '#a68a5b', light: '#d1b98a', bw: 38, bh: 119, // plus mince (était 48)
     hp: 95, speed: 260, dmg: 10, range: 66,
     weapon: 'Cartouches de jeux', weaponDesc: 'Gilet de papy, cheveux noirs, cartouches à lancer',
     special: 'cartouches', specialName: 'Salve de cartouches', specialDesc: 'Lance trois cartouches de jeux vidéo en éventail',
@@ -224,7 +226,7 @@ const CHARACTERS = {
   },
   venum: {
     id: 'venum', name: 'Venum', title: 'Le Boxeur',
-    color: '#2d3436', light: '#636e72', bw: 46, bh: 96,
+    color: '#2d3436', light: '#636e72', bw: 46, bh: 122,
     hp: 115, speed: 255, dmg: 11, range: 64,
     weapon: 'Gants de boxe', weaponDesc: 'Enchaînements rapides, frappe sèche',
     special: 'direct', specialName: 'Direct foudroyant', specialDesc: 'Fonce gants en avant, invincible',
@@ -234,7 +236,7 @@ const CHARACTERS = {
   },
   senoussi: {
     id: 'senoussi', name: 'Senoussi', title: 'Le Berger',
-    color: '#d35400', light: '#e67e22', bw: 60, bh: 96,
+    color: '#d35400', light: '#e67e22', bw: 60, bh: 133,
     hp: 140, speed: 225, dmg: 14, range: 100,
     weapon: 'Grande pelle', weaponDesc: 'Énorme allonge, balaie large',
     special: 'moutons', specialName: 'Ruée de moutons', specialDesc: 'Trois moutons chargent sur toute la profondeur',
@@ -244,7 +246,7 @@ const CHARACTERS = {
   },
   purf: {
     id: 'purf', name: 'The Purf', title: 'Le Toxique',
-    color: '#c0392b', light: '#e74c3c', bw: 66, bh: 96,
+    color: '#c0392b', light: '#e74c3c', bw: 66, bh: 130,
     hp: 150, speed: 225, dmg: 14, range: 70,
     weapon: 'Poudre toxique', weaponDesc: 'Une poudre verte tombe de son visage en continu',
     special: 'fumee', specialName: 'Nuage toxique', specialDesc: 'Un nuage vert qui ronge les ennemis',

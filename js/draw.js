@@ -850,7 +850,27 @@ const HUMANS = {
 };
 
 // Héros / boss
+// v4.0 : les 7 laïquistes sont dessinés par le nouveau pantin articulé (persos.js) ; l'ancien dessin ci-dessous
+// ne sert plus qu'à la planche de style (tools/planche.html) et aux pages qui ne chargent pas persos.js.
 function drawCharacter(ctx, kind, o = {}) {
+  const rig = typeof persoRig === 'function' ? persoRig(kind) : null;
+  if (rig) {
+    drawPerso(ctx, kind, o);
+    if (kind === 'fateh' && o.companion) { // Aïka, en laisse, qui bondit quand Fateh frappe
+      const pose = o.pose || 'idle', pt = o.poseT || 0, sc = o.scale || 1;
+      ctx.save();
+      if (o.alpha !== undefined) ctx.globalAlpha *= o.alpha;
+      ctx.scale((o.dir || 1) * sc, sc); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      const lunge = pose === 'attack' ? Math.sin(Math.min(1, pt) * Math.PI) * 40 : 0, dx = 56;
+      if (pose !== 'down' && pose !== 'carry') {
+        ctx.strokeStyle = INK; ctx.lineWidth = 3.4; ctx.beginPath(); ctx.moveTo(16, -rig.H * 0.5); ctx.quadraticCurveTo(44, -34, dx + lunge + 24, -46); ctx.stroke();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(16, -rig.H * 0.5); ctx.quadraticCurveTo(44, -34, dx + lunge + 24, -46); ctx.stroke();
+      }
+      drawDog(ctx, dx, 0, o.t || 0, lunge, pose === 'attack', DOG_PAL.aika, 1.1);
+      ctx.restore();
+    }
+    return;
+  }
   ctx.save();
   if (o.alpha !== undefined) ctx.globalAlpha *= o.alpha;
   ctx.scale((o.dir || 1) * (o.scale || 1), o.scale || 1);
@@ -873,7 +893,10 @@ function drawMinion(ctx, type, o = {}) {
   const t = o.t || 0, pose = o.pose || 'idle';
   _face.pose = pose; _face.t = t;
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-  if (pose === 'down' || pose === 'hurt') ctx.rotate(pose === 'down' ? -0.6 : -0.2);
+  // (v4.0 : un ennemi humain se couche déjà tout seul dans drawHumanoid ; avec les 0,6 rad en plus il basculait la tête
+  //  sous le sol et sortait de sa boîte de dessin : à terre, on ne voyait que ses chaussures)
+  const humain = !!HUMANS[type] || type === 'enfant';
+  if (pose === 'down' || pose === 'hurt') ctx.rotate(pose === 'down' ? (humain ? 0 : -0.6) : -0.2);
   switch (type) {
     case 'goeland': drawSeagull(ctx, t, pose); break;
     case 'berger': drawDog(ctx, -6, 0, t, 0, pose === 'attack' || pose === 'windup', DOG_PAL.berger); break;
@@ -903,6 +926,7 @@ function drawMinion(ctx, type, o = {}) {
 
 // Petite tête pour le HUD et les bulles
 function drawHead(ctx, kind, x, y, size) {
+  if (typeof persoRig === 'function' && persoRig(kind)) { drawPersoHead(ctx, kind, x, y, size); return; } // nouveau dessin (persos.js)
   ctx.save(); ctx.translate(x, y);
   const s0 = HUMANS[kind];
   const hr = s0.headR || Math.max(15, s0.bw * 0.38);

@@ -1,3 +1,35 @@
+# Les laïquistes — v4.0.0 : les 7 héros et boss redessinés
+
+Septième étape de la refonte (7/9). Le style a été choisi sur la planche de l'étape 6 (`tools/planche.html`).
+
+## Ce qui change
+- **Les 7 laïquistes ont un nouveau dessin**, en héros comme en boss : Christian, Guilhem, Fateh, Faouzi, Venum, Senoussi et The Purf.
+  - Ils sont **environ 23 % plus grands** à l'écran, avec une tête plus grosse.
+  - Bras et jambes articulés (coude, genou), vraies mains, pieds, visage qui change selon l'action (colère, douleur, rire, yeux en croix à terre).
+  - Des **poses nettes** : attente, marche, élan, impact, coup final, touché, à terre, saut, piqué, victoire, raillerie, porter.
+- Ce qui identifie chacun est conservé : casque, lunettes rondes et truelle de Christian · Guilhem grand, sans lunettes, grosse montre en or · Fateh et sa chienne Aïka en laisse · Faouzi mince, gilet de papy et cartouche de jeu · gants de boxe rouges de Venum · Senoussi, ses boucles et sa grande pelle · The Purf, sa moustache, son nuage vert et sa poudre qui tombe.
+- Le nouveau dessin est utilisé **partout** : en combat, dans le choix du personnage, le choix du monde, l'écran d'avant-combat, le portrait en haut à gauche, l'écran de victoire, le défi du jour, l'appel à un pote, le bandeau d'arrivée des boss et l'image de score à partager.
+- Le monde de Faouzi reste pixelisé, personnages compris.
+- **Correction : un personnage à terre n'est plus coupé.** Avant, un ennemi renversé basculait la tête sous le sol et on ne voyait plus que ses chaussures ; un héros à terre était coupé à la taille. Maintenant on les voit en entier, couchés sur le dos.
+
+## Ce qui ne change pas
+- Les règles du jeu : vie, dégâts, vitesse, **portée des coups et largeur de frappe** sont les mêmes qu'en 3.15. Le test du martelage donne toujours 9 coups sur 9 pour les 7 héros.
+- Les zones annoncées des boss (elles dépendent de leur portée, pas de leur dessin).
+- Les décors, les sons, les voix, la sauvegarde, les classements.
+
+## À savoir
+- **Les ennemis courants, les mini-boss et les entourages gardent l'ancien dessin** jusqu'à l'étape 8 : en attendant, ils sont plus petits et plus simples que les héros.
+- Sur l'écran titre, la frise de personnages est toute petite sur téléphone (c'était déjà le cas) : l'écran titre est prévu à l'étape 8.
+- Les icônes de l'appli et l'image d'aperçu de partage ne sont pas refaites (à décider ensemble).
+- Affichage : mesuré sans carte graphique sur quatre combats de boss, une image demande environ 15 % de temps en plus qu'en 3.15 (16 ms contre 14 ms). L'allègement automatique (`Gfx`) est toujours là. Si le jeu rame sur un téléphone, l'étape 9 est prévue pour ça.
+
+## Pour les curieux
+- `js/persos.js` (nouveau fichier du jeu) : un pantin articulé commun (`drawPerso`), les proportions et détails de chaque personnage (`RIGS`), les poses (`p2Key`, `p2Pose`).
+- `drawCharacter` et `drawHead` (`js/draw.js`) passent par ce nouveau dessin ; `Fighter.draw` (`js/entities.js`) lui laisse l'élan et la fente, qu'il simulait avant en penchant le personnage.
+- `bh` (hauteur) des 7 personnages dans `js/data.js` : 119, 137, 132, 119, 122, 133, 130 (avant : 72, 112, 108, 92, 96, 96, 96).
+
+---
+
 # Les laïquistes — v3.15.0 : des boss plus lisibles
 
 Cinquième étape de la refonte (5/9).
