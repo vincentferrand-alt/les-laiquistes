@@ -168,7 +168,6 @@ h2 { margin: 0; font-family: var(--fx); font-size: clamp(22px, 5vh, 40px); color
 }
 
 h2, .logo, .win-title, .intro-name, .intro-step, .gameover, .b-title, .b-sub, .cc-name, .cd-name, .wc-name, .btn, .win-stats .total { font-weight: 900; }
-.char-side .btn.big { min-width: 0; width: 100%; }
 
 #pause-controls table { border-collapse: collapse; background: rgba(0,0,0,.45); border: 3px solid #000; border-radius: 12px; overflow: hidden; font-size: clamp(11px, 2.4vh, 15px); }
 #pause-controls th, #pause-controls td { padding: clamp(2px, .8vh, 6px) 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,.1); }
@@ -194,14 +193,10 @@ h2, .logo, .win-title, .intro-name, .intro-step, .gameover, .b-title, .b-sub, .c
 .settings .tog { display: flex; align-items: center; gap: 10px; font-size: 15px; }
 .settings .tog input { width: 22px; height: 22px; accent-color: #1dd1a1; }
 .set-note { font-size: 12px; opacity: .7; }
-/* boutons Boss Rush / Survie côte à côte sous les modes principaux */
-#s-title .menu .menu.row .btn { min-width: min(155px, 34vw); }
 @media (max-height: 500px) {
   #s-title .logo { font-size: clamp(30px, 10vh, 70px); }
   #s-title .logo span { -webkit-text-stroke: 1px #000; font-size: .5em; }
   #title-art { max-height: 14vh; }
-  #s-title .btn.big { padding: 6px 20px; font-size: 16px; }
-  #s-title .menu .menu.row .btn { min-width: 0; padding: 6px 14px; font-size: 13px; }
 }
 
 /* ---------- Version, sauvegarde en ligne, bandeau de mise à jour, toast ---------- */
@@ -298,3 +293,101 @@ h2, .logo, .win-title, .intro-name, .intro-step, .gameover, .b-title, .b-sub, .c
 .pad.pote { right: calc(120px * var(--k)); bottom: calc(88px * var(--k)); width: calc(54px * var(--k)); height: calc(54px * var(--k)); background: rgba(255,159,67,.55); font-size: calc(20px * var(--k)); }
 .pad.pote small { font-size: calc(7px * var(--k)); }
 .pad.used { opacity: .25; filter: grayscale(1); }
+
+/* ============================================================
+   v3.12 — MENU TITRE REGROUPÉ + ÉCRANS QUI TIENNENT SUR UN TÉLÉPHONE
+   ============================================================ */
+/* rangée d'icônes du titre : une icône et son nom dessous */
+.icons { gap: clamp(6px, 1.4vw, 14px); }
+.ico { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 74px; padding: 6px 8px 5px; cursor: pointer; color: #fff;
+  font-family: inherit; font-size: 11px; font-weight: 800; background: rgba(0,0,0,.35); border: 2px solid rgba(255,255,255,.55); border-radius: 14px; box-shadow: 0 3px 0 #000; }
+.ico i { font-style: normal; font-size: 22px; line-height: 1.1; }
+.ico:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
+/* écran « Autres modes » : trois grandes cartes */
+.modes { display: flex; gap: clamp(8px, 2vw, 18px); justify-content: center; align-items: stretch; width: min(900px, 94vw); }
+.mode-card { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: clamp(10px, 3vh, 22px) 12px; cursor: pointer; color: #fff; font-family: inherit;
+  background: linear-gradient(#576574, #2f3542); border: 3px solid #fff; border-radius: 20px; box-shadow: 0 6px 0 #000, inset 0 4px 8px rgba(255,255,255,.25); }
+.mode-card.daily { background: linear-gradient(#ff9f43, #e67e22); }
+.mode-card:active { transform: translateY(4px); box-shadow: 0 2px 0 #000; }
+.mode-card i { font-style: normal; font-size: clamp(30px, 9vh, 54px); line-height: 1; }
+.mode-card b { font-family: var(--fx); font-weight: 900; font-size: clamp(16px, 3.6vh, 24px); text-shadow: 2px 2px 0 #000; }
+.mode-card small { font-size: clamp(11px, 2.4vh, 14px); opacity: .9; }
+/* choix du perso : « Retour » et « C'EST PARTI ! » sur une même ligne */
+.char-go { display: flex; gap: 8px; align-items: center; }
+.char-go .btn.big { min-width: 0; flex: 1; white-space: nowrap; padding-left: 12px; padding-right: 12px; }
+
+/* ---------- téléphone en paysage (écran peu haut) : tout tient sans défilement ---------- */
+@media (max-height: 500px) {
+  .screen { gap: 6px; padding-top: max(8px, env(safe-area-inset-top)); padding-bottom: 8px; }
+  h2 { font-size: 20px; -webkit-text-stroke: 1px #000; text-shadow: 3px 3px 0 #5f27cd; }
+  .sub { font-size: 11px; }
+  .btn.big { min-width: min(240px, 50vw); padding: 7px 20px; font-size: 16px; }
+  /* la version et « Mettre à jour » prennent moins de place */
+  #ver-box { flex-direction: column; align-items: flex-start; gap: 2px; font-size: 11px; bottom: max(5px, env(safe-area-inset-bottom)); }
+  #upd-msg { position: absolute; left: 100%; bottom: 4px; margin-left: 6px; white-space: nowrap; }
+  #toast { bottom: auto; top: 8px; } /* (en bas, il cachait les boutons) */
+  #ver-box .btn.small { padding: 3px 8px; font-size: 10px; box-shadow: 0 3px 0 #000; }
+
+  /* titre : les trois gros boutons côte à côte */
+  .title-main { flex-direction: row; }
+  .title-main .btn.big { min-width: 0; padding: 9px 20px; }
+  .ico { min-width: 66px; padding: 4px 6px; font-size: 10px; }
+  .ico i { font-size: 19px; }
+
+  /* choix du perso : la grille prend la hauteur qui reste, le panneau de droite est resserré */
+  #s-chars { justify-content: flex-start; }
+  .chars-layout { flex: 1; min-height: 0; }
+  #char-grid { grid-template-rows: repeat(2, minmax(0, 1fr)); }
+  .char-card { display: flex; flex-direction: column; min-height: 0; padding: 3px 3px 4px; }
+  .char-card canvas { flex: 1; min-height: 0; max-height: none; width: 100%; object-fit: contain; }
+  .char-card:nth-child(5) { grid-column-start: 2; } /* 2e rangée décalée : la case en bas à gauche reste libre pour la version */
+  .cc-name { font-size: 12px; }
+  .cc-lv { top: 3px; right: 4px; font-size: 9px; }
+  .char-side { width: 290px; gap: 5px; }
+  #char-detail { padding: 5px 10px; flex: 0 1 auto; display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; align-content: start; }
+  #char-detail > * { grid-column: 1 / -1; }
+  #char-detail > .stat { grid-column: auto; margin: 1px 0; font-size: 11px; }
+  .stat span { width: 46px; } .bar { height: 8px; }
+  .cd-name { font-size: 19px; line-height: 1.1; } .cd-title { display: none; }
+  .cd-lv { font-size: 11px; margin: 0; } .cd-weapon { margin: 0 0 2px; }
+  .cd-special { margin-top: 3px; padding: 3px 6px; font-size: 11px; }
+  .diff-pick { margin: 0; gap: 4px; flex-wrap: nowrap; position: relative; padding: 15px 0 13px; }
+  .diff-pick .dp-title { position: absolute; top: 0; left: 0; font-size: 11px; }
+  .diff-pick .dp { flex: 1; min-width: 0; padding: 4px 2px; font-size: 11px; }
+  .diff-pick .dp small { font-size: 9px; }
+  .diff-pick .dp-hint { position: absolute; bottom: 0; left: 0; font-size: 9.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .char-go { margin-top: auto; }
+
+  /* réglages : deux colonnes (les curseurs à gauche, le reste à droite) */
+  .settings { display: grid; grid-template-rows: repeat(5, auto); grid-auto-flow: column; grid-template-columns: 1fr 1fr; column-gap: 26px; row-gap: 5px; padding: 8px 16px; width: min(800px, 96vw); align-items: center; }
+  .settings .rng { font-size: 14px; } .settings .rng span { width: 100px; white-space: nowrap; } .settings .tog { font-size: 13px; }
+  .seg span { width: auto; } .seg .btn.small { padding: 4px 9px; font-size: 11px; }
+  .set-note { font-size: 11px; } .account { padding-top: 5px; gap: 3px; }
+  #s-settings .version { display: none; } /* (la version est déjà affichée en bas à gauche) */
+
+  /* victoire : le héros qui danse, le décompte et la progression côte à côte */
+  #s-win.active { display: grid; grid-template-columns: auto minmax(250px, 1fr) minmax(0, 1.15fr); grid-template-rows: auto minmax(0, auto) auto auto; align-content: center; justify-items: center; align-items: center; column-gap: 12px; row-gap: 5px; }
+  #s-win > .win-title { grid-column: 1 / -1; margin: 0; font-size: 26px; line-height: 1.1; -webkit-text-stroke: 1px #000; text-shadow: 3px 3px 0 #000; }
+  #win-art { position: static; grid-column: 1; grid-row: 2; height: min(150px, 40vh); }
+  .win-stats { grid-column: 2; grid-row: 2; min-width: 0; width: 100%; padding: 6px 14px; }
+  .win-stats div { font-size: 13px; padding: 1px 0; } .win-stats .total { font-size: 17px; padding-top: 3px; }
+  .win-unlock { grid-column: 3; grid-row: 2; font-size: 12px; max-height: 100%; overflow-y: auto; align-self: stretch; display: flex; flex-direction: column; justify-content: center; }
+  .win-stars { font-size: 28px; } .win-xp, .win-lvl { font-size: 12px; margin-top: 2px; } .win-hint { font-size: 12px; }
+  .medal-row { font-size: 12px; white-space: nowrap; } .medal-row small { font-size: 10px; }
+  #win-save { grid-column: 1 / -1; } #s-win > #win-buttons { grid-column: 1 / -1; margin: 0; }
+  .save-box .save-msg { width: auto; min-height: 0; } .name-in { padding: 5px 12px; font-size: 15px; }
+  #s-win .btn, #s-over .btn { padding: 7px 18px; font-size: 14px; } #s-win .btn.small { padding: 6px 14px; font-size: 12px; }
+  .gameover { font-size: clamp(40px, 13vh, 70px); }
+
+  /* défi du jour : l'image et les règles à gauche, le classement du jour à droite */
+  #s-daily.active { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); grid-template-areas: "h h" "d d" "art src" "art list" "card list" "btn btn"; grid-template-rows: auto auto auto auto minmax(0, auto) auto; align-content: center; justify-items: center; column-gap: 14px; row-gap: 5px; }
+  #s-daily > h2 { grid-area: h; } #daily-date { grid-area: d; } #daily-src { grid-area: src; align-self: end; }
+  #daily-art { grid-area: art; width: auto; max-width: 100%; height: 26vh; }
+  .daily-card { grid-area: card; margin: 0; gap: 4px; } .daily-card > div { padding: 3px 8px; font-size: 11px; }
+  #daily-list { grid-area: list; width: 100%; max-height: none; height: 100%; align-self: stretch; font-size: 13px; } #daily-list li { padding: 3px 10px; } #daily-list .rk { width: 22px; height: 22px; font-size: 12px; }
+  #s-daily > .menu { grid-area: btn; }
+
+  /* intro, pause, mondes */
+  #intro-art { max-height: 44vh; }
+  .intro-name { font-size: clamp(28px, 8vh, 60px); }
+}

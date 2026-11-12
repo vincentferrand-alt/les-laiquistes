@@ -226,7 +226,7 @@ const Extras = {
     if (e.escaping) {
       const dir = e.escDir || (e.escDir = e.x < (B.L + B.R) / 2 ? -1 : 1);
       e.x += dir * e.speed * 1.4 * dt; e.dir = dir; e.state = 'walk'; e.walk += dt * 14;
-      if (e.x < B.L - 120 || e.x > B.R + 120) e.remove = true;
+      { const E = this.edges(); if (e.x < E.L - 120 || e.x > E.R + 120) e.remove = true; } // il sort vraiment de l'écran
       return;
     }
     const side = Math.sign(e.x - h.x) || 1;
@@ -333,17 +333,17 @@ const Extras = {
 
   extrasHUD(ctx, VW) {
     const h = this.hero, b = this.boost;
-    // bonus en cours, sous la vie
+    // bonus en cours : une petite icône à droite du panneau du héros, entourée d'une jauge qui se vide (v3.12 ;
+    // avant : un grand panneau sous la vie). Son nom est annoncé au-dessus du héros quand il le ramasse.
     if (b) {
-      const P = POWERUPS[b.type], f = clamp(b.t / b.max, 0, 1), s = 1 + Math.max(0, this.boostPop - 1.2) * 0.8;
-      ctx.save(); ctx.translate(10, 90); ctx.scale(s, s);
-      ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.roundRect(0, 0, 280, 42, 12); ctx.fill(); ctx.stroke();
-      ctx.save(); ctx.translate(22, 21); ctx.scale(0.75, 0.75); drawPowerIcon(ctx, b.type, this.t); ctx.restore();
-      ctx.textAlign = 'left'; ctx.font = '900 13px "Arial Black", Arial'; ctx.fillStyle = P.col; ctx.fillText(P.name, 44, 15);
-      ctx.font = 'bold 11px Arial'; ctx.fillStyle = '#fff'; ctx.fillText(P.desc, 44, 27);
-      ctx.fillStyle = '#222'; ctx.fillRect(44, 32, 226, 5); // temps restant
-      ctx.fillStyle = b.t < 2 && Math.floor(this.t * 8) % 2 ? '#fff' : P.col; ctx.fillRect(44, 32, 226 * f, 5);
+      const P = POWERUPS[b.type], f = clamp(b.t / b.max, 0, 1), s = 1 + Math.max(0, this.boostPop - 1.2) * 1.2;
+      ctx.save(); ctx.translate(310, 31); ctx.scale(s, s);
+      ctx.fillStyle = 'rgba(0,0,0,0.65)'; ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(0, 0, 19, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.save(); ctx.scale(0.62, 0.62); drawPowerIcon(ctx, b.type, this.t); ctx.restore();
+      ctx.lineCap = 'round'; ctx.lineWidth = 4; // jauge circulaire : temps restant (clignote à la fin)
+      ctx.strokeStyle = b.t < 2 && Math.floor(this.t * 8) % 2 ? '#fff' : P.col;
+      ctx.beginPath(); ctx.arc(0, 0, 17, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * f); ctx.stroke();
       ctx.restore();
     }
     // chrono (histoire, choix du niveau, défi du jour) : couleur de la médaille encore possible
@@ -352,7 +352,7 @@ const Extras = {
       const lbl = '⏱ ' + Math.floor(tm / 60) + ':' + String(Math.floor(tm % 60)).padStart(2, '0') + (m ? ' ' + m.icon : '');
       ctx.save(); ctx.textAlign = 'center'; ctx.font = '900 15px "Arial Black", Arial'; ctx.lineWidth = 4; ctx.strokeStyle = '#000';
       ctx.fillStyle = m ? m.col : '#b2bec3';
-      ctx.strokeText(lbl, VW / 2, 66); ctx.fillText(lbl, VW / 2, 66);
+      ctx.strokeText(lbl, VW / 2, 54); ctx.fillText(lbl, VW / 2, 54);
       ctx.restore();
     }
     // message centré

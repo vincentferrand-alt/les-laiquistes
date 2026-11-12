@@ -1,3 +1,30 @@
+# Les laïquistes — v3.12.0 : l'écran de téléphone
+
+Deuxième étape de la refonte (2/9). Rien ne disparaît ; trois boutons du titre ont changé de place (voir « Menu titre »).
+
+## Tous les écrans tiennent sur un téléphone
+- En 844×390 et en 740×360, plus aucun écran n'a besoin d'être défilé : choix du personnage (le titre et « C'EST PARTI ! » étaient hors écran), réglages, victoire, défi du jour. Les listes longues (trophées, classements) défilent toujours dans leur cadre.
+- Choix du personnage : la grille s'adapte à la hauteur, la fiche du héros est resserrée, les trois difficultés tiennent sur une ligne, « Retour » et « C'EST PARTI ! » sont côte à côte.
+- Réglages sur deux colonnes ; victoire sur trois colonnes (le héros qui danse, le décompte, les étoiles) ; défi du jour sur deux colonnes (l'image et les règles, le classement du jour).
+- La version et « Mettre à jour » restent en bas à gauche, en plus compact sur téléphone, et ne passent plus sur aucun bouton.
+
+## Menu titre regroupé
+- Trois gros boutons : **MODE HISTOIRE**, **CHOIX DU NIVEAU**, **AUTRES MODES**.
+- **AUTRES MODES** ouvre un nouvel écran avec **Boss Rush**, **Survie** et **Défi du jour** (qui étaient sur le titre).
+- Une rangée d'icônes : Trophées, Classement, Réglages, Son, Plein écran, Partager (et Installer quand c'est possible).
+
+## En jeu
+- **Le héros ne passe plus sous le joystick** : une zone protégée existe maintenant à gauche, comme à droite. Celle de droite est un peu élargie (le héros passait encore sous le bouton POTE). Les ennemis n'y entrent pas non plus ; ils arrivent du vrai bord de l'écran. Réglage : `SAFE` au début de `js/game.js`.
+- Un bonus, de la nourriture ou une arme tombés sous le joystick ou les boutons glissent vers la zone jouable.
+- **Le premier plan ne cache plus les combats** : poteaux, cactus, buissons et barrières deviennent translucides devant la zone où l'on se bat (ils restent nets en haut de l'écran). Les décors ne sont pas redessinés.
+- **Plus de pointes noires** au-dessus des textes (contours arrondis).
+- **Affichage allégé** : le nom du monde n'est plus affiché pendant le jeu (il est annoncé en grand au début) ; le bonus en cours est une petite icône entourée d'une jauge, à droite du panneau du héros, au lieu d'un grand panneau.
+
+## Tests automatiques
+- Nouveau test `tests/ecrans.js` : ouvre les 13 écrans en 844×390 et 740×360 ; échec si l'un d'eux doit être défilé, si un bouton sort de l'écran ou passe sous la version.
+
+---
+
 # Les laïquistes — v3.11.0 : des coups qui touchent
 
 Première étape de la refonte (1/9). Rien ne disparaît.

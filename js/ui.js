@@ -18,6 +18,9 @@ const UI = {
     $('#b-levels').onclick = () => { Sfx.init(); Sfx.click(); this.run.mode = 'select'; this.openChars(); };
     $('#b-rush').onclick = () => { Sfx.init(); Sfx.click(); this.run.mode = 'bossrush'; this.openChars(); };
     $('#b-surv').onclick = () => { Sfx.init(); Sfx.click(); this.run.mode = 'survival'; this.openChars(); };
+    $('#b-modes').onclick = () => { Sfx.init(); Sfx.click(); this.show('s-modes'); }; // Boss Rush, Survie, Défi du jour (v3.12)
+    // Retour depuis le choix du perso : vers « Autres modes » si on en vient, sinon vers le titre
+    $('#b-char-back').onclick = () => { Sfx.init(); Sfx.click(); this.show(['bossrush', 'survival'].includes(this.run.mode) ? 's-modes' : 's-title'); };
     $('#b-daily').onclick = () => { Sfx.init(); Sfx.click(); this.openDaily(); };
     $('#b-daily-go').onclick = () => { Sfx.click(); this.startDaily(); };
     $('#b-trophies').onclick = () => { Sfx.init(); Sfx.click(); this.openTrophies(); };
@@ -28,7 +31,7 @@ const UI = {
     $('#b-char-go').onclick = () => { Sfx.click(); this.confirmHero(); };
     $('#b-intro-go').onclick = () => { Sfx.click(); this.launch(); };
     // Retour depuis l'intro : choix du niveau → choix du monde ; histoire → choix du personnage
-    $('#b-intro-back').onclick = () => { Sfx.click(); if (this.run.mode === 'select' || this.run.mode === 'survival') this.openWorlds(); else this.openChars(); };
+    $('#b-intro-back').onclick = () => { Sfx.click(); if (this.run.mode === 'select' || this.run.mode === 'survival') this.openWorlds(); else if (this.run.mode === 'daily') this.openDaily(); else this.openChars(); };
     $('#b-resume').onclick = () => this.resume();
     $('#b-restart').onclick = () => { this.hideScreens(); Game.stop(); this.run.cp = null; this.launch(true); }; // recommence tout le monde
     $('#b-quit').onclick = () => { Game.stop(); this.toTitle(); };
@@ -104,7 +107,7 @@ const UI = {
     const text = '🎮 Viens jouer à Les laïquistes : 7 héros, 7 mondes, 7 boss ! ' + url;
     window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
   },
-  updateMuteBtn() { $('#b-mute').textContent = Save.data.muted ? '🔇 Son coupé' : '🔊 Son activé'; },
+  updateMuteBtn() { $('#b-mute').innerHTML = Save.data.muted ? '<i>🔇</i>Son coupé' : '<i>🔊</i>Son activé'; },
   fullscreen() {
     const el = document.documentElement;
     const p = el.requestFullscreen ? el.requestFullscreen() : (el.webkitRequestFullscreen && el.webkitRequestFullscreen());
@@ -614,7 +617,7 @@ const UI = {
       : '<li class="empty">Aucun score pour l\'instant. À toi de jouer !</li>';
   },
 };
-const MENU_SCREENS = ['s-title', 's-chars', 's-worlds', 's-intro', 's-scores', 's-settings', 's-daily', 's-trophies'];
+const MENU_SCREENS = ['s-title', 's-modes', 's-chars', 's-worlds', 's-intro', 's-scores', 's-settings', 's-daily', 's-trophies'];
 const CONTROLS_HTML = `
   <table>
     <tr><th></th><th>Clavier</th><th>Téléphone</th></tr>

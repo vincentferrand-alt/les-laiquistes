@@ -308,7 +308,7 @@ const Tiers = {
 
   // ---------- HUD : barre à 3 repères, barre du mini-boss ----------
   drawTierBar(ctx, VW) {
-    const x0 = VW / 2 - 120, w = 240, y = 41, len = this.levelLen - this.VW;
+    const x0 = VW / 2 - 120, w = 240, y = 26, len = this.levelLen - this.VW; // (remontée : le nom du monde n'est plus au-dessus)
     const pg = clamp(this.camX / len, 0, 1);
     ctx.save();
     ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.beginPath(); ctx.roundRect(x0, y - 4, w, 8, 4); ctx.fill();

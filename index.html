@@ -66,25 +66,33 @@
     <section id="s-title" class="screen">
       <div class="logo"><span>LES</span>LAÏQUISTES</div>
       <canvas id="title-art" width="900" height="170"></canvas>
-      <div class="menu">
+      <!-- v3.12 : trois gros boutons, puis une rangée d'icônes. Boss Rush, Survie et Défi du jour sont dans « Autres modes ». -->
+      <div class="menu title-main">
         <button class="btn primary big" id="b-story">MODE HISTOIRE</button>
         <button class="btn big" id="b-levels">CHOIX DU NIVEAU</button>
-        <div class="menu row">
-          <button class="btn" id="b-rush">💀 BOSS RUSH</button>
-          <button class="btn" id="b-surv">🌊 SURVIE</button>
-          <button class="btn daily-btn" id="b-daily">📅 DÉFI DU JOUR</button>
-          <button class="btn" id="b-trophies">🏅 TROPHÉES</button>
-          <button class="btn" id="b-scores">🏆 CLASSEMENT</button>
-        </div>
+        <button class="btn big" id="b-modes">AUTRES MODES</button>
       </div>
-      <div class="menu row">
-        <button class="btn small" id="b-mute">🔊</button>
-        <button class="btn small" id="b-settings">⚙ Réglages</button>
-        <button class="btn small" id="b-fs">⛶ Plein écran</button>
-        <button class="btn small hidden" id="b-install">📲 Installer l'appli</button>
-        <button class="btn small" id="b-share">💬 Partager sur WhatsApp</button>
+      <div class="menu row icons">
+        <button class="ico" id="b-trophies"><i>🏅</i>Trophées</button>
+        <button class="ico" id="b-scores"><i>🏆</i>Classement</button>
+        <button class="ico" id="b-settings"><i>⚙</i>Réglages</button>
+        <button class="ico" id="b-mute"><i>🔊</i>Son</button>
+        <button class="ico" id="b-fs"><i>⛶</i>Plein écran</button>
+        <button class="ico" id="b-share"><i>💬</i>Partager</button>
+        <button class="ico hidden" id="b-install"><i>📲</i>Installer</button>
       </div>
       <div class="hint">PC : flèches ou ZQSD · Espace = saut · J / X = frapper · K / C = spécial · Échap = pause</div>
+    </section>
+
+    <!-- Autres modes (v3.12) -->
+    <section id="s-modes" class="screen">
+      <h2>AUTRES MODES</h2>
+      <div class="modes">
+        <button class="mode-card" id="b-rush"><i>💀</i><b>BOSS RUSH</b><small>Les 6 autres boss à la suite, la vie se reporte</small></button>
+        <button class="mode-card" id="b-surv"><i>🌊</i><b>SURVIE</b><small>Des vagues sans fin dans le monde de ton choix</small></button>
+        <button class="mode-card daily" id="b-daily"><i>📅</i><b>DÉFI DU JOUR</b><small>Le même défi pour tout le monde, un nouveau chaque jour</small></button>
+      </div>
+      <button class="btn small" data-go="s-title">← Retour</button>
     </section>
 
     <!-- Choix du personnage -->
@@ -96,8 +104,10 @@
         <div class="char-side">
           <div id="char-detail"></div>
           <div id="diff-pick" class="diff-pick"></div>
-          <button class="btn primary big" id="b-char-go">C'EST PARTI !</button>
-          <button class="btn small" data-go="s-title">← Retour</button>
+          <div class="char-go">
+            <button class="btn small" id="b-char-back">← Retour</button>
+            <button class="btn primary big" id="b-char-go">C'EST PARTI !</button>
+          </div>
         </div>
       </div>
     </section>
@@ -191,7 +201,7 @@
       <canvas id="daily-art" width="760" height="200"></canvas>
       <div class="daily-card" id="daily-card"></div>
       <div class="menu row">
-        <button class="btn small" data-go="s-title">← Retour</button>
+        <button class="btn small" data-go="s-modes">← Retour</button>
         <button class="btn primary big" id="b-daily-go">RELEVER LE DÉFI !</button>
       </div>
       <div class="sub" id="daily-src"></div>

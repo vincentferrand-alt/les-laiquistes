@@ -3,10 +3,12 @@
 // ============================================================
 const BOSS_SPECIAL = { christian: 'truelle', guilhem: 'rolex', fateh: 'imperatif', faouzi: 'cartouches', venum: 'direct', senoussi: 'agneaux', purf: 'fumee' };
 const PX = 3; // taille d'un "pixel" dans le monde rétro de Faouzi
+const SAFE = { right: 0.95, left: 1 }; // part de la largeur des commandes tactiles interdite aux personnages (v3.12) [avant : 0,85 à droite, 0 à gauche]
 
 const Game = {
   canvas: null, ctx: null, dpr: 1, s: 1, ox: 0, oy: 0, VW: 960,
   marginR: 0, // largeur (unités du jeu) masquée à droite par les boutons tactiles
+  marginL: 0, // largeur masquée à gauche par le joystick (v3.12)
   running: false, paused: false, onEnd: null,
 
   init() {
@@ -39,21 +41,23 @@ const Game = {
     this.updateSafeArea();
   },
 
-  // Sur téléphone, les boutons FRAPPE / SAUT / SPÉCIAL couvrent le bas à droite de l'écran,
-  // c'est-à-dire justement le sol. On mesure leur place pour réduire la zone jouable utile.
+  // Sur téléphone, les boutons (à droite) et le joystick (à gauche) couvrent le bas de l'écran, c'est-à-dire justement le sol.
+  // On mesure leur place pour réduire la zone jouable : ni le héros ni les ennemis n'y entrent.
+  // Réglages : SAFE.right et SAFE.left (1 = toute la largeur des commandes est protégée, 0 = rien).
   updateSafeArea() {
-    this.marginR = 0;
     const ctl = document.getElementById('controls');
-    if (!ctl || ctl.classList.contains('hidden') || !ctl.classList.contains('touch')) return;
-    const jump = ctl.querySelector('.pad.jump');
-    if (!jump) return;
-    const r = jump.getBoundingClientRect();
-    if (!r.width) return;
-    const fromRight = window.innerWidth - r.left; // px CSS depuis le bord droit
-    this.marginR = clamp(fromRight / this.s * 0.85 - (window.innerWidth - (this.ox + this.VW * this.s)) / this.s, 0, this.VW * 0.3);
+    if (!ctl || ctl.classList.contains('hidden') || !ctl.classList.contains('touch')) { this.marginR = 0; this.marginL = 0; return; }
+    const horsJeuD = (window.innerWidth - (this.ox + this.VW * this.s)) / this.s, horsJeuG = this.ox / this.s; // bandes noires éventuelles sur les côtés
+    const jump = ctl.querySelector('.pad.jump'), r = jump && jump.getBoundingClientRect();
+    if (r && r.width) this.marginR = clamp((window.innerWidth - r.left) / this.s * SAFE.right - horsJeuD, 0, this.VW * 0.3);
+    // à gauche : le socle du joystick, à sa place de repos (pendant qu'on le touche il suit le pouce : on garde alors la dernière mesure)
+    const base = document.getElementById('stick-base'), b = base && !Input.stick.active && base.getBoundingClientRect();
+    if (b && b.width) this.marginL = clamp(b.right / this.s * SAFE.left - horsJeuG, 0, this.VW * 0.25);
   },
   // Zone visible ET jouable (en coordonnées du monde)
-  bounds() { return { L: this.camX, R: this.camX + this.VW - this.marginR }; },
+  bounds() { return { L: this.camX + this.marginL, R: this.camX + this.VW - this.marginR }; },
+  // Bords réels de l'écran (pour faire apparaître ce qui arrive de l'extérieur : ennemis, voiture…)
+  edges() { return { L: this.camX, R: this.camX + this.VW }; },
   // Côté d'apparition des ennemis : 60 % par la droite, 40 % par la gauche (true = droite)
   spawnFromRight() { return Math.random() < 0.6; },
 
@@ -96,7 +100,7 @@ const Game = {
       this.camX = this.levelLen - this.VW; this.hero.x = this.camX + 220; // déclenche tout de suite l'arrivée du boss
       this.hazardT = 9;
     } else if (this.mode === 'survival') { // Survie : arène fixe, vagues sans fin
-      this.waves = []; this.camX = 900; this.lockMax = this.camX; this.hero.x = this.camX + (this.VW - this.marginR) * 0.4;
+      this.waves = []; this.camX = 900; this.lockMax = this.camX; this.hero.x = this.camX + this.marginL + (this.VW - this.marginL - this.marginR) * 0.4;
     }
     this.tiersStart(o); // mini-boss, point de reprise, GO, aides (tiers.js)
     this.rageStart();   // armes, pote, ennemi visé (rage.js)
@@ -420,7 +424,7 @@ const Game = {
       case 'agneaux':
         f.say(pick(['Alors là !', 'Que le Chapiste soit avec moi !']));
         { // les agneaux arrivent tous du même côté (60 % droite / 40 % gauche)
-          const right = this.spawnFromRight(), B = this.bounds();
+          const right = this.spawnFromRight(), B = this.edges();
           for (let i = 0; i < (f.isBoss ? BALANCE.boss.lambs : 4); i++) this.spawnEnemy('agneau', { x: right ? B.R + 40 + i * 50 : B.L - 40 - i * 50, y: rand(GROUND_TOP + 20, GROUND_BOTTOM - 10) });
         }
         break;
@@ -514,7 +518,7 @@ const Game = {
       if (!d.fired && d.t >= d.warn) { d.fired = true; this.dangerFire(d); }
       // objets qui traversent l'écran (voiture, tourbillon)
       if (d.type === 'car' || d.type === 'devil') {
-        if (d.cx === undefined) d.cx = d.vx > 0 ? B.L - 180 : B.R + 180;
+        if (d.cx === undefined) { const E = this.edges(); d.cx = d.vx > 0 ? E.L - 180 : E.R + 180; } // la voiture arrive de l'extérieur de l'écran
         if (d.t >= d.warn) d.cx += d.vx * dt;
       }
       if (!on) return;
@@ -647,6 +651,9 @@ const Game = {
         this.text(h.x, h.y, h.height + 20, '+25 MIAM', '#2ecc71', 22);
       }
     });
+    // v3.12 : un objet visible mais tombé sous le joystick ou les boutons glisse vers la zone jouable (sinon il serait impossible à ramasser)
+    const B = this.bounds(), E = this.edges();
+    this.pickups.forEach(p => { if (p.x > E.L && p.x < B.L + 30) p.x += 140 * dt; else if (p.x < E.R && p.x > B.R - 30) p.x -= 140 * dt; });
     this.pickups = this.pickups.filter(p => p.life > 0);
   },
 
@@ -676,7 +683,7 @@ const Game = {
   },
 
   // Les ennemis restent ENTIÈREMENT dans la zone visible (et non masquée par les boutons).
-  // À l'apparition, ils glissent vers l'intérieur et sont posés au bord au plus tard après 0,7 s ; ensuite ils n'en ressortent plus.
+  // À l'apparition (au bord réel de l'écran), ils avancent vers la zone jouable et y sont posés au plus tard après 1,6 s ; ensuite ils n'en ressortent plus.
   keepInView(e, dt) {
     const B = this.bounds(), m = 8 + e.halfW;
     const L = B.L + m, R = B.R - m;
@@ -689,7 +696,7 @@ const Game = {
     e.offT += dt;
     const dir = e.x < L ? 1 : -1;
     e.x += dir * Math.max(260, e.speed * 1.4) * dt;
-    if (e.offT > 0.7) { e.x = dir > 0 ? L : R; e.entered = true; e.offT = 0; this.dust(e.x, e.y, 4); }
+    if (e.offT > 1.6) { e.x = dir > 0 ? L : R; e.entered = true; e.offT = 0; this.dust(e.x, e.y, 4); }
   },
 
   contact(e, knockdown) {
@@ -812,8 +819,8 @@ const Game = {
 
   spawnEnemy(kind, o = {}) {
     const fromRight = o.fromRight !== undefined ? o.fromRight : this.spawnFromRight();
-    const B = this.bounds();
-    const x = o.x !== undefined ? o.x : fromRight ? B.R + 40 : B.L - 40; // juste derrière le bord : il entre tout de suite
+    const B = this.edges();
+    const x = o.x !== undefined ? o.x : fromRight ? B.R + 40 : B.L - 40; // juste derrière le bord de l'écran : il entre tout de suite
     const y = o.y !== undefined ? o.y : rand(GROUND_TOP + 20, GROUND_BOTTOM - 10);
     const m = MINIONS[kind];
     const e = new Fighter(kind, 'enemy', x, y, {
@@ -985,7 +992,7 @@ const Game = {
 
   // ---------- progression ----------
   updateCamera(dt) {
-    const target = this.hero.x - (this.VW - this.marginR) * 0.42;
+    const target = this.hero.x - this.marginL - (this.VW - this.marginL - this.marginR) * 0.42; // le héros à 42 % de la zone jouable
     let nx = this.camX + (target - this.camX) * Math.min(1, dt * 5);
     nx = Math.max(this.camX, nx);
     nx = Math.min(nx, this.lockMax, this.levelLen - this.VW);
@@ -1084,7 +1091,7 @@ const Game = {
     this.spawnT = 0.4;
     if (this.survWave > 1) { Sfx.jingle('stage'); this.addScore(100 * (this.survWave - 1)); if (this.hero.state === 'idle') this.hero.setState('taunt', 0.8); }
     if (this.survWave % S.bossEvery === 0) { // retour du boss du monde
-      const B = this.bounds(), right = this.spawnFromRight();
+      const B = this.edges(), right = this.spawnFromRight();
       const b = this.makeBoss(right ? B.R + 80 : B.L - 80, (GROUND_TOP + GROUND_BOTTOM) / 2, S.bossHpMul);
       this.bossLine(b); this.survBoss = b;
       this.cineT = 2.4; this.bossCard = { name: b.def.name.toUpperCase(), title: b.def.title, col: b.def.light, kind: b.kind, splash: true, dur: 2.4 };
@@ -1325,6 +1332,7 @@ const Game = {
 
   renderHUD(ctx) {
     const h = this.hero, VW = this.VW;
+    ctx.lineJoin = 'round'; // (sinon le contour des textes fait des pointes noires sur certaines lettres, comme le M)
     ctx.save();
     ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.roundRect(10, 10, 280, 74, 14); ctx.fill();
@@ -1352,15 +1360,15 @@ const Game = {
     this.evHUD(ctx, VW);     // événement en cours (events.js)
     this.extrasHUD(ctx, VW); // bonus en cours, chrono, messages (extras.js)
     this.rageHUD(ctx, VW);   // pote, arme en main, ennemi visé (rage.js)
-    ctx.textAlign = 'center'; ctx.font = '900 17px "Arial Black", Arial'; ctx.fillStyle = '#fff';
-    ctx.strokeText(this.world.name, VW / 2, 28); ctx.fillText(this.world.name, VW / 2, 28);
+    // v3.12 : le nom du monde n'est plus affiché pendant le jeu (il est annoncé en grand au début)
+    ctx.textAlign = 'center'; ctx.lineWidth = 5; ctx.strokeStyle = '#000';
     if (this.mode === 'survival') { // Survie : numéro de vague
       ctx.font = '900 20px "Arial Black", Arial'; ctx.fillStyle = '#feca57';
-      ctx.strokeText('SURVIE — VAGUE ' + Math.max(1, this.survWave), VW / 2, 54); ctx.fillText('SURVIE — VAGUE ' + Math.max(1, this.survWave), VW / 2, 54);
+      ctx.strokeText('SURVIE — VAGUE ' + Math.max(1, this.survWave), VW / 2, 34); ctx.fillText('SURVIE — VAGUE ' + Math.max(1, this.survWave), VW / 2, 34);
     } else if (this.mode === 'bossrush') {
-      ctx.font = '900 15px "Arial Black", Arial'; ctx.fillStyle = '#ff6b6b';
+      ctx.font = '900 16px "Arial Black", Arial'; ctx.fillStyle = '#ff6b6b';
       const lbl = 'BOSS RUSH ' + (UI.run.idx + 1) + ' / ' + UI.run.order.length;
-      ctx.strokeText(lbl, VW / 2, 50); ctx.fillText(lbl, VW / 2, 50);
+      ctx.strokeText(lbl, VW / 2, 32); ctx.fillText(lbl, VW / 2, 32);
     } else {
       this.drawTierBar(ctx, VW); // barre avec les 3 repères : mini-boss, épreuve, boss (tiers.js)
     }
