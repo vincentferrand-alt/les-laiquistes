@@ -18,7 +18,7 @@
 
 // ---------- Réglages ----------
 const EXTRA = {
-  powerCrate: 0.3,     // chance qu'une caisse lâche un bonus temporaire (avant l'objet à lancer / la nourriture)
+  powerCrate: 0.3,     // chance qu'une caisse lâche un bonus temporaire (avant l'arme / la nourriture)
   goldHpMul: 2.2,      // l'ennemi en or est plus solide…
   goldSpeed: 1.1,      // … et un peu plus rapide
   goldFlee: 12,        // il s'échappe au bout de n secondes

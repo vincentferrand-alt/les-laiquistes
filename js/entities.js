@@ -256,11 +256,7 @@ class Fighter {
         ctx.lineJoin = 'round'; ctx.lineWidth = 4; ctx.strokeStyle = '#000'; ctx.fillStyle = this.isBoss ? '#f1c40f' : '#ffeaa7';
         ctx.strokeText(name, sx, top); ctx.fillText(name, sx, top);
       }
-      if (!this.isBoss && !this.isMini) { // (le mini-boss a sa grande barre en bas de l'écran)
-        const bw = 40, f = this.hp / this.maxHp;
-        ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(sx - bw / 2 - 1, top + 5, bw + 2, 6);
-        ctx.fillStyle = this.golden ? '#ffd32a' : f > 0.5 ? '#2ecc71' : f > 0.25 ? '#f39c12' : '#e74c3c'; ctx.fillRect(sx - bw / 2, top + 6, bw * f, 4);
-      }
+      // v3.13 : plus de petite barre de vie au-dessus des têtes ; la vie de l'ennemi visé est sous le panneau du héros (rage.js)
       if (this.state === 'windup') {
         ctx.font = '900 30px Arial'; ctx.fillStyle = '#ff4757'; ctx.strokeStyle = '#000'; ctx.lineWidth = 4; ctx.textAlign = 'center';
         ctx.strokeText('!', sx, top - 14); ctx.fillText('!', sx, top - 14);

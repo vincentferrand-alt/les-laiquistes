@@ -15,7 +15,7 @@
 const RAGE = {
   specialShare: 0.35,   // part des ennemis spéciaux dans la vague du 3e tiers et les renforts du boss
   fromDecor: 0.3,       // part des ennemis de vague qui sortent du décor
-  weaponCrate: 0.3,     // chance qu'une caisse lâche une arme (après le bonus temporaire)
+  weaponCrate: 0.5,     // chance qu'une caisse lâche une arme (après le bonus temporaire) ; sinon : de la nourriture   [avant la v3.13 : 0,3, puis 60 % d'objet à lancer]
   weapon: { hits: 8, dmg: 1.6, reach: 28 },
   pote: { dmg: 60, bossDmg: 30, speed: 1150 },
   boomR: 115,           // rayon de l'explosion du fût radioactif
@@ -173,7 +173,7 @@ const Rage = {
   },
 
   // ---------- F. ennemi visé ----------
-  setTarget(o) { if (o && o.team === 'enemy' && !o.isBoss && !o.isMini && !o.golden) this.target = { e: o, t: 3 }; },
+  setTarget(o) { if (o && o.team === 'enemy' && !o.isBoss && !o.isMini) this.target = { e: o, t: 3 }; }, // (boss et mini-boss ont leur grande barre en bas)
 
   // ---------- rendu ----------
   rageDrawGround(ctx, cx) { // bouches d'égout d'où sortent les ennemis
@@ -211,34 +211,35 @@ const Rage = {
       if (ready && !Input.isTouch) { ctx.font = 'bold 9px Arial'; ctx.fillStyle = '#fff'; ctx.fillText('L', 0, 26); }
       ctx.restore();
     }
-    // arme en main
+    // ennemi visé (le dernier touché) : petite tête, nom et barre de vie, sous le panneau du héros, comme dans Streets of Rage.
+    // C'est la seule barre de vie des ennemis courants (v3.13).
+    const tg = this.target, shown = tg && tg.e && !tg.e.remove;
+    if (shown) {
+      const e = tg.e, f = clamp(e.hp / e.maxHp, 0, 1), x = 10, y = 90, a = Math.min(1, tg.t * 3);
+      ctx.save(); ctx.globalAlpha = a;
+      ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.roundRect(x, y, 280, 38, 12); ctx.fill(); ctx.stroke();
+      ctx.save(); ctx.beginPath(); ctx.arc(x + 22, y + 19, 15, 0, Math.PI * 2); ctx.fillStyle = e.golden ? '#ffe9a0' : '#dfe6e9'; ctx.fill(); ctx.clip();
+      const s = Math.min(0.6, 34 / Math.max(30, e.def.bh * 0.55));
+      ctx.translate(x + 22, y + 19 + e.def.bh * s * 0.55); drawMinion(ctx, e.kind, { dir: 1, scale: s, t: e.t, variant: e.variant, label: e.label });
+      ctx.restore();
+      ctx.beginPath(); ctx.arc(x + 22, y + 19, 15, 0, Math.PI * 2); ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.font = '900 12px "Arial Black", Arial'; ctx.textAlign = 'left'; ctx.fillStyle = e.dead ? '#ff6b6b' : e.golden ? '#ffd32a' : '#fff';
+      ctx.fillText((e.golden ? 'ENNEMI EN OR' : e.def.name.toUpperCase()) + (e.dead ? ' — K.O.' : ''), x + 44, y + 15);
+      ctx.fillStyle = '#300'; ctx.fillRect(x + 44, y + 21, 226, 9);
+      ctx.fillStyle = e.golden ? '#ffd32a' : f > 0.5 ? '#2ecc71' : f > 0.25 ? '#f39c12' : '#e74c3c'; ctx.fillRect(x + 44, y + 21, 226 * f, 9);
+      ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.strokeRect(x + 44, y + 21, 226, 9);
+      ctx.restore();
+    }
+    // arme en main (juste en dessous)
     const w = this.hero.weapon;
     if (w) {
-      const y = 90;
+      const y = shown ? 134 : 90;
       ctx.save(); ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.roundRect(10, y, 210, 26, 10); ctx.fill(); ctx.stroke();
       ctx.font = '900 12px "Arial Black", Arial'; ctx.textAlign = 'left'; ctx.fillStyle = '#7bed9f';
       ctx.fillText('🔨 ' + WEAPON_NAME[w.type], 18, y + 17);
       for (let i = 0; i < RAGE.weapon.hits; i++) { ctx.fillStyle = i < w.hits ? '#7bed9f' : '#2d3436'; ctx.fillRect(150 + i * 8, y + 8, 6, 10); }
-      ctx.restore();
-    }
-    // ennemi visé : nom, petite tête et barre de vie (en haut à droite, sous le score)
-    const tg = this.target;
-    if (tg && tg.e && !tg.e.remove) {
-      const e = tg.e, f = clamp(e.hp / e.maxHp, 0, 1), x = VW - 90 - 250, y = 52, a = Math.min(1, tg.t * 3);
-      ctx.save(); ctx.globalAlpha = a;
-      ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.roundRect(x, y, 250, 38, 12); ctx.fill(); ctx.stroke();
-      ctx.save(); ctx.beginPath(); ctx.arc(x + 22, y + 19, 15, 0, Math.PI * 2); ctx.fillStyle = '#dfe6e9'; ctx.fill(); ctx.clip();
-      const s = Math.min(0.6, 34 / Math.max(30, e.def.bh * 0.55));
-      ctx.translate(x + 22, y + 19 + e.def.bh * s * 0.55); drawMinion(ctx, e.kind, { dir: 1, scale: s, t: e.t, variant: e.variant, label: e.label });
-      ctx.restore();
-      ctx.beginPath(); ctx.arc(x + 22, y + 19, 15, 0, Math.PI * 2); ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.stroke();
-      ctx.font = '900 12px "Arial Black", Arial'; ctx.textAlign = 'left'; ctx.fillStyle = e.dead ? '#ff6b6b' : '#fff';
-      ctx.fillText(e.def.name.toUpperCase() + (e.dead ? ' — K.O.' : ''), x + 44, y + 15);
-      ctx.fillStyle = '#300'; ctx.fillRect(x + 44, y + 21, 196, 9);
-      ctx.fillStyle = f > 0.5 ? '#2ecc71' : f > 0.25 ? '#f39c12' : '#e74c3c'; ctx.fillRect(x + 44, y + 21, 196 * f, 9);
-      ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.strokeRect(x + 44, y + 21, 196, 9);
       ctx.restore();
     }
   },

@@ -66,23 +66,87 @@ const BALANCE = {
     fateh: { hazardEvery: 0.8 },
   },
   diveMul: 1.8,             // dégâts du coup plongeant (× dégâts du héros)
-  // NIVEAUX DE DIFFICULTÉ 1 à 3 (v3.4) — multiplient tout le reste. Le niveau 2 = l'équilibrage de la v3.3.
-  // Finir le mode histoire en niveau N débloque le niveau N+1 (pour tous les héros) ; ensuite on choisit librement.
-  levels: {
-    1: { name: 'Tranquille', enemyHp: 0.8, enemyDmg: 0.7, enemyCd: 1.2, maxAlive: -1, extraPerWave: -1,
-         bossHp: 0.8, bossDmg: 0.7, bossCd: 1.15, windup: 1.2, combo: 0, phase2At: 0.6,
-         hazardEvery: 1.3, hazardDmg: 0.7, food: 1.35, score: 1 },
-    2: { name: 'Costaud', enemyHp: 1, enemyDmg: 1, enemyCd: 1, maxAlive: 0, extraPerWave: 0,
-         bossHp: 1, bossDmg: 1, bossCd: 1, windup: 1, combo: 0, phase2At: 0.6,
-         hazardEvery: 1, hazardDmg: 1, food: 1, score: 1.5 },
-    3: { name: 'Laïque ultime', enemyHp: 1.3, enemyDmg: 1.3, enemyCd: 0.85, maxAlive: 1, extraPerWave: 1,
-         bossHp: 1.3, bossDmg: 1.3, bossCd: 0.85, windup: 0.85, combo: 0.15, phase2At: 0.8,
-         hazardEvery: 0.8, hazardDmg: 1.25, food: 0.7, score: 2 },
-  },
+  levels: {},               // les 3 niveaux de difficulté : voir LEVEL_TABLE juste en dessous
   survival: { baseCount: 4, perWave: 1.2, maxCount: 14, diffPerWave: 0.05, bossEvery: 5, bossHpMul: 0.7,
               miniFrom: 3, miniEvery: 5 }, // mini-boss du monde aux vagues 3, 8, 13… (v3.9)
   // mini-boss (v3.9) : PV × difficulté × niveau, dégâts, barre en 3 niveaux
   mini: { hpMul: 1, dmgMul: 0.9, tiers: 3, windupSpecial: 0.8, specialDmg: 0.5, heal: 25, score: 500 },
+};
+
+// ============================================================
+//  NIVEAUX DE DIFFICULTÉ — LE tableau à régler (v3.13). Une ligne par réglage, une colonne par niveau.
+//  Ces valeurs multiplient les réglages généraux de BALANCE ci-dessus. Le niveau « Costaud » = l'équilibrage de la v3.3.
+//  Finir le mode histoire dans un niveau débloque le suivant (pour tous les héros) ; ensuite on choisit librement.
+// ============================================================
+const LEVEL_TABLE = {
+  //                Tranquille   Costaud   Laïque ultime
+  name:           ['Tranquille', 'Costaud', 'Laïque ultime'],
+  // --- ennemis courants ---
+  enemyHp:        [0.8,          1,         1.3 ],   // vie
+  enemyDmg:       [0.7,          1,         1.3 ],   // dégâts
+  enemyCd:        [1.2,          1,         0.85],   // délai entre leurs attaques (plus grand = plus calme)
+  maxAlive:       [-1,           0,         1   ],   // ennemis en même temps, en plus ou en moins (base : BALANCE.enemies.maxAlive)
+  extraPerWave:   [-1,           0,         1   ],   // ennemis par vague, en plus ou en moins
+  // --- boss et mini-boss ---
+  bossHp:         [0.8,          1,         1.3 ],   // vie
+  bossDmg:        [0.7,          1,         1.3 ],   // dégâts
+  bossCd:         [1.15,         1,         0.85],   // délai entre leurs attaques
+  windup:         [1.2,          1,         0.85],   // durée de préparation des attaques (le « ! ») — vaut aussi pour les épreuves
+  combo:          [0,            0,         0.15],   // chance en plus que le boss enchaîne un 2e coup
+  phase2At:       [0.6,          0.6,       0.8 ],   // le boss passe en phase 2 quand il lui reste cette part de vie
+  // --- dangers du décor, nourriture, score ---
+  hazardEvery:    [1.3,          1,         0.8 ],   // délai entre deux dangers
+  hazardDmg:      [0.7,          1,         1.25],   // dégâts des dangers
+  food:           [1.35,         1,         0.7 ],   // chance qu'un ennemi lâche de la nourriture
+  score:          [1,            1.5,       2   ],   // multiplicateur de score
+};
+[1, 2, 3].forEach(n => { const L = BALANCE.levels[n] = {}; for (const k in LEVEL_TABLE) L[k] = LEVEL_TABLE[k][n - 1]; });
+
+// ============================================================
+//  TUNING — LA fonction de calcul (v3.13). C'est le SEUL endroit où l'on calcule la vie, les dégâts et les délais
+//  des adversaires (avant : les formules étaient réparties entre spawnEnemy, makeBoss, makeMini, think…).
+//  Tout est un produit de trois choses :
+//    1. la fiche de l'adversaire (MINIONS, MINIBOSSES, CHARACTERS) ;
+//    2. les réglages généraux (BALANCE) et ceux du monde (BALANCE.perWorld, g.pw) ;
+//    3. la difficulté : g.diff = difficulté du monde (elle monte au fil de l'histoire et des vagues de Survie)
+//       et g.L = la colonne du niveau choisi dans LEVEL_TABLE.
+//  g : la partie en cours (l'objet Game).
+// ============================================================
+const Tuning = {
+  // ennemi courant · o.mustKill : entourage d'un boss · o.hpMul : multiplicateur ponctuel (ennemi en or…)
+  enemy(g, kind, o = {}) {
+    const m = MINIONS[kind], E = BALANCE.enemies, pw = g.pw || {};
+    return {
+      hp: m.hp * g.diff * (o.hpMul || 1) * (o.mustKill ? BALANCE.boss.entourageHpMul : E.hpMul * (pw.minionHp || 1)) * g.L.enemyHp,
+      dmg: m.dmg * (0.85 + g.diff * 0.15) * (o.mustKill ? 1 : E.dmgMul * (pw.minionDmg || 1)) * g.L.enemyDmg,
+    };
+  },
+  // boss du monde · hpMul : multiplicateur ponctuel (retour du boss en Survie)
+  boss(g, hpMul = 1) {
+    const w = g.world, c = CHARACTERS[w.boss], B = BALANCE.boss, d = this.bossDiff(g), pb = (B.perBoss && B.perBoss[w.boss]) || {};
+    return {
+      hp: c.hp * (w.entourage ? B.hpMulEntourage : B.hpMul) * d * hpMul * (pb.hp || 1) * g.L.bossHp,
+      dmg: c.dmg * B.dmgMul * d * (pb.dmg || 1) * g.L.bossDmg,
+    };
+  },
+  // mini-boss
+  mini(g, kind, hpMul = 1) {
+    const def = MINIBOSSES[kind], M = BALANCE.mini;
+    return { hp: def.hp * M.hpMul * g.diff * g.L.bossHp * hpMul, dmg: def.dmg * M.dmgMul * (0.85 + g.diff * 0.15) * g.L.bossDmg };
+  },
+  // les boss ne subissent qu'une partie de la difficulté du monde (BALANCE.boss.diffScale)
+  bossDiff(g) { return 1 + (g.diff - 1) * BALANCE.boss.diffScale; },
+  bossDmgK(g) { return this.bossDiff(g) * g.L.bossDmg; }, // dégâts des attaques spéciales et de phase 2 des boss
+  // dégâts d'une attaque spéciale (base = dégâts de la fiche de l'attaque) ; celles du héros ne changent pas
+  specialDmg(g, f, base) {
+    if (f.team === 'hero') return base;
+    return f.isBoss ? base * BALANCE.boss.specialDmgMul * this.bossDmgK(g) : base * 0.55 * g.diff * 0.8 * g.L.enemyDmg;
+  },
+  // délai avant la prochaine attaque : [min, max] en secondes
+  enemyCd(g, range) { return rand(range[0], range[1]) / Math.sqrt(g.diff) * BALANCE.enemies.cdMul * g.L.enemyCd; },
+  bossCd(g, e, range) { return rand(range[0], range[1]) * (e.tierCd || 1) * g.L.bossCd; },
+  // nombre d'ennemis en plus dans une vague
+  extraPerWave(g) { return Math.max(0, Math.floor((g.diff - 1) * 6) + ((g.pw || {}).extraPerWave || 0) + g.L.extraPerWave); },
 };
 
 // ============================================================

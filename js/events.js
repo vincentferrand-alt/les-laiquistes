@@ -255,7 +255,7 @@ const Events = {
       } });
       ev.balls.forEach(b => list.push({ y: b.y, draw: () => {
         ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(b.x - cx, b.y, 12, 4, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.save(); ctx.translate(b.x - cx, b.y - b.z - 11); drawThrowItem(ctx, 'boule', b.t < b.dur ? b.t : 0); ctx.restore();
+        ctx.save(); ctx.translate(b.x - cx, b.y - b.z - 11); drawBoule(ctx, b.t < b.dur ? b.t : 0); ctx.restore();
       } }));
     }
   },
@@ -331,4 +331,12 @@ function drawThiefDrone(ctx, t) {
   // la batterie volée, pendue en dessous
   ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(0, -10); ctx.stroke();
   rrect(ctx, -8, -10, 16, 22, 3, '#2d3436'); ctx.fillStyle = '#7bed9f'; ctx.fillRect(-5, -2, 10, 10);
+}
+
+// boule de pétanque (épreuve du monde de Fateh) — elle tourne sur elle-même
+function drawBoule(ctx, t) {
+  ctx.save(); ctx.strokeStyle = INK; ctx.lineWidth = 2.5; ctx.rotate(t * 12);
+  const g = ctx.createRadialGradient(-4, -4, 1, 0, 0, 12); g.addColorStop(0, '#fff'); g.addColorStop(0.4, '#bdc3c7'); g.addColorStop(1, '#636e72');
+  circle(ctx, 0, 0, 12, g); ctx.beginPath(); ctx.moveTo(-10, -4); ctx.lineTo(10, -4); ctx.moveTo(-10, 4); ctx.lineTo(10, 4); ctx.stroke();
+  ctx.restore();
 }

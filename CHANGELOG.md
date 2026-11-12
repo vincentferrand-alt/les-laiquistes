@@ -1,3 +1,23 @@
+# Les laïquistes — v3.13.0 : élagage
+
+Troisième étape de la refonte (3/9). Cette version retire ou simplifie quatre choses.
+
+## Ce qui disparaît ou change
+- **Les objets à lancer disparaissent** (brique, vinyle, boule, cartouche, batterie, jarre, bidon). Une caisse donne maintenant un bonus (30 %), une arme à manier (35 %) ou de la nourriture (35 %). Avant : bonus 30 %, arme 21 %, objet à lancer 29 %, nourriture 20 %.
+  - Attraper et lancer un ennemi ne change pas. Les trophées « Strike ! » et « Lanceur » se gagnent toujours en lançant des ennemis.
+  - Défi du jour « Déménagement » : « toujours une arme ou un bonus » au lieu de « toujours un objet à lancer ».
+  - Le tableau des commandes (pause) explique l'arme à la place de l'objet à lancer.
+- **Une seule barre de vie par ennemi courant** : les petites barres au-dessus des têtes disparaissent. La barre de l'ennemi visé (le dernier touché) passe sous le panneau du héros, comme dans Streets of Rage. L'ennemi en or y apparaît aussi, en doré. Boss et mini-boss gardent leur grande barre en bas.
+- **Les niveaux des héros ne donnent plus de vie ni de force** (c'était +3 % et +2 % par niveau, soit jusqu'à +27 % et +18 %). Le classement partagé et le défi du jour deviennent équitables. Le niveau reste affiché, sous le nom de **grade** ; l'expérience et le trophée « Vétéran » restent.
+  - ⚠ Un héros déjà monté en niveau sera donc un peu moins fort qu'avant.
+
+## Équilibrage regroupé (aucune valeur ne change)
+- Un seul tableau par niveau de difficulté, `LEVEL_TABLE` dans `js/data.js` : une ligne par réglage, une colonne par niveau (Tranquille, Costaud, Laïque ultime).
+- Une seule fonction de calcul, `Tuning` (dans `js/data.js`) : vie, dégâts et délais des ennemis, des mini-boss et des boss. Avant, les formules étaient réparties dans quatre fichiers.
+- Vérification : `tests/equilibrage.js` relève la vie et les dégâts de chaque adversaire dans le vrai jeu (3 niveaux × 4 situations × 7 mondes, 744 lignes). Le relevé est identique avant et après.
+
+---
+
 # Les laïquistes — v3.12.0 : l'écran de téléphone
 
 Deuxième étape de la refonte (2/9). Rien ne disparaît ; trois boutons du titre ont changé de place (voir « Menu titre »).
