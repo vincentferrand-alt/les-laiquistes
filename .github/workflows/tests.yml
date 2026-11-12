@@ -1,0 +1,26 @@
+# Tests automatiques : lancés par GitHub à chaque demande de fusion (et à la main : onglet Actions → « Tests automatiques » → Run workflow).
+# Un Chrome sans fenêtre ouvre le jeu et un robot y joue. Une coche verte = tout va bien ; une croix rouge = ne pas fusionner.
+#  - tests/fumee.js     : chaque monde, chaque boss et une Survie démarrent et tournent sans erreur JavaScript ;
+#  - tests/martelage.js : en martelant FRAPPE sans bouger, au moins 8 coups sur 9 touchent, pour les 7 héros.
+name: Tests automatiques
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Playwright (l'outil qui pilote Chrome) n'est installé que sur le serveur de test : rien n'est ajouté au jeu
+      - run: npm install --no-save playwright@1
+      - run: npx playwright install --with-deps chromium
+      - name: Le jeu tourne sans erreur
+        run: node tests/fumee.js
+      - name: Les coups touchent
+        run: node tests/martelage.js

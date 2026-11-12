@@ -189,12 +189,13 @@ const Game = {
         else if (Input.consume('attack')) {
           if (this.heldItem) this.throwItem(); // objet en main : on le lance
           // en l'air ET en train de redescendre : coup plongeant
-          else if (h.z > 25 && h.vz < 0) h.startDive(); else h.startAttack();
+          else if (h.z > 25 && h.vz < 0) h.startDive(); else { h.startAttack(); this.heroSwing(h); }
         }
       } else {
         if (h.state === 'attack' && h.st > 0.1 && Input.consume('attack')) h.queued = true;
         if (h.z > 0 && (h.state === 'attack' || h.state === 'dive')) h.x += Input.mx * h.speed * 0.6 * dt;
         if (h.state === 'dive') h.y += Input.my * h.speed * 0.4 * dt;
+        this.heroStep(h, dt); // petit pas en avant pendant l'élan du coup (v3.11)
       }
       this.updateAction(h, dt);
       const B = this.bounds();
@@ -205,13 +206,41 @@ const Game = {
     h.remove = false;
   },
 
+  // ---------- des coups qui touchent (v3.11) — réglages : FEEL dans data.js ----------
+  // Au départ de chaque coup donné au sol, le héros repère l'ennemi le plus proche devant lui…
+  heroSwing(h) {
+    h.stepLeft = h.z <= 0 ? FEEL.step : 0; h.aimLeft = FEEL.aimY; h.aim = null;
+    let best = 1e9;
+    this.opponents(h).forEach(o => {
+      if (o.grabbed || o.fly) return;
+      const dx = (o.x - h.x) * h.dir, dy = Math.abs(o.y - h.y);
+      if (dx < -18 || dx > h.halfW + h.reach + o.halfW * 0.6 + FEEL.aimX || dy > FEEL.aimDepth) return;
+      const d = dx + dy * 2; // le plus proche, en privilégiant ceux qui sont sur sa ligne
+      if (d < best) { best = d; h.aim = o; }
+    });
+  },
+  // … puis, pendant l'élan (avant l'impact), il fait un petit pas vers l'avant et se recale un peu en profondeur.
+  // Il s'arrête juste avant de marcher sur l'ennemi visé, et la limite de l'écran est appliquée juste après (updateHero).
+  heroStep(h, dt) {
+    if (h.state !== 'attack' || h.hitDone || h.z > 0 || !(h.stepLeft > 0 || h.aimLeft > 0)) return;
+    const k = dt / (h.stateDur * 0.35); // part de l'élan écoulée pendant cette image
+    let step = Math.min(h.stepLeft, FEEL.step * k);
+    const o = h.aim && !h.aim.dead && !h.aim.grabbed ? h.aim : null;
+    if (o) {
+      step = clamp((o.x - h.x) * h.dir - (h.halfW + o.halfW + FEEL.gap), 0, step);
+      const dy = o.y - h.y, my = Math.sign(dy) * Math.min(Math.abs(dy), h.aimLeft, FEEL.aimY * k);
+      h.y += my; h.aimLeft -= Math.abs(my);
+    }
+    h.x += h.dir * step; h.stepLeft -= step;
+  },
+
   specialOf(f) { return f.team === 'hero' || f.isMini ? f.def.special : BOSS_SPECIAL[f.kind]; },
 
   updateAction(f, dt) {
     if (f.state === 'attack') {
       if (!f.hitDone && f.st >= f.stateDur * 0.35) { f.hitDone = true; this.resolveMelee(f); }
       if (f.st >= f.stateDur) {
-        if (f.queued) { f.comboT = 1; f.startAttack(); }
+        if (f.queued) { f.comboT = 1; f.startAttack(); if (f === this.hero) this.heroSwing(f); }
         else { f.setState('idle'); f.comboT = 0.45; if (f.combo >= 2) { f.combo = 0; f.comboT = 0; } }
       }
     } else if (f.state === 'taunt') {
@@ -295,7 +324,7 @@ const Game = {
   inMeleeZone(f, o, extra = 0) {
     const dx = (o.x - f.x) * f.dir;
     const reachX = f.halfW + f.reach + o.halfW * 0.6 + extra;
-    const depthTol = 26 + 9 * (f.scale + o.scale);
+    const depthTol = 26 + 9 * (f.scale + o.scale) + (f.team === 'hero' ? FEEL.heroDepth : 0); // un peu plus de tolérance pour le héros (v3.11)
     const zUp = f.team === 'hero' ? 175 : 90;
     return dx > -18 && dx < reachX && Math.abs(o.y - f.y) < depthTol && o.z <= f.z + zUp && o.z + o.height >= f.z - 20;
   },
