@@ -3,7 +3,6 @@
 //  v4.0 : les 7 laïquistes (drawCharacter et drawHead, draw.js, passent par ici).
 //  v4.1 : ouvrier, rappeur, skateur, papy, runner, indien, zombie, Mini-Fateh et costaud (drawMinion, draw.js).
 //  Les animaux, robots, ennemis pixelisés et objets gardent leur dessin (draw.js, rage.js).
-//  La page tools/planche.html montre toutes les poses, ancien et nouveau dessin côte à côte.
 //
 //  Principe : chaque personnage est un pantin — bassin, torse, tête, deux bras et deux jambes en deux
 //  segments, des mains et des pieds. Une POSE donne les angles des articulations ; le même pantin sert
@@ -15,10 +14,9 @@
 //  Ce fichier se charge après draw.js (il réutilise INK, SKIN, lerp, easeOut, rrect, circle, ell, poly).
 // ============================================================
 
-const P2 = { ol: 2.7, contour: 4.2, ancien: false }; // ol : épaisseur du trait intérieur · contour : gros contour autour de la silhouette
-// (ancien : mis à vrai par la planche de style, le temps de dessiner l'ancien personnage pour comparer)
+const P2 = { ol: 2.7, contour: 4.2 }; // ol : épaisseur du trait intérieur · contour : gros contour autour de la silhouette
 // Le pantin d'un personnage, s'il a été redessiné (sinon null : on garde l'ancien dessin)
-function persoRig(kind) { return P2.ancien ? null : (RIGS[kind] || null); }
+function persoRig(kind) { return RIGS[kind] || null; }
 
 // couleur assombrie (bras et jambe du fond)
 function p2Dark(hex, k = 0.74) {

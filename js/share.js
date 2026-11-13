@@ -51,7 +51,8 @@ const Share = {
     ctx.save(); ctx.scale(s, s);
     drawWorldBackground(ctx, w.id, VW, 900, 2.5);
     const shadow = (x, r) => { ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(x, GROUND_BOTTOM - 8, r, 12, 0, 0, Math.PI * 2); ctx.fill(); };
-    const hx = VW * 0.2, bx = VW * 0.42, hk = CHARACTERS[run.hero], bk = CHARACTERS[w.boss];
+    const hx = VW * (run.hero === 'fateh' ? 0.13 : 0.2), bx = VW * 0.42, // (v4.4 : Fateh recule, Aïka ne passe plus devant le boss)
+       hk = CHARACTERS[run.hero], bk = CHARACTERS[w.boss];
     const hs = 2.1 * 100 / Math.max(80, hk.bh), bs = (win ? 1.6 : 1.9) * 100 / Math.max(80, bk.bh);
     shadow(bx, 70); shadow(hx, 60);
     ctx.save(); ctx.translate(bx, GROUND_BOTTOM - 8);

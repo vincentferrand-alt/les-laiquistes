@@ -34,7 +34,7 @@ h2 { margin: 0; font-family: var(--fx); font-size: clamp(22px, 5vh, 40px); color
 }
 .logo span { display: block; font-size: .38em; color: #feca57; text-shadow: 3px 3px 0 #000; }
 @keyframes logoPulse { 50% { transform: rotate(-3deg) scale(1.04); } }
-#title-art { width: min(92vw, 900px); height: auto; max-height: 22vh; }
+#title-art { width: auto; max-width: 94vw; height: 30vh; max-height: 230px; }
 
 .menu { display: flex; flex-direction: column; gap: clamp(6px, 1.4vh, 12px); align-items: center; }
 .menu.row { flex-direction: row; flex-wrap: wrap; justify-content: center; }
@@ -196,7 +196,7 @@ h2, .logo, .win-title, .intro-name, .intro-step, .gameover, .b-title, .b-sub, .c
 @media (max-height: 500px) {
   #s-title .logo { font-size: clamp(30px, 10vh, 70px); }
   #s-title .logo span { -webkit-text-stroke: 1px #000; font-size: .5em; }
-  #title-art { max-height: 14vh; }
+  #title-art { height: 31vh; margin: -4px 0; }
 }
 
 /* ---------- Version, sauvegarde en ligne, bandeau de mise à jour, toast ---------- */

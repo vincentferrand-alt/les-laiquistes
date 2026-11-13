@@ -16,7 +16,7 @@
 // ============================================================
 
 const BETE = { gros: 1.23, ol: 2.4, pix: 6 }; // gros : agrandissement · ol : trait intérieur · pix : côté d'un carré du monde pixelisé
-function beteDessin(type) { return P2.ancien ? null : (BETES[type] || null); }
+function beteDessin(type) { return BETES[type] || null; }
 
 // humeur du visage selon la pose
 const bMood = pose => pose === 'down' ? 'ko' : pose === 'hurt' ? 'hurt' : (pose === 'attack' || pose === 'windup' || pose === 'special') ? 'angry' : 'calm';

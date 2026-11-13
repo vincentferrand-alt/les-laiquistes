@@ -1,3 +1,22 @@
+# Les laïquistes — v4.4.0 : écran titre, finitions, ménage
+
+Fin de la huitième étape de la refonte (8c-2). Tous les personnages du jeu ont maintenant le nouveau dessin.
+
+## Ce qui change
+- **Écran titre** : les héros débloqués posent côte à côte, environ deux fois plus grands qu'avant sur téléphone, et ne sont plus coupés en haut. Chacun son tour nargue ou lève les bras ; Aïka est à côté de Fateh.
+- **Nom des boss** : le nom et la bulle de Senoussi sont au-dessus de sa pelle au lieu de la chevaucher ; le « ! » d'élan est à côté du nom au lieu d'être dessus.
+- **Image de score** : avec Fateh, Aïka ne passe plus devant le boss.
+- Mini Purf a maintenant une traînée quand il frappe, comme les autres mini-boss.
+
+## Ce qui disparaît
+- **Les anciens dessins sont retirés du code** (environ 900 lignes) : ancien pantin, anciens animaux et robots, anciens mini-boss. Rien ne change à l'écran.
+- **La page `tools/planche.html`** (comparaison ancien / nouveau dessin de l'étape 6) est supprimée : elle ne peut plus comparer, l'ancien dessin n'existe plus.
+
+## Ce qui ne change pas
+- Les règles : relevé `tests/equilibrage.js` identique à la 4.3.
+
+---
+
 # Les laïquistes — v4.3.0 : les 7 mini-boss redessinés
 
 Huitième étape de la refonte, troisième partie (8c-1). Il reste l'écran titre, trois petits défauts et le ménage des anciens dessins (8c-2).

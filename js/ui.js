@@ -167,17 +167,19 @@ const UI = {
     }
   },
 
+  // Frise du titre (v4.4) : les héros débloqués posent côte à côte, en grand ; chacun son tour nargue ou lève les bras
   buildTitleArt() {
     const cv = $('#title-art');
     this.liveCanvas(cv, (ctx, t, W, H) => {
-      const kinds = ROSTER.filter(k => Save.isUnlocked(k));
-      const n = kinds.length;
-      kinds.forEach((k, i) => {
-        ctx.save();
-        const x = W * (i + 0.5) / n, y = H - 14 - Math.abs(Math.sin(t * 3 + i)) * 10;
-        ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(x, H - 12, 26, 6, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.translate(x, y);
-        menuSprite(ctx, k, { dir: i < n / 2 ? 1 : -1, scale: 0.85, t: t + i, walk: t * 8 + i, pose: 'walk' });
+      const kinds = ROSTER.filter(k => Save.isUnlocked(k)), n = kinds.length, sol = H - 16;
+      const tour = Math.floor(t / 1.8) % n, ph = (t % 1.8) / 1.8; // à tour de rôle
+      const ordre = kinds.map((k, i) => i).sort((a, b) => Math.abs(b - (n - 1) / 2) - Math.abs(a - (n - 1) / 2)); // ceux du milieu devant
+      ordre.forEach(i => {
+        const k = kinds[i], rig = persoRig(k), x = W * (i + 0.5) / n, sc = Math.min(1.12, 150 / (rig ? rig.H : 130));
+        const pose = i === tour && ph < 0.75 ? (i % 2 ? 'victory' : 'taunt') : 'idle';
+        ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(x, sol + 2, 34, 7, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.save(); ctx.translate(x, sol);
+        menuSprite(ctx, k, { dir: i < n / 2 ? 1 : -1, scale: sc, t: t + i * 0.7, walk: 0, pose, companion: n <= 5 });
         ctx.restore();
       });
     });

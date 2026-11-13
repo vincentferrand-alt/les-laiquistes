@@ -40,161 +40,10 @@ Object.assign(ITEMS, {
   },
 });
 
-// ---------- les mini-boss humanoïdes ----------
-Object.assign(HUMANS, {
-  marcel: {
-    bw: 40, bh: 86, color: '#dfe6e9', light: '#ffffff', legs: '#34495e', shoes: '#4e342e', item: 'baguette', idleArm: -0.55,
-    behind(ctx, o, w, h) { // canne dans l'autre main
-      ctx.strokeStyle = '#5d4037'; ctx.lineWidth = 5;
-      ctx.beginPath(); ctx.moveTo(-w * 0.5, 0); ctx.lineTo(-w * 0.5, -h * 0.42); ctx.arc(-w * 0.5 + 7, -h * 0.42, 7, Math.PI, 0); ctx.stroke();
-      ctx.strokeStyle = INK; ctx.lineWidth = 3;
-    },
-    torso(ctx, w, h, bob) { // marinière + foulard rouge
-      ctx.fillStyle = '#1e3799';
-      for (let i = 0; i < 5; i++) ctx.fillRect(-w / 2 + 3, -h * 0.74 + i * h * 0.1 + bob, w - 6, h * 0.04);
-      ctx.strokeStyle = INK; ctx.lineWidth = 2;
-      poly(ctx, [[-8, -h * 0.8 + bob], [10, -h * 0.8 + bob], [2, -h * 0.68 + bob]], '#e74c3c');
-      ctx.lineWidth = 3;
-    },
-    face(ctx, hr, hy, pose, t, hurt) {
-      ctx.strokeStyle = INK; ctx.lineWidth = 2;
-      circle(ctx, -hr * 0.8, hy + hr * 0.05, hr * 0.3, '#dfe6e9'); // cheveux blancs sur le côté
-      ell(ctx, -hr * 0.05, hy - hr * 0.72, hr * 1.12, hr * 0.42, '#1e272e', true, -0.12); // béret
-      rrect(ctx, -2, hy - hr * 1.22, 4, 7, 2, '#1e272e', false); // la petite queue du béret
-      eyeDot(ctx, hr * 0.45, hy - hr * 0.05, 2.5, hurt);
-      ctx.strokeStyle = '#ecf0f1'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(hr * 0.22, hy - hr * 0.3); ctx.lineTo(hr * 0.68, hy - hr * 0.26); ctx.stroke(); // sourcil
-      ctx.strokeStyle = INK; ctx.lineWidth = 2;
-      ell(ctx, hr * 0.55, hy + hr * 0.32, hr * 0.42, hr * 0.13, '#ecf0f1'); // moustache
-      ctx.fillStyle = 'rgba(231,76,60,.35)'; ctx.beginPath(); ctx.arc(hr * 0.75, hy + hr * 0.05, hr * 0.15, 0, Math.PI * 2); ctx.fill(); // nez rouge
-    },
-  },
-  clement: {
-    bw: 34, bh: 80, headR: 16, color: '#5f27cd', light: '#a29bfe', legs: '#576574', shoes: '#ffffff', item: 'manette', idleArm: -0.7,
-    torso(ctx, w, h, bob) { // sweat à capuche : poche + cordons
-      ctx.strokeStyle = '#341f97'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.roundRect(-w * 0.3, -h * 0.42 + bob, w * 0.6, h * 0.12, 4); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(-3, -h * 0.79 + bob); ctx.lineTo(-4, -h * 0.65 + bob); ctx.moveTo(5, -h * 0.79 + bob); ctx.lineTo(6, -h * 0.65 + bob); ctx.stroke();
-      ctx.strokeStyle = INK; ctx.lineWidth = 3;
-    },
-    face(ctx, hr, hy, pose, t, hurt) {
-      ctx.strokeStyle = INK; ctx.lineWidth = 2;
-      hairDome(ctx, hr, hy, '#6d4c41', 1.0, 2.0, 0.22, 1.05);
-      ctx.beginPath(); ctx.arc(0, hy - hr * 0.3, hr * 1.02, Math.PI * 1.05, Math.PI * 1.95); ctx.closePath(); ctx.fillStyle = '#ff9f43'; ctx.fill(); ctx.stroke(); // casquette…
-      rrect(ctx, -hr * 1.75, hy - hr * 0.5, hr * 0.95, 6, 3, '#ff9f43'); // … à l'envers
-      eyeDot(ctx, hr * 0.45, hy - hr * 0.02, 2.6, hurt);
-      ctx.fillStyle = '#e17055'; [[0.1, 0.25], [0.3, 0.4], [-0.1, 0.35]].forEach(([x, y]) => { ctx.beginPath(); ctx.arc(hr * x, hy + hr * y, 1.6, 0, Math.PI * 2); ctx.fill(); }); // boutons d'ado
-      if (pose !== 'attack' && pose !== 'windup') { ctx.strokeStyle = '#95a5a6'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(hr * 0.35, hy + hr * 0.5); ctx.lineTo(hr * 0.75, hy + hr * 0.5); ctx.stroke(); } // appareil dentaire
-    },
-  },
-  cecile: {
-    bw: 34, bh: 82, headR: 15, color: '#c2185b', light: '#f06292', legs: '#2d3436', shoes: '#c0392b', item: 'phone', idleArm: -2.5,
-    behind(ctx, o, w, h) { // longs cheveux blonds dans le dos
-      const hr = 15, hy = -h * 0.8 - hr * 0.35;
-      ctx.fillStyle = '#f6d365'; ctx.strokeStyle = INK; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.moveTo(-hr * 1.05, hy - hr * 0.2); ctx.quadraticCurveTo(-hr * 1.55, hy + hr * 1.9, -hr * 0.7, hy + hr * 2.4);
-      ctx.lineTo(hr * 0.2, hy + hr * 1.3); ctx.lineTo(hr * 0.3, hy - hr * 0.4); ctx.closePath(); ctx.fill(); ctx.stroke();
-      ctx.lineWidth = 3;
-    },
-    torso(ctx, w, h, bob) { // jupe
-      ctx.strokeStyle = INK; ctx.lineWidth = 2.5;
-      poly(ctx, [[-w / 2 + 1, -h * 0.36 + bob], [w / 2 - 1, -h * 0.36 + bob], [w / 2 + 6, -h * 0.2 + bob], [-w / 2 - 6, -h * 0.2 + bob]], '#2d3436');
-      ctx.lineWidth = 3;
-    },
-    face(ctx, hr, hy, pose, t, hurt) {
-      hairDome(ctx, hr, hy, '#f6d365', 0.95, 2.02, 0.22, 1.1); // frange blonde
-      ctx.fillStyle = '#f6d365'; ctx.fillRect(-hr * 1.05, hy - hr * 0.4, hr * 0.45, hr * 0.9);
-      eyeDot(ctx, hr * 0.45, hy - hr * 0.02, 2.6, hurt);
-      ctx.strokeStyle = INK; ctx.lineWidth = 1.6; // cils
-      ctx.beginPath(); ctx.moveTo(hr * 0.35, hy - hr * 0.2); ctx.lineTo(hr * 0.27, hy - hr * 0.34); ctx.moveTo(hr * 0.5, hy - hr * 0.24); ctx.lineTo(hr * 0.5, hy - hr * 0.38); ctx.stroke();
-      ctx.fillStyle = '#e84393'; ctx.beginPath(); ctx.ellipse(hr * 0.58, hy + hr * 0.45, hr * 0.17, hr * 0.08, 0, 0, Math.PI * 2); ctx.fill(); // rouge à lèvres
-      ctx.fillStyle = 'rgba(255,120,150,.35)'; ctx.beginPath(); ctx.arc(hr * 0.2, hy + hr * 0.22, hr * 0.2, 0, Math.PI * 2); ctx.fill();
-    },
-    front(ctx, o, w, h, hr, hy) { // « dring » quand elle prépare son attaque
-      if (o.pose !== 'windup' && o.pose !== 'special') return;
-      ctx.strokeStyle = '#ff7675'; ctx.lineWidth = 2.5;
-      for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(hr * 0.2, hy - hr * 1.2, 8 + i * 7 + ((o.t || 0) * 30) % 7, -2.4, -0.7); ctx.stroke(); }
-    },
-  },
-  leblond: {
-    bw: 38, bh: 92, headR: 17, armW: 7.5, legW: 9, color: '#1e3799', light: '#4a69bd', legs: '#2c3e50', item: 'telescope', idleArm: -0.5,
-    torso(ctx, w, h, bob) { // veste d'astronome étoilée
-      ctx.fillStyle = '#feca57'; ctx.font = 'bold 9px Arial'; ctx.textAlign = 'center';
-      [[-8, -0.7], [6, -0.6], [-4, -0.45], [9, -0.38]].forEach(([x, y]) => ctx.fillText('★', x, h * y + bob));
-    },
-    face(ctx, hr, hy, pose, t, hurt) {
-      hairDome(ctx, hr, hy, '#f9e79f', 1.0, 2.0, 0.25, 1.06); // blond
-      ctx.fillStyle = '#f9e79f'; ctx.strokeStyle = INK; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(-hr * 0.3, hy - hr * 1.15); ctx.quadraticCurveTo(hr * 0.9, hy - hr * 1.1, hr * 1.0, hy - hr * 0.35); ctx.lineTo(hr * 0.15, hy - hr * 0.7); ctx.closePath(); ctx.fill(); ctx.stroke();
-      eyeDot(ctx, hr * 0.45, hy - hr * 0.02, 3, hurt);
-    },
-  },
-});
-
-// ---------- Clapet 3000 : téléphone noir à clapet ----------
-function drawFlipPhone(ctx, o) {
-  const t = o.t || 0, pose = o.pose || 'idle', pt = o.poseT || 0, walk = o.walk || 0;
-  const sw = pose === 'walk' ? Math.sin(walk) * 7 : 0;
-  ctx.strokeStyle = INK; ctx.lineWidth = 3;
-  // jambes fines et baskets
-  rrect(ctx, -14, -22, 6, 22 + sw * 0.3, 3, '#2d3436'); rrect(ctx, -18, -4, 14, 6, 3, '#ff4757', false);
-  rrect(ctx, 8, -22, 6, 22 - sw * 0.3, 3, '#2d3436'); rrect(ctx, 6, -4, 14, 6, 3, '#ff4757', false);
-  // bas du téléphone : le clavier
-  rrect(ctx, -26, -70, 52, 50, 8, '#1e1e1e');
-  ctx.fillStyle = '#57606f';
-  for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) ctx.fillRect(-15 + c * 11, -62 + r * 10, 8, 6);
-  rrect(ctx, -10, -66, 20, 3, 1, '#a4b0be', false);
-  // bras
-  ctx.lineWidth = 4; ctx.strokeStyle = '#2d3436';
-  const arm = pose === 'attack' ? -1.2 : pose === 'windup' ? 0.6 : Math.sin(t * 4) * 0.2;
-  ctx.beginPath(); ctx.moveTo(24, -52); ctx.lineTo(24 + Math.cos(arm) * 18, -52 + Math.sin(arm) * 18 + 8); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(-24, -52); ctx.lineTo(-38, -40); ctx.stroke();
-  ctx.strokeStyle = INK; ctx.lineWidth = 3;
-  // charnière
-  rrect(ctx, -28, -76, 56, 9, 4, '#2f3542');
-  // couvercle (écran) : s'ouvre en grand pour préparer, claque vers l'avant pour frapper
-  let ang = Math.sin(t * 2) * 0.05;
-  if (pose === 'windup') ang = -0.45 + Math.sin(t * 30) * 0.05;
-  else if (pose === 'attack') ang = Math.sin(Math.min(1, pt * 1.6) * Math.PI) * 1.25;
-  else if (pose === 'hurt' || pose === 'down') ang = 0.5;
-  ctx.save(); ctx.translate(0, -72); ctx.rotate(ang);
-  rrect(ctx, -26, -58, 52, 58, 8, '#1e1e1e');
-  ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(-22, -54, 6, 50);
-  const scr = ctx.createLinearGradient(0, -50, 0, -14); scr.addColorStop(0, '#74b9ff'); scr.addColorStop(1, '#0984e3');
-  rrect(ctx, -19, -50, 38, 32, 4, scr);
-  // visage sur l'écran
-  const hurt = pose === 'hurt' || pose === 'down';
-  ctx.fillStyle = '#0c2461';
-  if (hurt) { ctx.font = 'bold 12px Arial'; ctx.textAlign = 'center'; ctx.fillText('x  x', 2, -32); }
-  else { ctx.fillRect(-9, -40, 6, 7); ctx.fillRect(7, -40, 6, 7); ctx.fillRect(-10, -44, 9, 2); ctx.fillRect(6, -45, 9, 2); }
-  ctx.fillRect(-6, -25, 14, pose === 'attack' || pose === 'windup' ? 5 : 2);
-  ctx.save(); ctx.translate(0, -7); if ((o.dir || 1) < 0) ctx.scale(-1, 1); // (texte à l'endroit même quand il regarde à gauche)
-  ctx.fillStyle = '#dfe6e9'; ctx.font = 'bold 7px Arial'; ctx.textAlign = 'center'; ctx.fillText('CLAPET 3000', 0, 0); ctx.restore();
-  ctx.restore();
-  // petite antenne
-  ctx.save(); ctx.translate(0, -72); ctx.rotate(ang);
-  rrect(ctx, 16, -70, 5, 14, 2, '#2f3542'); ctx.restore();
-}
-
-// ---------- Mouton géant ----------
-function drawBigSheep(ctx, o) {
-  const t = o.t || 0, pose = o.pose || 'idle', pt = o.poseT || 0, s = 2.3;
-  const lunge = pose === 'attack' ? Math.sin(Math.min(1, pt * 1.4) * Math.PI) * 18 : pose === 'windup' ? -8 : 0;
-  ctx.save(); ctx.translate(lunge, 0);
-  drawSheep(ctx, 0, 0, pose === 'walk' || pose === 'special' ? t : t * 0.2, s);
-  ctx.scale(s, s); ctx.strokeStyle = '#8d6e63'; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
-  // cornes en spirale
-  ctx.beginPath(); ctx.arc(15, -40, 6, Math.PI * 0.2, Math.PI * 1.9); ctx.stroke();
-  ctx.beginPath(); ctx.arc(15, -40, 2.5, 0, Math.PI * 1.5); ctx.stroke();
-  // sourcil furieux + œil rouge quand il prépare son coup
-  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(20, -42); ctx.lineTo(27, -39); ctx.stroke();
-  if (pose === 'windup' || pose === 'special') { ctx.fillStyle = '#ff4757'; ctx.beginPath(); ctx.arc(24, -37, 1.6, 0, Math.PI * 2); ctx.fill(); }
-  ctx.restore();
-}
-
 // ============================================================
 //  v4.3 — NOUVEAU DESSIN DES MINI-BOSS (même style que les héros : persos.js, et que les bêtes : betes.js)
 //  Marcel, Clément, Cécile, Le Blond et Mini Purf sont des pantins articulés (RIGS) ; Clapet 3000 et le
-//  Mouton géant sont redessinés ici. L'ancien dessin (plus haut) ne sert plus qu'à la planche de style.
+//  Mouton géant sont redessinés ici. (L'ancien dessin a été retiré en v4.4.)
 // ============================================================
 Object.assign(RIGS, {
   marcel: { // vieux Français : béret, marinière, foulard rouge, moustache blanche, nez rouge, baguette à la main, canne
@@ -316,28 +165,22 @@ function drawClapet(ctx, o) {
 // Mini-boss (même convention que drawMinion : o = { dir, scale, t, walk, pose, poseT })
 function drawMiniBoss(ctx, kind, o = {}) {
   const pose = o.pose || 'idle';
-  if (!P2.ancien && persoRig(kind)) { drawPerso(ctx, kind, o); return; } // pantins articulés (persos.js)
+  if (persoRig(kind)) { drawPerso(ctx, kind, o); return; } // pantins articulés (persos.js)
   ctx.save();
   if (o.alpha !== undefined) ctx.globalAlpha *= o.alpha;
   ctx.scale((o.dir || 1) * (o.scale || 1), o.scale || 1);
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-  if (!P2.ancien && kind === 'clapet') { // touché : il part en arrière ; à terre : couché sur le dos
+  if (kind === 'clapet') { // touché : il part en arrière ; à terre : couché sur le dos
     ctx.scale(BETE.gros, BETE.gros);
     if (pose === 'hurt') ctx.rotate(-0.15); else if (pose === 'down') { ctx.translate(-6, -27); ctx.rotate(-Math.PI / 2); }
     drawClapet(ctx, o);
-  } else if (!P2.ancien && kind === 'moutong') { // le mouton de betes.js, en très grand, avec ses cornes ; il charge tête baissée
+  } else { // Mouton géant : le mouton de betes.js, en très grand, avec ses cornes ; il charge tête baissée
     const s = 2.6, pt = o.poseT || 0, ol = BETE.ol, ruee = pose === 'special';
     const lunge = pose === 'attack' ? Math.sin(Math.min(1, pt * 1.4) * Math.PI) * 18 : pose === 'windup' ? -8 : 0;
     if (pose === 'hurt') ctx.rotate(-0.12); else if (pose === 'down') { ctx.translate(0, -56 * s); ctx.scale(1, -1); } // à terre : sur le dos
     BETE.ol = ol * 0.6; // (trait intérieur moins épais : le dessin est très agrandi)
     drawMouton(ctx, lunge, 0, o.t || 0, s, { pose: ruee ? 'walk' : pose, walk: ruee ? (o.t || 0) * 12 : (o.walk || 0) * 0.8, belier: true, charge: ruee });
     BETE.ol = ol;
-  } else { // ancien dessin (planche de style)
-    _face.pose = pose; _face.t = o.t || 0;
-    if (kind === 'clapet') { if (pose === 'down') ctx.rotate(-0.6); drawFlipPhone(ctx, o); }
-    else if (kind === 'moutong') { if (pose === 'down' || pose === 'hurt') ctx.rotate(pose === 'down' ? -0.5 : -0.12); drawBigSheep(ctx, o); }
-    else if (kind === 'minipurf') { ctx.scale(0.73, 0.73); drawHumanoid(ctx, HUMANS.purf, o); }
-    else if (HUMANS[kind]) drawHumanoid(ctx, HUMANS[kind], o);
   }
   ctx.restore();
 }

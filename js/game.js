@@ -1115,7 +1115,7 @@ const Game = {
     // surimpressions nettes : bulles
     ctx.lineJoin = 'round'; ctx.miterLimit = 2;
     [this.hero, ...this.enemies].forEach(f => {
-      if (f.bubble && !f.dead) drawBubble(ctx, f.x - this.camX, f.y - f.z - f.height - 34 * f.scale, f.bubble.text, Math.min(1, f.bubble.t * 3, (f.bubble.max - f.bubble.t) * 6), this.VW - this.marginR);
+      if (f.bubble && !f.dead) drawBubble(ctx, f.x - this.camX, f.y - f.z - f.height - (34 + ((persoRig(f.kind) || {}).dessus || 0)) * f.scale, f.bubble.text, Math.min(1, f.bubble.t * 3, (f.bubble.max - f.bubble.t) * 6), this.VW - this.marginR);
     });
     ctx.restore(); // fin du zoom
     // teinte + vignettage du monde : début → milieu → arène du boss
