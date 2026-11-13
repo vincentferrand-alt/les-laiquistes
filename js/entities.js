@@ -35,6 +35,7 @@ class Fighter {
     this.entering = 0; // > 0 : en train d'arriver (cinématique), invulnérable
     this.entered = false; // devient vrai une fois entré dans la zone visible : il n'en ressort plus
     this.offT = 0;        // temps passé hors de la zone visible (ramené au bord au-delà de 0,7 s)
+    Galerie.voir(kind);   // rencontré en jeu : sa fiche se dévoile dans la galerie (galerie.js)
   }
   get halfW() { return this.def.bw * 0.5 * this.scale; }
   get height() { return this.def.bh * this.scale; }
@@ -44,6 +45,7 @@ class Fighter {
   // prio 2 : phrase importante (début du combat, niveau de vie perdu, victoire) · voice : faire parler aussi un héros
   say(text, dur = 2.6, prio = 1, voice = false) {
     this.bubble = { text, t: dur, max: dur };
+    Galerie.entendre(this.kind, text); // phrase entendue : elle s'ajoute à la galerie (galerie.js)
     if (((this.isBoss || this.isMini) && this.team === 'enemy') || voice) Voice.speak(text, this.kind, prio); // voix synthétisée
   }
 

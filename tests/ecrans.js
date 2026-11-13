@@ -26,6 +26,9 @@ const ECRANS = {
   'game-over': () => { Object.assign(UI.run, { mode: 'select', hero: 'christian', order: ['guilhem'], idx: 0, score: 0, heroHp: null, level: 1 }); UI.launch(); Game.score = 2345; Game.finish('lose'); },
   defi: () => { UI.toTitle(); return UI.openDaily(); },
   trophees: () => { UI.toTitle(); UI.openTrophies(); },
+  galerie: () => { UI.toTitle(); Galerie.ouvrir(); },
+  'galerie-bestiaire': () => { UI.toTitle(); Object.keys(MINIONS).forEach((k, i) => { if (i % 3) Galerie.voir(k); }); Galerie.onglet = 'betes'; Galerie.ouvrir(); },
+  'galerie-mini-boss': () => { UI.toTitle(); ['cecile', 'clapet', 'moutong'].forEach(k => Galerie.voir(k)); Galerie.entendre('cecile', MINIBOSSES.cecile.phrases[0]); Galerie.onglet = 'minis'; Galerie.choix = 'cecile'; Galerie.ouvrir(); },
   classement: () => { UI.toTitle(); return UI.openScores('histoire'); },
 };
 
