@@ -393,3 +393,33 @@ h2, .logo, .win-title, .intro-name, .intro-step, .gameover, .b-title, .b-sub, .c
   #intro-art { max-height: 44vh; }
   .intro-name { font-size: clamp(28px, 8vh, 60px); }
 }
+
+/* ---------- Galerie (v4.5) ---------- */
+.gal { display: flex; gap: clamp(8px, 2vw, 22px); align-items: stretch; justify-content: center; max-width: 96vw; }
+.gal-left { display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center; }
+.gal-tabs, .gal-row { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
+.chip { background: rgba(0,0,0,.5); color: #fff; border: 2px solid #000; border-radius: 16px; padding: 5px 11px; font: 700 12px Inter, Arial, sans-serif; cursor: pointer; min-height: 28px; }
+.chip.on { background: #feca57; color: #000; }
+.chip.son { background: #1e3799; } .chip.son.vide { opacity: .55; }
+#gal-grid { display: grid; gap: 5px; justify-content: center; }
+#gal-grid.nbeaucoup { grid-template-columns: repeat(8, clamp(34px, 9.6vh, 54px)); }
+#gal-grid.npeu { grid-template-columns: repeat(4, clamp(50px, 17vh, 84px)); }
+.gal-tile { aspect-ratio: 1; padding: 0; background: rgba(255,255,255,.12); border: 2px solid #000; border-radius: 10px; cursor: pointer; overflow: hidden; }
+.gal-tile canvas { width: 100%; height: 100%; display: block; }
+.gal-tile.cache { background: rgba(0,0,0,.35); }
+.gal-tile.sel { border-color: #feca57; box-shadow: 0 0 0 2px #feca57; }
+.gal-card { width: clamp(280px, 40vw, 400px); background: rgba(0,0,0,.45); border: 3px solid #000; border-radius: 14px; padding: 6px 10px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.gal-txt { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+#gal-cv { height: clamp(120px, 32vh, 230px); width: auto; max-width: 100%; }
+#gal-name { font-family: var(--fx); font-size: clamp(17px, 4vh, 26px); color: #feca57; text-shadow: 2px 2px 0 #000; line-height: 1.05; }
+#gal-info { text-align: center; }
+#gal-bulle { min-height: 15px; font-size: 12px; font-style: italic; text-align: center; opacity: .95; }
+/* téléphone en paysage : le dessin à gauche, la fiche à droite */
+@media (max-height: 500px) {
+  .chip { padding: 2px 8px; font-size: 10.5px; min-height: 25px; }
+  .gal-card { flex-direction: row; width: min(54vw, 430px); gap: 6px; padding: 4px 8px; }
+  .gal-txt { flex: 1; gap: 4px; min-width: 0; }
+  #gal-cv { height: 44vh; flex: none; }
+  #gal-bulle { font-size: 10.5px; min-height: 12px; }
+  .ico { min-width: 58px; padding: 4px 3px; font-size: 9.5px; } .icons { gap: 6px; }
+}

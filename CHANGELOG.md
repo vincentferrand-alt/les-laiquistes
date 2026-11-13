@@ -1,3 +1,22 @@
+# Les laïquistes — v4.5.0 : la galerie
+
+## Ce qui est nouveau
+- **Un écran « Galerie »** (bouton 📖 sur l'écran titre), en trois onglets : **Laïquistes** (les 7 héros et boss), **Mini-boss** (7) et **Bestiaire** (29 ennemis).
+- **Chaque fiche est animée** : un bouton « 🎬 » (ou un appui sur le dessin) fait défiler ses mouvements — attente, marche, attaque, attaque spéciale, touché, à terre, raillerie.
+- **Chaque fiche a ses sons** : « 🔊 Phrase » rejoue, avec sa voix, les phrases du personnage ; « 💥 Attaque » son bruit d'attaque ; pour les laïquistes, « ⭐ » le son de leur attaque spéciale et « 🎺 Arrivée » le son d'arrivée des boss.
+- **On dévoile en jouant** : une fiche montre une silhouette et « ??? » tant qu'on n'a pas rencontré le personnage en jeu ; une phrase s'ajoute quand on l'a entendue en jeu. Un compteur indique où on en est (« 12 / 43 personnages rencontrés », « Phrase (3/7) »).
+- À la première ouverture, la galerie dévoile déjà tes héros débloqués et tous les personnages des mondes où tu as au moins une étoile. Les phrases, elles, repartent de zéro : le jeu ne notait pas jusqu'ici celles que tu avais entendues.
+
+## À savoir
+- Ce que tu as vu et entendu est gardé **sur l'appareil** (comme « Continuer l'histoire ») : rien n'est envoyé en ligne, rien ne change dans Firebase. Sur un autre appareil, la galerie repart de ce rattrapage.
+- Sur téléphone, les icônes de l'écran titre sont un peu plus étroites pour faire de la place au bouton Galerie.
+- Nouveau test automatique `tests/galerie.js` (les fiches se dévoilent, sont gardées, et s'animent toutes sans erreur) ; l'écran est aussi vérifié par `tests/ecrans.js`.
+
+## Pour les curieux
+- Nouveau fichier `js/galerie.js` (objet `Galerie`, clé locale `laiquistes_galerie_v1`). `Fighter` (`js/entities.js`) appelle `Galerie.voir` à la création d'un combattant et `Galerie.entendre` quand il parle.
+
+---
+
 # Les laïquistes — v4.4.0 : écran titre, finitions, ménage
 
 Fin de la huitième étape de la refonte (8c-2). Tous les personnages du jeu ont maintenant le nouveau dessin.

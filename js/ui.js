@@ -47,6 +47,7 @@ const UI = {
     $('#b-daily').onclick = () => { Sfx.init(); Sfx.click(); this.openDaily(); };
     $('#b-daily-go').onclick = () => { Sfx.click(); this.startDaily(); };
     $('#b-trophies').onclick = () => { Sfx.init(); Sfx.click(); this.openTrophies(); };
+    $('#b-galerie').onclick = () => { Sfx.init(); Sfx.click(); Galerie.ouvrir(); }; // v4.5 (galerie.js)
     $('#b-scores').onclick = () => { Sfx.init(); Sfx.click(); this.openScores('histoire'); };
     $('#b-mute').onclick = () => this.toggleMute();
     $('#b-fs').onclick = () => this.fullscreen();
@@ -660,7 +661,7 @@ const UI = {
       : '<li class="empty">Aucun score pour l\'instant. À toi de jouer !</li>';
   },
 };
-const MENU_SCREENS = ['s-title', 's-modes', 's-chars', 's-worlds', 's-intro', 's-scores', 's-settings', 's-daily', 's-trophies'];
+const MENU_SCREENS = ['s-title', 's-modes', 's-chars', 's-worlds', 's-intro', 's-scores', 's-settings', 's-daily', 's-trophies', 's-galerie'];
 const CONTROLS_HTML = `
   <table>
     <tr><th></th><th>Clavier</th><th>Téléphone</th></tr>

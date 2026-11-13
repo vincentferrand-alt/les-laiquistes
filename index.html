@@ -74,6 +74,7 @@
         <button class="btn big" id="b-modes">AUTRES MODES</button>
       </div>
       <div class="menu row icons">
+        <button class="ico" id="b-galerie"><i>📖</i>Galerie</button>
         <button class="ico" id="b-trophies"><i>🏅</i>Trophées</button>
         <button class="ico" id="b-scores"><i>🏆</i>Classement</button>
         <button class="ico" id="b-settings"><i>⚙</i>Réglages</button>
@@ -217,6 +218,31 @@
       <button class="btn small" data-go="s-title">← Retour</button>
     </section>
 
+    <!-- Galerie (v4.5) : laïquistes, mini-boss et bestiaire, animés, avec leurs sons -->
+    <section id="s-galerie" class="screen">
+      <h2>📖 GALERIE</h2>
+      <div class="gal">
+        <div class="gal-left">
+          <div class="gal-tabs">
+            <button class="chip" data-tab="heros">Laïquistes</button><button class="chip" data-tab="minis">Mini-boss</button><button class="chip" data-tab="betes">Bestiaire</button>
+          </div>
+          <div id="gal-grid"></div>
+          <div class="sub" id="gal-sum"></div>
+        </div>
+        <div class="gal-card">
+          <canvas id="gal-cv" width="280" height="230"></canvas>
+          <div class="gal-txt">
+            <div id="gal-name"></div>
+            <div class="sub" id="gal-info"></div>
+            <div class="gal-row" id="gal-poses"></div>
+            <div class="gal-row" id="gal-sons"></div>
+            <div id="gal-bulle"></div>
+          </div>
+        </div>
+      </div>
+      <button class="btn small" data-go="s-title">← Retour</button>
+    </section>
+
     <!-- Classement -->
     <section id="s-scores" class="screen">
       <h2>🏆 CLASSEMENT</h2>
@@ -254,6 +280,7 @@
   <script src="js/boss.js"></script>
   <script src="js/share.js"></script>
   <script src="js/progress.js"></script>
+  <script src="js/galerie.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/main.js"></script>
 </body>
