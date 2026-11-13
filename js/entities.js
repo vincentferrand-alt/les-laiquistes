@@ -178,7 +178,7 @@ class Fighter {
     const p = this.pose();
     // v4.0 : les héros / boss ont un nouveau dessin articulé (persos.js), avec ses propres poses de piqué et d'atterrissage
     // v4.1 : les ennemis à forme humaine aussi ; un ennemi porté par le héros est à l'horizontale, au bout de ses bras
-    const rig = typeof persoRig === 'function' ? persoRig(this.kind) : null; // (v4.3 : mini-boss compris)
+    const rig = persoRig(this.kind); // (mini-boss articulés compris)
     const porte = !!rig && this.grabbed && !this.dead;
     if (rig && !this.dead) { if (this.state === 'dive') p.pose = 'dive'; else if (this.state === 'land') p.pose = 'final'; else if (porte) p.pose = 'held'; }
     ctx.save();
@@ -221,9 +221,9 @@ class Fighter {
       if (sx2 !== 1 || sy2 !== 1) ctx.scale(sx2, sy2);
     }
     // traînée d'arme (couleur propre à chaque héros ; rouge pour les ennemis)
-    if (this.state === 'attack' && (this.isChar || (this.isMini && HUMANS[this.kind])) && !this.dead) {
+    if (this.state === 'attack' && (this.isChar || (this.isMini && rig)) && !this.dead) {
       ctx.save(); ctx.scale(this.dir * this.scale, this.scale);
-      const punch = !this.weapon && (rig ? rig.style === 'punch' : !!(HUMANS[this.kind] && HUMANS[this.kind].punch));
+      const punch = !this.weapon && !!rig && rig.style === 'punch';
       const col = this.team === 'hero' ? (TRAIL_COL[this.kind] || '255,234,120') : '255,90,90';
       drawWeaponTrail(ctx, this.st / this.stateDur, this.def.range + this.def.bw * 0.5, rig && !punch ? rig.H * 0.82 : this.def.bh, punch, col, this.combo);
       ctx.restore();
@@ -259,7 +259,7 @@ class Fighter {
       const above = (calme ? 50 + (rig.dessus || 0) : large ? 150 : 110) * sc;
       box = { x: this.dir > 0 ? -back : -front, y: -rig.H * sc - above, w: front + back, h: rig.H * sc + above + 28 * sc };
     }
-    drawSprite(ctx, box, paint, { outline: (rig ? P2.contour : this.isBoss ? 4 : this.isMini || (typeof beteDessin === 'function' && beteDessin(this.kind)) ? 3.8 : 3.2) * Math.sqrt(sc), shade: { top: -this.height }, flash: this.flash > 0 && !this.dead,
+    drawSprite(ctx, box, paint, { outline: (rig ? P2.contour : this.isBoss ? 4 : 3.8) * Math.sqrt(sc), shade: { top: -this.height }, flash: this.flash > 0 && !this.dead,
       minor: this.team === 'enemy' && !this.isBoss && !this.mustKill && !this.golden, tint: this.golden ? '255,200,30' : null }); // ennemi en or : teinte dorée
     if (this.state === 'victory' && !this.dead) { // étoiles qui tournent autour de la tête
       ctx.font = '20px Arial'; ctx.textAlign = 'center';
@@ -272,18 +272,20 @@ class Fighter {
     }
     ctx.restore();
 
-    const top = sy - this.z - this.height - 18 * this.scale;
+    const top = sy - this.z - this.height - (18 + (rig && rig.dessus ? rig.dessus : 0)) * this.scale; // (v4.4 : au-dessus de la pelle de Senoussi)
+    const nomme = this.isBoss || this.mustKill;
     if (this.team === 'enemy' && !this.dead) {
       if (this.isBoss || this.mustKill) {
         const name = this.def.name.toUpperCase();
         ctx.font = `900 ${this.isBoss ? 22 : 14}px "Arial Black", Arial`; ctx.textAlign = 'center';
         ctx.lineJoin = 'round'; ctx.lineWidth = 4; ctx.strokeStyle = '#000'; ctx.fillStyle = this.isBoss ? '#f1c40f' : '#ffeaa7';
-        ctx.strokeText(name, sx, top); ctx.fillText(name, sx, top);
+        ctx.strokeText(name, sx, top); ctx.fillText(name, sx, top); this._nomW = ctx.measureText(name).width;
       }
       // v3.13 : plus de petite barre de vie au-dessus des têtes ; la vie de l'ennemi visé est sous le panneau du héros (rage.js)
       if (this.state === 'windup') {
         ctx.font = '900 30px Arial'; ctx.fillStyle = '#ff4757'; ctx.strokeStyle = '#000'; ctx.lineWidth = 4; ctx.textAlign = 'center';
-        ctx.strokeText('!', sx, top - 14); ctx.fillText('!', sx, top - 14);
+        const ex = nomme ? sx + (this._nomW || 60) / 2 + 14 : sx, ey = nomme ? top + 4 : top - 14; // (v4.4 : à côté du nom, plus dessus)
+        ctx.strokeText('!', ex, ey); ctx.fillText('!', ex, ey);
       }
     }
     if (this.winded > 0 && !this.dead) { // boss essoufflé après son attaque signature (boss.js) : c'est le moment de frapper

@@ -220,12 +220,8 @@ const Rage = {
       ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.roundRect(x, y, 280, 38, 12); ctx.fill(); ctx.stroke();
       ctx.save(); ctx.beginPath(); ctx.arc(x + 22, y + 19, 15, 0, Math.PI * 2); ctx.fillStyle = e.golden ? '#ffe9a0' : '#dfe6e9'; ctx.fill(); ctx.clip();
-      if (!e.isMini && typeof persoRig === 'function' && persoRig(e.kind)) drawPersoHead(ctx, e.kind, x + 22, y + 19, 34); // nouveau dessin : sa tête (persos.js)
-      else if (!e.isMini && typeof beteDessin === 'function' && beteDessin(e.kind)) drawBeteTete(ctx, e.kind, x + 22, y + 19, 15, e); // v4.2 : sa tête aussi (betes.js)
-      else {
-        const s = Math.min(0.6, 34 / Math.max(30, e.def.bh * 0.55));
-        ctx.translate(x + 22, y + 19 + e.def.bh * s * 0.55); drawMinion(ctx, e.kind, { dir: 1, scale: s, t: e.t, variant: e.variant, label: e.label });
-      }
+      if (persoRig(e.kind)) drawPersoHead(ctx, e.kind, x + 22, y + 19, 34); // nouveau dessin : sa tête (persos.js)
+      else drawBeteTete(ctx, e.kind, x + 22, y + 19, 15, e); // sa tête aussi (betes.js)
       ctx.restore();
       ctx.beginPath(); ctx.arc(x + 22, y + 19, 15, 0, Math.PI * 2); ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.stroke();
       ctx.font = '900 12px "Arial Black", Arial'; ctx.textAlign = 'left'; ctx.fillStyle = e.dead ? '#ff6b6b' : e.golden ? '#ffd32a' : '#fff';
@@ -253,129 +249,8 @@ Object.assign(Game, Rage);
 // ============================================================
 //  DESSINS — ennemis spéciaux, costaud, armes
 // ============================================================
-// le gros costaud (humanoïde)
-HUMANS.costaud = {
-  bw: 66, bh: 124, armW: 17, legW: 20, headR: 20, color: '#2d3436', light: '#636e72', legs: '#1e272e', skin: '#e0ac69', punch: true, idleArm: -0.4,
-  torso(ctx, w, h, bob) { // débardeur, chaîne en or, tatouage
-    ctx.fillStyle = '#e0ac69'; ctx.beginPath(); ctx.moveTo(-w * 0.28, -h * 0.8 + bob); ctx.quadraticCurveTo(0, -h * 0.66 + bob, w * 0.28, -h * 0.8 + bob); ctx.fill();
-    ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, -h * 0.8 + bob, w * 0.26, 0.4, Math.PI - 0.4); ctx.stroke();
-    ctx.strokeStyle = INK; ctx.lineWidth = 3;
-  },
-  face(ctx, hr, hy, pose, t, hurt) {
-    ctx.strokeStyle = INK; ctx.lineWidth = 2;
-    rrect(ctx, hr * 0.05, hy - hr * 0.25, hr * 0.95, hr * 0.32, 4, '#111'); // lunettes noires
-    ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(hr * 0.2, hy - hr * 0.2, hr * 0.25, 3);
-    ctx.fillStyle = '#5d4037'; ctx.fillRect(hr * 0.25, hy + hr * 0.45, hr * 0.55, 3); // bouche pincée
-    ctx.fillStyle = 'rgba(0,0,0,.15)'; ctx.beginPath(); ctx.arc(-hr * 0.1, hy - hr * 0.55, hr * 0.5, Math.PI, 0); ctx.fill(); // crâne rasé qui brille
-  },
-};
+// (le costaud est dans persos.js, les ennemis spéciaux dans betes.js ; leurs anciens dessins ont été retirés en v4.4)
 
-// ennemis spéciaux (tournés vers la droite ; drawMinion s'occupe du retournement)
-function drawRageMinion(ctx, type, o) {
-  const t = o.t || 0, pose = o.pose || 'idle', walk = o.walk || 0;
-  ctx.strokeStyle = INK; ctx.lineWidth = 2.5;
-  const eye = (x, y, r = 3.5, angry = true) => {
-    circle(ctx, x, y, r * 1.6, '#fff'); circle(ctx, x + 1, y, r * 0.8, INK, false);
-    if (angry) { ctx.strokeStyle = INK; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x - r * 1.8, y - r * 2.4); ctx.lineTo(x + r * 1.6, y - r * 1.4); ctx.stroke(); }
-  };
-  switch (type) {
-    case 'marteau': { // marteau-piqueur
-      const sh = pose === 'walk' || o.air ? Math.sin(t * 60) * 1.5 : 0;
-      ctx.translate(sh, 0);
-      ctx.fillStyle = '#95a5a6'; ctx.fillRect(-3, -18, 6, 18); ctx.strokeRect(-3, -18, 6, 18); // burin
-      poly(ctx, [[-3, 0], [3, 0], [0, 6]], '#7f8c8d');
-      rrect(ctx, -15, -66, 30, 50, 8, '#f1c40f'); // corps
-      ctx.fillStyle = '#2d3436'; ctx.fillRect(-15, -34, 30, 6); ctx.fillRect(-15, -22, 30, 4);
-      rrect(ctx, -26, -80, 52, 9, 4, '#2d3436'); // poignées
-      rrect(ctx, -4, -76, 8, 12, 2, '#636e72');
-      eye(-5, -52, 3); eye(7, -52, 3);
-      break;
-    }
-    case 'ballon': { // ballon de basket qui rebondit
-      const b = -Math.abs(Math.sin(t * 7)) * 16;
-      ctx.translate(0, -21 + b); ctx.rotate((o.roll || 0) * 0.6);
-      circle(ctx, 0, 0, 21, '#e67e22');
-      ctx.strokeStyle = '#2d3436'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(-21, 0); ctx.lineTo(21, 0); ctx.moveTo(0, -21); ctx.lineTo(0, 21); ctx.stroke();
-      ctx.beginPath(); ctx.arc(-24, 0, 15, -0.9, 0.9); ctx.stroke(); ctx.beginPath(); ctx.arc(24, 0, 15, Math.PI - 0.9, Math.PI + 0.9); ctx.stroke();
-      ctx.rotate(-(o.roll || 0) * 0.6); eye(5, -5, 3); eye(13, -4, 2.5);
-      break;
-    }
-    case 'basket': { // chaussure de course qui court toute seule
-      const a = pose === 'walk' || pose === 'dash' ? Math.sin(walk * 1.5) * 5 : 0;
-      ctx.strokeStyle = INK; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(-14, -8); ctx.lineTo(-18 - a, 0); ctx.moveTo(10, -8); ctx.lineTo(14 + a, 0); ctx.stroke(); // petites jambes
-      ctx.lineWidth = 2.5;
-      rrect(ctx, -30, -16, 62, 9, 4, '#f5f6fa'); // semelle
-      ctx.beginPath(); ctx.moveTo(-28, -16); ctx.lineTo(-26, -40); ctx.quadraticCurveTo(-12, -46, -2, -34); ctx.lineTo(18, -28); ctx.quadraticCurveTo(32, -26, 32, -16); ctx.closePath();
-      ctx.fillStyle = '#ff4757'; ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#feca57'; poly(ctx, [[-14, -22], [-4, -34], [-6, -27], [6, -30], [-4, -18], [-2, -24]], '#feca57', false); // éclair
-      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(-8 + i * 6, -40 + i * 2); ctx.lineTo(-2 + i * 6, -36 + i * 2); ctx.stroke(); } // lacets
-      eye(20, -26, 2.6);
-      break;
-    }
-    case 'glitch': { // bug de jeu vidéo : cube de pixels qui grésille
-      const j = Math.floor(t * 12) % 3, px = 6;
-      const rows = ['..PPPP..', '.PPPPPP.', 'PPWEPWEP', 'PPPPPPPP', 'PCPPPPCP', 'PPCCCCPP', '.PP..PP.', 'PP....PP'];
-      const pal = { P: '#8854d0', W: '#fff', E: '#111', C: '#00d2d3' };
-      const draw = (ox, col) => rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '.') return; ctx.fillStyle = col || pal[ch]; ctx.fillRect(-24 + x * px + ox, -60 + y * 7.4, px, 7.4); }));
-      ctx.globalAlpha = 0.5; draw(-3 - j, '#ff4757'); draw(3 + j, '#00d2d3'); ctx.globalAlpha = 1; draw(0);
-      if (Math.random() < 0.15) { ctx.fillStyle = '#fff'; ctx.fillRect(-26, -60 + Math.random() * 56, 52, 2); }
-      break;
-    }
-    case 'tableur': { // feuille de calcul en colère (pas de logo : un tableur, tout simplement)
-      const sw = pose === 'walk' ? Math.sin(walk) * 4 : 0;
-      ctx.lineWidth = 3; ctx.strokeStyle = INK;
-      ctx.beginPath(); ctx.moveTo(-10, -10); ctx.lineTo(-12 - sw, 0); ctx.moveTo(10, -10); ctx.lineTo(12 + sw, 0); ctx.stroke();
-      rrect(ctx, -27, -60, 54, 52, 4, '#ffffff');
-      ctx.fillStyle = '#21a366'; ctx.fillRect(-26, -59, 52, 9); // barre de formule
-      ctx.fillStyle = '#fff'; ctx.font = 'bold 7px Arial'; ctx.textAlign = 'left'; ctx.fillText('=SOMME()', -23, -52);
-      ctx.strokeStyle = '#b2bec3'; ctx.lineWidth = 1;
-      for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(-26 + i * 13, -50); ctx.lineTo(-26 + i * 13, -8); ctx.stroke(); }
-      for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(-26, -50 + i * 10.5); ctx.lineTo(26, -50 + i * 10.5); ctx.stroke(); }
-      ctx.fillStyle = 'rgba(33,163,102,.35)'; ctx.fillRect(-13, -29, 26, 10.5); // cellule sélectionnée
-      ctx.strokeStyle = '#21a366'; ctx.lineWidth = 2; ctx.strokeRect(-13, -29, 26, 10.5);
-      eye(-6, -40, 2.6); eye(10, -40, 2.6);
-      ctx.fillStyle = '#c0392b'; ctx.font = 'bold 6px Arial'; ctx.textAlign = 'center'; ctx.fillText('#DIV/0!', 0, -12);
-      break;
-    }
-    case 'chevre': { // chèvre (corne, barbichette)
-      const a = Math.sin(t * 16) * (pose === 'walk' || pose === 'dash' ? 1 : 0.2);
-      ctx.fillStyle = '#3d2b1f';
-      ctx.fillRect(-16, -18, 6, 18 + a * 4); ctx.fillRect(10, -18, 6, 18 - a * 4);
-      ctx.strokeStyle = INK; ctx.lineWidth = 2;
-      ell(ctx, -2, -28, 24, 14, '#d7b899');
-      ell(ctx, -6, -26, 10, 7, '#f5f6fa', false);
-      poly(ctx, [[-26, -32], [-34, -38], [-28, -28]], '#d7b899'); // queue
-      ell(ctx, 24, -40, 10, 9, '#d7b899', true, -0.3); // tête
-      ctx.strokeStyle = '#6d4c41'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(20, -47); ctx.quadraticCurveTo(14, -60, 6, -56); ctx.stroke(); // corne
-      ctx.fillStyle = '#f5f6fa'; poly(ctx, [[26, -32], [30, -32], [27, -22]], '#f5f6fa', false); // barbichette
-      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(28, -43, 1.8, 0, Math.PI * 2); ctx.fill();
-      ell(ctx, 14, -44, 5, 2.5, '#c49a6c', true, 0.6); // oreille
-      break;
-    }
-    case 'fut': { // fût radioactif sur pattes
-      const glow = pose === 'windup' ? 0.5 + Math.sin(t * 30) * 0.5 : 0;
-      const sw = pose === 'walk' ? Math.sin(walk) * 4 : 0;
-      ctx.lineWidth = 3; ctx.strokeStyle = INK;
-      ctx.beginPath(); ctx.moveTo(-9, -8); ctx.lineTo(-11 - sw, 0); ctx.moveTo(9, -8); ctx.lineTo(11 + sw, 0); ctx.stroke();
-      if (glow > 0) { ctx.fillStyle = `rgba(255,60,60,${0.35 * glow})`; ctx.beginPath(); ctx.arc(0, -36, 42, 0, Math.PI * 2); ctx.fill(); }
-      const g = ctx.createLinearGradient(-20, 0, 20, 0); g.addColorStop(0, '#d4ac0d'); g.addColorStop(0.5, '#f9e79f'); g.addColorStop(1, '#b7950b');
-      rrect(ctx, -20, -64, 40, 56, 6, g);
-      ctx.fillStyle = '#2d3436'; ctx.fillRect(-20, -54, 40, 4); ctx.fillRect(-20, -20, 40, 4);
-      // symbole « danger radioactif »
-      ctx.save(); ctx.translate(0, -36); ctx.fillStyle = '#111';
-      for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, 11, i * 2.094 - 0.52, i * 2.094 + 0.52); ctx.closePath(); ctx.fill(); }
-      ctx.fillStyle = '#f9e79f'; ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(0, 0, 2, 0, Math.PI * 2); ctx.fill();
-      ctx.restore();
-      ctx.fillStyle = `rgba(163,230,53,${0.6 + Math.sin(t * 5) * 0.3})`; ctx.beginPath(); ctx.ellipse(0, -64, 14, 4, 0, 0, Math.PI * 2); ctx.fill(); // liquide vert
-      eye(-7, -46, 2.2); eye(8, -46, 2.2);
-      break;
-    }
-  }
-}
-
-// armes à manier (repère du bras : +y = prolongement du bras)
 Object.assign(ITEMS, {
   w_tuyau(ctx) { rrect(ctx, -5, -10, 10, 70, 4, '#95a5a6'); rrect(ctx, -8, 54, 22, 12, 4, '#7f8c8d'); ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.fillRect(-2, -6, 3, 58); },
   w_micro(ctx) { ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, -6); ctx.quadraticCurveTo(-14, -20, -6, -34); ctx.stroke(); ctx.strokeStyle = INK;
