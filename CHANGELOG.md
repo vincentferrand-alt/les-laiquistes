@@ -1,3 +1,29 @@
+# Les laïquistes — v4.3.0 : les 7 mini-boss redessinés
+
+Huitième étape de la refonte, troisième partie (8c-1). Il reste l'écran titre, trois petits défauts et le ménage des anciens dessins (8c-2).
+
+## Ce qui change
+- **Les 7 mini-boss ont un nouveau dessin**, dans le style des héros : gros contour, environ 25 % plus grands, visage expressif, vraies poses (élan, coup, attaque spéciale, touché, à terre, raillerie).
+  - **Marcel** : béret, marinière, foulard rouge, moustache blanche, nez rouge, baguette à la main, canne plantée derrière lui.
+  - **Clément** : sweat violet à capuche, casquette orange à l'envers, boutons d'ado, dents serrées, manette.
+  - **Cécile** : longs cheveux blonds, haut rose, jupe sombre, téléphone collé à l'oreille ; les ondes « dring » avant son attaque.
+  - **Le Blond** : la taille de Faouzi, grande mèche blonde, veste bleu nuit étoilée, télescope en laiton.
+  - **Clapet 3000** : visage sur l'écran (yeux, bouche, colère), gants blancs, baskets rouges, antenne qui clignote ; le couvercle claque toujours vers l'avant pour frapper.
+  - **Mouton géant** : grosse corne en spirale, regard mauvais, tête baissée et pattes qui courent pendant sa ruée ; à terre, il est sur le dos.
+  - **Mini Purf** : le nouveau The Purf, en plus petit.
+- Le bandeau d'arrivée des mini-boss montre le nouveau dessin.
+
+## Ce qui ne change pas
+- Les règles : vie, vitesse, dégâts, portée, largeur de frappe et attaques spéciales des mini-boss sont les mêmes qu'en 4.2 (relevé `tests/equilibrage.js` identique).
+- Leurs phrases, leurs voix, leurs arrivées (solex, voiture sans permis, étoile filante…) et leurs projectiles.
+
+## Pour les curieux
+- `js/minis.js` : 5 nouveaux pantins dans `RIGS` (marcel, clement, cecile, leblond, minipurf), `drawClapet`, et `drawMiniBoss` / `miniSprite` qui passent par le nouveau dessin. Le Mouton géant est le mouton de `js/betes.js` (`drawMouton` avec `belier`).
+- `Fighter.draw` (`js/entities.js`) traite les mini-boss articulés comme les héros (boîte de dessin, gros contour).
+- `bh` dans `js/data.js` : 110, 104, 105, 119, 123, 112, 91 (avant : 86, 80, 82, 92, 100, 96, 70).
+
+---
+
 # Les laïquistes — v4.2.0 : les autres ennemis redessinés
 
 Huitième étape de la refonte, deuxième partie (8b). Il reste les 7 mini-boss et l'écran titre (8c).
