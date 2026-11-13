@@ -496,7 +496,8 @@ const DOG_PAL = {
   // Berger australien bleu merle : gris-bleu marbré de noir, marques cuivre (joues, pattes) et blanches (liste, poitrail)
   berger: { body: '#97a9bd', dark: '#3d4552', light: '#ffffff', ear: '#2f3542', muzzle: '#ffffff', copper: '#c46a2e', merle: true },
 };
-function drawDog(ctx, x, y, t, lunge = 0, open = false, pal = DOG_PAL.aika, s = 1) {
+function drawDog(ctx, x, y, t, lunge = 0, open = false, pal = DOG_PAL.aika, s = 1, q = null) {
+  if (typeof drawChien === 'function' && !P2.ancien) { drawChien(ctx, x, y, t, lunge, open, pal, s, q); return; } // v4.2 : nouveau dessin (betes.js)
   ctx.save(); ctx.translate(x + lunge, y); ctx.scale(s, s);
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   const a = Math.sin(t * 14), wag = Math.sin(t * 9);
@@ -563,6 +564,7 @@ function drawDog(ctx, x, y, t, lunge = 0, open = false, pal = DOG_PAL.aika, s = 
   ctx.restore();
 }
 function drawSheep(ctx, x, y, t, s = 1) {
+  if (typeof drawMouton === 'function' && !P2.ancien) { drawMouton(ctx, x, y, t, s); return; } // v4.2 : nouveau dessin (betes.js)
   ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
   const a = Math.sin(t * 16);
   ctx.fillStyle = INK;
@@ -851,7 +853,8 @@ const HUMANS = {
 
 // Héros / boss
 // v4.0 : les 7 laïquistes sont dessinés par le nouveau pantin articulé (persos.js), et depuis la v4.1 les ennemis à forme
-// humaine aussi (drawMinion) ; l'ancien dessin (drawHumanoid) sert encore aux mini-boss et à la planche de style.
+// humaine aussi (drawMinion) ; depuis la v4.2 les autres ennemis sont dans betes.js. L'ancien dessin (drawHumanoid, et les
+// anciens animaux et robots de ce fichier) ne sert plus qu'aux mini-boss et à la planche de style.
 function drawCharacter(ctx, kind, o = {}) {
   const rig = typeof persoRig === 'function' ? persoRig(kind) : null;
   if (rig) {
@@ -866,7 +869,7 @@ function drawCharacter(ctx, kind, o = {}) {
         ctx.strokeStyle = INK; ctx.lineWidth = 3.4; ctx.beginPath(); ctx.moveTo(16, -rig.H * 0.5); ctx.quadraticCurveTo(44, -34, dx + lunge + 24, -46); ctx.stroke();
         ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(16, -rig.H * 0.5); ctx.quadraticCurveTo(44, -34, dx + lunge + 24, -46); ctx.stroke();
       }
-      drawDog(ctx, dx, 0, o.t || 0, lunge, pose === 'attack', DOG_PAL.aika, 1.1);
+      drawDog(ctx, dx, 0, o.t || 0, lunge, pose === 'attack', DOG_PAL.aika, 1.1, { pose: pose === 'walk' || pose === 'attack' ? pose : 'idle', walk: o.walk || 0 }); // (v4.2 : elle ne trotte plus sur place à l'arrêt)
       ctx.restore();
     }
     return;
@@ -888,6 +891,7 @@ function drawCharacter(ctx, kind, o = {}) {
 // Ennemis courants (et entourages)
 function drawMinion(ctx, type, o = {}) {
   if (typeof persoRig === 'function' && persoRig(type)) { drawPerso(ctx, type, o); return; } // v4.1 : ennemis à forme humaine (persos.js)
+  if (typeof beteDessin === 'function' && beteDessin(type)) { drawBete(ctx, type, o); return; } // v4.2 : animaux, robots, monde pixelisé, ennemis spéciaux (betes.js)
   ctx.save();
   if (o.alpha !== undefined) ctx.globalAlpha *= o.alpha;
   ctx.scale((o.dir || 1) * (o.scale || 1), o.scale || 1);

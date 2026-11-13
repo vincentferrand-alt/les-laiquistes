@@ -259,7 +259,7 @@ class Fighter {
       const above = (calme ? 50 + (rig.dessus || 0) : large ? 150 : 110) * sc;
       box = { x: this.dir > 0 ? -back : -front, y: -rig.H * sc - above, w: front + back, h: rig.H * sc + above + 28 * sc };
     }
-    drawSprite(ctx, box, paint, { outline: (rig ? P2.contour : this.isBoss ? 4 : 3.2) * Math.sqrt(sc), shade: { top: -this.height }, flash: this.flash > 0 && !this.dead,
+    drawSprite(ctx, box, paint, { outline: (rig ? P2.contour : this.isBoss ? 4 : !this.isMini && typeof beteDessin === 'function' && beteDessin(this.kind) ? 3.8 : 3.2) * Math.sqrt(sc), shade: { top: -this.height }, flash: this.flash > 0 && !this.dead,
       minor: this.team === 'enemy' && !this.isBoss && !this.mustKill && !this.golden, tint: this.golden ? '255,200,30' : null }); // ennemi en or : teinte dorée
     if (this.state === 'victory' && !this.dead) { // étoiles qui tournent autour de la tête
       ctx.font = '20px Arial'; ctx.textAlign = 'center';

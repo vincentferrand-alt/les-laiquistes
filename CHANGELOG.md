@@ -1,3 +1,35 @@
+# Les laïquistes — v4.2.0 : les autres ennemis redessinés
+
+Huitième étape de la refonte, deuxième partie (8b). Il reste les 7 mini-boss et l'écran titre (8c).
+
+## Ce qui change
+- **Vingt ennemis ont un nouveau dessin**, dans le style des héros : gros contour, environ 23 % plus grands, gros yeux expressifs, et une vraie pose pour chaque moment (attente, marche, élan, attaque, touché, à terre).
+  - Animaux : goéland, berger australien, chat, mouton, oursin, chèvre.
+  - Robots : robot, chat robot.
+  - Monde pixelisé de Faouzi : chevalier, alien, chauve-souris, slime, Glitch. Ils restent en gros pixels, sur une grille plus fine et cernés de noir.
+  - Ennemis spéciaux : marteau-piqueur, ballon de basket, basket de course, tableur, fût radioactif.
+  - Entourages des boss : Aïka, chat robot, agneau.
+- Ce qui les identifie est conservé : robe bleu merle et marques cuivre du berger · collier rouge et médaille d'Aïka · énorme goitre du goéland · nom affiché sur l'écran du robot · « =SOMME() » et « #DIV/0! » du tableur · symbole radioactif et liquide vert du fût · bande de chantier du marteau-piqueur.
+- **On voit ce qu'ils préparent** : le chat fait le dos rond et hérisse la queue avant de griffer, le chien se ramasse et montre les crocs, le mouton et la chèvre baissent la tête pour charger, le robot lève son canon, le chevalier lève son épée, le fût clignote en rouge.
+- **À terre, les animaux sont sur le dos, les pattes en l'air** ; les robots et les objets sont couchés ; le slime est aplati.
+- Aïka, tenue en laisse par Fateh, les moutons lancés par Senoussi, le mouton doré de l'épreuve et le Mouton géant prennent le même nouveau dessin. Aïka ne trotte plus sur place quand Fateh est à l'arrêt.
+- Le petit portrait de l'ennemi visé montre aussi la tête de ces ennemis.
+- Le texte du tableur n'est plus à l'envers quand il regarde à gauche.
+
+## Ce qui ne change pas
+- Les règles : vie, vitesse, dégâts, portée et largeur de frappe de ces ennemis sont les mêmes qu'en 4.1 (vérifié avec `tests/equilibrage.js` : relevé identique).
+- Les 7 mini-boss et l'écran titre gardent leur dessin pour l'instant.
+
+## À savoir
+- Affichage : mesuré sans carte graphique sur une scène figée avec 8 de ces ennemis à l'écran, une image demande environ 4 % de temps en plus qu'en 4.1.
+
+## Pour les curieux
+- Nouveau fichier `js/betes.js` (chargé après `js/persos.js`) : `BETES` (un dessin par ennemi), `drawBete`, `drawBeteTete` (portrait), `drawChien`, `drawMouton`, `bChat`, grilles de pixels `PIX2`.
+- `drawMinion`, `drawDog` et `drawSheep` (`js/draw.js`) passent par le nouveau dessin quand il existe. Les anciens dessins restent dans `js/draw.js` et `js/rage.js` jusqu'à la fin de l'étape 8.
+- `bh` (hauteur) dans `js/data.js` : +23 % pour ces vingt ennemis (par exemple robot 123 au lieu de 100, berger 74 au lieu de 60).
+
+---
+
 # Les laïquistes — v4.1.0 : les ennemis à forme humaine redessinés
 
 Huitième étape de la refonte, première partie (8a). Les autres ennemis (animaux, robots, monde pixelisé, ennemis spéciaux) viendront en 8b, les mini-boss et l'écran titre en 8c.
