@@ -221,6 +221,7 @@ const Rage = {
       ctx.beginPath(); ctx.roundRect(x, y, 280, 38, 12); ctx.fill(); ctx.stroke();
       ctx.save(); ctx.beginPath(); ctx.arc(x + 22, y + 19, 15, 0, Math.PI * 2); ctx.fillStyle = e.golden ? '#ffe9a0' : '#dfe6e9'; ctx.fill(); ctx.clip();
       if (!e.isMini && typeof persoRig === 'function' && persoRig(e.kind)) drawPersoHead(ctx, e.kind, x + 22, y + 19, 34); // nouveau dessin : sa tête (persos.js)
+      else if (!e.isMini && typeof beteDessin === 'function' && beteDessin(e.kind)) drawBeteTete(ctx, e.kind, x + 22, y + 19, 15, e); // v4.2 : sa tête aussi (betes.js)
       else {
         const s = Math.min(0.6, 34 / Math.max(30, e.def.bh * 0.55));
         ctx.translate(x + 22, y + 19 + e.def.bh * s * 0.55); drawMinion(ctx, e.kind, { dir: 1, scale: s, t: e.t, variant: e.variant, label: e.label });
