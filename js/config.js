@@ -16,7 +16,7 @@ window.FIREBASE_CONFIG = {
 
 // Numéro de version affiché dans le menu. Pense à changer aussi VERSION dans sw.js
 // à chaque mise en ligne (c'est ce qui déclenche le bandeau « Nouvelle version disponible »).
-window.GAME_VERSION = '4.2.0';
+window.GAME_VERSION = '4.3.0';
 /* Exemple :
 window.FIREBASE_CONFIG = {
   apiKey: "AIza...",

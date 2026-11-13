@@ -266,37 +266,37 @@ const ROSTER = ['christian', 'guilhem', 'fateh', 'faouzi', 'venum', 'senoussi', 
 const MINIBOSSES = {
   marcel: {
     id: 'marcel', name: 'Marcel', title: 'Le vrai Français', world: 'christian',
-    bw: 40, bh: 86, hp: 125, speed: 150, dmg: 9, range: 86, special: 'baguettes', specialCd: 5.5, entrance: 'solex',
+    bw: 40, bh: 110, hp: 125, speed: 150, dmg: 9, range: 86, special: 'baguettes', specialCd: 5.5, entrance: 'solex',
     phrases: ['Vive la France !'],
   },
   clement: {
     id: 'clement', name: 'Clément', title: "L'ado", world: 'guilhem',
-    bw: 34, bh: 80, hp: 115, speed: 215, dmg: 8, range: 60, special: 'manettes', specialCd: 5, entrance: 'voiturette',
+    bw: 34, bh: 104, hp: 115, speed: 215, dmg: 8, range: 60, special: 'manettes', specialCd: 5, entrance: 'voiturette',
     phrases: ['Rachète-moi une PS5 !'],
   },
   cecile: {
     id: 'cecile', name: 'Cécile', title: 'Au téléphone', world: 'fateh',
-    bw: 34, bh: 82, hp: 115, speed: 205, dmg: 8, range: 62, special: 'dring', specialCd: 5, entrance: 'marche',
+    bw: 34, bh: 105, hp: 115, speed: 205, dmg: 8, range: 62, special: 'dring', specialCd: 5, entrance: 'marche',
     phrases: ['Fateh, rappelle-moi tout de suite !'],
   },
   leblond: {
     id: 'leblond', name: 'Le Blond', title: "L'astronome", world: 'faouzi',
-    bw: 38, bh: 92, hp: 120, speed: 190, dmg: 9, range: 92, special: 'trounoir', specialCd: 6.5, entrance: 'etoile',
+    bw: 38, bh: 119, hp: 120, speed: 190, dmg: 9, range: 92, special: 'trounoir', specialCd: 6.5, entrance: 'etoile',
     phrases: ['Laissez Faouzi tranquille, son trou noir m\'appartient !'],
   },
   clapet: {
     id: 'clapet', name: 'Clapet 3000', title: 'Le téléphone à clapet', world: 'venum',
-    bw: 54, bh: 100, hp: 130, speed: 170, dmg: 9, range: 64, special: 'sms', specialCd: 5, entrance: 'chute',
+    bw: 54, bh: 123, hp: 130, speed: 170, dmg: 9, range: 64, special: 'sms', specialCd: 5, entrance: 'chute',
     phrases: ['Vive Samsung et les téléphones à clapet !'],
   },
   moutong: {
     id: 'moutong', name: 'Mouton géant', title: 'Le bélier', world: 'senoussi',
-    bw: 110, bh: 96, hp: 150, speed: 170, dmg: 10, range: 56, special: 'belier', specialCd: 5.5, entrance: 'charge',
+    bw: 110, bh: 112, hp: 150, speed: 170, dmg: 10, range: 56, special: 'belier', specialCd: 5.5, entrance: 'charge',
     phrases: ['Bêêêêê ! Qu\'est-ce que tu veux ?'],
   },
   minipurf: {
     id: 'minipurf', name: 'Mini Purf', title: 'Le petit toxique', world: 'purf',
-    bw: 48, bh: 70, hp: 120, speed: 200, dmg: 9, range: 56, special: 'parmesan', specialCd: 5, entrance: 'fumee',
+    bw: 48, bh: 91, hp: 120, speed: 200, dmg: 9, range: 56, special: 'parmesan', specialCd: 5, entrance: 'fumee',
     phrases: ['Vous aimez le parmesan ? Vous allez en avoir !'],
   },
 };

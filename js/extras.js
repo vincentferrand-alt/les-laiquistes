@@ -117,7 +117,7 @@ const Extras = {
     if (cdef) {
       ctx.save(); ctx.beginPath(); ctx.rect(-bw / 2, -hh / 2 - 200, bw, hh + 200); ctx.clip();
       ctx.translate(VW * 0.24, hh / 2 + 4); ctx.rotate(0.1);
-      const sc = 2.6 * 100 / Math.max(80, cdef.bh), so = { dir: -1, scale: Math.min(sc, card.kind === 'moutong' ? 1.9 : 9), t: el * 1.5 + 2, pose: el < 0.9 ? 'windup' : 'taunt' };
+      const sc = 2.6 * 100 / Math.max(80, cdef.bh), so = { dir: -1, scale: Math.min(sc, card.kind === 'moutong' ? 1.9 : card.kind === 'clapet' ? 1.75 : 9), t: el * 1.5 + 2, pose: el < 0.9 ? 'windup' : 'taunt' };
       if (card.mini) miniSprite(ctx, card.kind, so); else menuSprite(ctx, card.kind, so); // (mini-boss : minis.js)
       ctx.restore();
     }

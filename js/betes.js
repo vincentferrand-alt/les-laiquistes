@@ -108,7 +108,8 @@ function drawChien(ctx, x, y, t, lunge = 0, open = false, pal = DOG_PAL.aika, s 
 
 // ---------- Mouton (et agneau, en plus petit) ----------
 function drawMouton(ctx, x, y, t, s = 1, q = null) {
-  const pose = q ? q.pose : 'walk', mood = bMood(pose), run = bPas(q, t, 16), charge = pose === 'attack' || pose === 'windup';
+  const pose = q ? q.pose : 'walk', belier = !!(q && q.belier), run = bPas(q, t, 16), charge = pose === 'attack' || pose === 'windup' || !!(q && q.charge);
+  const mood = belier && bMood(pose) === 'calm' ? 'angry' : bMood(pose); // (q.belier : cornes et air mauvais du Mouton géant, minis.js)
   ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
   ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.strokeStyle = INK; ctx.lineWidth = BETE.ol;
   [[-15, 0.6], [13, -0.6], [-8, -0.6], [18, 0.6]].forEach(([lx, k], i) => bPatte(ctx, lx, -17, 17, run * k, 5.4, i < 2 ? '#26222d' : '#3a3340', '#111'));
@@ -124,8 +125,9 @@ function drawMouton(ctx, x, y, t, s = 1, q = null) {
   ell(ctx, -3, -3, 6.5, 3.2, '#3a3340', true, -0.6);     // oreille
   rrect(ctx, -6, -7, 19, 16, 7, '#3a3340');              // museau
   circle(ctx, -2, -8, 6.5, '#fafbfd');                   // toupet de laine
-  bOeil(ctx, 6, -1, 3.4, mood, t);
+  bOeil(ctx, 6.5, -1, belier ? 4 : 3.4, mood, t);
   circle(ctx, 11, 4.5, 0.9, '#8a8296', false);
+  if (belier) bTrait(ctx, c => { c.arc(-6, -4, 6.5, Math.PI * 0.15, Math.PI * 1.75); c.arc(-5.2, -4, 2.8, Math.PI * 1.75, Math.PI * 3.1); }, 3.4, '#a1887f'); // corne en spirale
   ctx.restore();
   ctx.restore();
 }
