@@ -5,7 +5,8 @@
 #  - tests/ecrans.js    : tous les menus tiennent sur un téléphone (844×390 et 740×360), sans défilement ;
 #  - tests/histoire.js  : une histoire commencée peut être continuée après avoir fermé le jeu ;
 #  - tests/boss.js      : chaque boss annonce sa signature, s'essouffle ensuite et passe par ses 3 comportements ;
-#  - tests/galerie.js   : les fiches de la galerie se dévoilent, sont gardées, et s'animent toutes sans erreur.
+#  - tests/galerie.js   : les fiches de la galerie se dévoilent, sont gardées, et s'animent toutes sans erreur ;
+#  - tests/manette.js   : avec une fausse manette, on navigue dans les menus, on lance un monde et on joue.
 name: Tests automatiques
 on:
   pull_request:
@@ -36,3 +37,5 @@ jobs:
         run: node tests/boss.js
       - name: La galerie
         run: node tests/galerie.js
+      - name: La manette
+        run: node tests/manette.js

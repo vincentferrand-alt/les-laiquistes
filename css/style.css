@@ -423,3 +423,7 @@ h2, .logo, .win-title, .intro-name, .intro-step, .gameover, .b-title, .b-sub, .c
   #gal-bulle { font-size: 10.5px; min-height: 12px; }
   .ico { min-width: 58px; padding: 4px 3px; font-size: 9.5px; } .icons { gap: 6px; }
 }
+
+/* Manette (v4.6) : bouton choisi dans les menus */
+.pad-focus { outline: 4px solid #feca57 !important; outline-offset: 3px; box-shadow: 0 0 18px rgba(254,202,87,.8) !important; position: relative; z-index: 2; }
+summary.pad-focus { outline-offset: 1px; }
