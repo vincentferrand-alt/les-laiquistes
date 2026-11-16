@@ -1,3 +1,22 @@
+# Les laïquistes — v4.6.0 : la manette
+
+## Ce qui est nouveau
+- **On peut jouer à la manette** : manette USB ou Bluetooth sur ordinateur (Xbox, PlayStation…), et manette Bluetooth sur iPhone, iPad ou Mac (SteelSeries Nimbus, Xbox, PlayStation). Rien à régler : on branche (ou on appaire dans les réglages Bluetooth), on appuie sur un bouton, c'est parti. Un message « 🎮 Manette connectée » s'affiche.
+- **Boutons en jeu** (disposition Xbox / Nimbus, entre parenthèses PlayStation) : stick gauche ou croix = se déplacer · **A (✕)** = sauter · **X (□)** = frapper (rester appuyé = attraper, puis lâcher pour lancer) · **Y (△)** ou **RB** = attaque spéciale · **B (○)** ou **LB** = appeler un pote · **Start / Menu** = pause.
+- **Menus à la manette** : le stick ou la croix choisit un bouton (entouré de jaune), **A** valide, **B** revient en arrière, **Start** valide (et reprend la partie en pause). Sur le choix du perso, un second **A** sur le perso choisi lance la partie. Dans les réglages, gauche / droite règlent les volumes. L'écran « Touche pour jouer » se passe aussi avec A.
+- **Avec une manette, le joystick et les boutons tactiles disparaissent** de l'écran (et la zone de jeu reprend toute la largeur). Ils reviennent dès qu'on touche l'écran.
+- Le menu pause (« 🎮 Commandes ») a une colonne « Manette ».
+
+## À savoir
+- Sur iPhone et iPad, il se peut que le son ne démarre qu'après avoir touché l'écran une fois : c'est une règle d'Apple (le son ne se débloque que par un vrai geste à l'écran).
+- Un seul joueur : la première manette branchée est utilisée.
+- Nouveau test automatique `tests/manette.js` (une fausse manette parcourt les menus, lance un monde et joue).
+
+## Pour les curieux
+- Nouveau fichier `js/manette.js` (objet `Manette`, chargé après `js/ui.js`). Il lit la manette à chaque image et remplit `Input.pressed`, `Input.held` et `Input.pad` (direction, `js/input.js`). `UI.setControls` ne montre plus les commandes tactiles quand `Manette.actif`.
+
+---
+
 # Les laïquistes — v4.5.0 : la galerie
 
 ## Ce qui est nouveau

@@ -130,7 +130,7 @@ const UI = {
 
   setControls(on) {
     $('#controls').classList.toggle('hidden', !on);
-    $('#controls').classList.toggle('touch', on && Input.isTouch);
+    $('#controls').classList.toggle('touch', on && Input.isTouch && !Manette.actif); // avec une manette, pas de commandes tactiles
     Game.updateSafeArea(); // place prise par les boutons tactiles
   },
 
@@ -664,17 +664,17 @@ const UI = {
 const MENU_SCREENS = ['s-title', 's-modes', 's-chars', 's-worlds', 's-intro', 's-scores', 's-settings', 's-daily', 's-trophies', 's-galerie'];
 const CONTROLS_HTML = `
   <table>
-    <tr><th></th><th>Clavier</th><th>Téléphone</th></tr>
-    <tr><td>Se déplacer</td><td>Flèches ou ZQSD</td><td>Joystick (pouce gauche)</td></tr>
-    <tr><td>Frapper (combo ×3)</td><td>J ou X</td><td>✊ FRAPPE</td></tr>
-    <tr><td>Sauter</td><td>Espace</td><td>⤒ SAUT</td></tr>
-    <tr><td>Coup sauté (renverse)</td><td>Espace puis J (en montée)</td><td>SAUT puis FRAPPE</td></tr>
-    <tr><td>Coup plongeant (onde de choc)</td><td>Espace puis J / X en redescendant</td><td>SAUT puis FRAPPE en redescendant</td></tr>
-    <tr><td>Attaque spéciale</td><td>K ou C</td><td>★ SPÉCIAL</td></tr>
-    <tr><td>Attraper puis lancer un ennemi</td><td>Rester appuyé sur J / X, puis lâcher</td><td>Rester appuyé sur FRAPPE, puis lâcher</td></tr>
-    <tr><td>Arme (trouvée dans une caisse)</td><td colspan="2">Marche dessus pour la ramasser : 8 coups plus forts et plus longs</td></tr>
-    <tr><td>Appeler un pote (1 fois par monde)</td><td>L ou V</td><td>📣 POTE</td></tr>
-    <tr><td>Pause</td><td>Échap ou P</td><td>❚❚</td></tr>
+    <tr><th></th><th>Clavier</th><th>Téléphone</th><th>Manette</th></tr>
+    <tr><td>Se déplacer</td><td>Flèches ou ZQSD</td><td>Joystick (pouce gauche)</td><td>Stick gauche ou croix</td></tr>
+    <tr><td>Frapper (combo ×3)</td><td>J ou X</td><td>✊ FRAPPE</td><td>X (□)</td></tr>
+    <tr><td>Sauter</td><td>Espace</td><td>⤒ SAUT</td><td>A (✕)</td></tr>
+    <tr><td>Coup sauté (renverse)</td><td>Espace puis J (en montée)</td><td>SAUT puis FRAPPE</td><td>A puis X</td></tr>
+    <tr><td>Coup plongeant (onde de choc)</td><td>Espace puis J / X en redescendant</td><td>SAUT puis FRAPPE en redescendant</td><td>A puis X en redescendant</td></tr>
+    <tr><td>Attaque spéciale</td><td>K ou C</td><td>★ SPÉCIAL</td><td>Y (△) ou RB</td></tr>
+    <tr><td>Attraper puis lancer un ennemi</td><td>Rester appuyé sur J / X, puis lâcher</td><td>Rester appuyé sur FRAPPE, puis lâcher</td><td>Rester appuyé sur X, puis lâcher</td></tr>
+    <tr><td>Arme (trouvée dans une caisse)</td><td colspan="3">Marche dessus pour la ramasser : 8 coups plus forts et plus longs</td></tr>
+    <tr><td>Appeler un pote (1 fois par monde)</td><td>L ou V</td><td>📣 POTE</td><td>B (○) ou LB</td></tr>
+    <tr><td>Pause</td><td>Échap ou P</td><td>❚❚</td><td>Start / Menu</td></tr>
   </table>
   <div class="ctl-tip">Chaque monde a 3 tiers : un mini-boss 💀, une épreuve 🎯, puis le boss 👑. Si tu tombes, tu reprends au début du tiers.<br>La frappe touche aussi en hauteur (goélands, chauves-souris). Le « ! » rouge annonce une attaque ennemie, et la zone rouge au sol montre où frappe le boss : esquive en changeant de ligne.<br>Ramasse les bonus qui brillent (casque, Rolex, os…) et bats l'ennemi en or avant qu'il s'enfuie !</div>`;
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }

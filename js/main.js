@@ -5,6 +5,7 @@ window.addEventListener('load', () => {
   Input.init();
   Game.init();
   UI.init();
+  Manette.init(); // manette USB ou Bluetooth (v4.6)
   Scores.init(); // ouvre aussi la sauvegarde en ligne (js/cloud.js) si Firebase est configuré
   window.addEventListener('keydown', e => {
     if (e.code === 'Escape' && UI.current === 's-pause') { e.preventDefault(); UI.resume(); }

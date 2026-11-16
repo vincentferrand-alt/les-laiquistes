@@ -1,5 +1,5 @@
 // ============================================================
-//  ENTRÉES — clavier (PC) + joystick et boutons tactiles (téléphone)
+//  ENTRÉES — clavier (PC) + joystick et boutons tactiles (téléphone) + manette (js/manette.js, v4.6)
 // ============================================================
 
 // Vibration du téléphone (ignorée en silence si le navigateur ne la gère pas, ex. iPhone)
@@ -15,6 +15,7 @@ const Input = {
   pressed: { attack: false, jump: false, special: false, pause: false, pote: false },
   held: { attack: false, jump: false },
   stick: { active: false, id: null, ox: 0, oy: 0, dx: 0, dy: 0 },
+  pad: { mx: 0, my: 0 }, // direction donnée par la manette (rempli par js/manette.js)
   isTouch: false, stickR: 55,
 
   init() {
@@ -81,6 +82,7 @@ const Input = {
       const dx = this.stick.dx / this.stickR, dy = this.stick.dy / this.stickR;
       mx = Math.abs(dx) > 0.25 ? dx : 0; my = Math.abs(dy) > 0.3 ? dy : 0;
     }
+    if (!mx && !my && (this.pad.mx || this.pad.my)) { mx = this.pad.mx; my = this.pad.my; } // manette
     this.mx = clamp(mx, -1, 1); this.my = clamp(my, -1, 1);
   },
   consume(a) { const v = this.pressed[a]; this.pressed[a] = false; return v; },
